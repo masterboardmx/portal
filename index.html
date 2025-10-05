@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MASTERBOARD - Especialistas en reparación de tarjetas electrónicas de mini splits inverter en Mazatlán, Sinaloa">
+    <meta name="keywords" content="reparación electrónica, mini splits, inverter, Mazatlán, tarjetas electrónicas">
+    <title>MASTERBOARD - Soluciones que funcionan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        header { background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%); color: white; padding: 1rem 0; position: fixed; width: 100%; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        nav { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; }
+        .logo { font-size: 1.8rem; font-weight: bold; display: flex; align-items: center; gap: 0.8rem; letter-spacing: 1px; }
+        .logo-icon { width: 45px; height: 45px; background: white; border-radius: 8px; padding: 5px; }
+        .logo-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .nav-links { display: flex; list-style: none; gap: 2rem; }
+        .nav-links a { color: white; text-decoration: none; transition: opacity 0.3s; font-weight: 500; }
+        .nav-links a:hover { opacity: 0.8; }
+        .hero { background: linear-gradient(135deg, #1565C0 0%, #1976D2 50%, #42A5F5 100%); color: white; padding: 150px 2rem 100px; text-align: center; position: relative; overflow: hidden; }
+        .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.15) 0%, transparent 50%); opacity: 0.6; }
+        .hero-content { position: relative; z-index: 1; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 0.5rem; animation: fadeInUp 1s; letter-spacing: 2px; }
+        .hero .tagline { font-size: 1.5rem; margin-bottom: 1rem; font-weight: 300; opacity: 0.95; animation: fadeInUp 1s 0.1s backwards; }
+        .hero p { font-size: 1.2rem; margin-bottom: 2rem; animation: fadeInUp 1s 0.2s backwards; }
+        .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; animation: fadeInUp 1s 0.3s backwards; }
+        .cta-button { background: white; color: #1565C0; padding: 1rem 2.5rem; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s; text-decoration: none; display: inline-block; }
+        .cta-button:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .cta-button.secondary { background: transparent; border: 2px solid white; color: white; }
+        .cta-button.secondary:hover { background: white; color: #1565C0; }
+        .section { max-width: 1200px; margin: 0 auto; padding: 80px 2rem; }
+        .section-title { text-align: center; font-size: 2.5rem; margin-bottom: 1rem; color: #1565C0; }
+        .section-subtitle { text-align: center; font-size: 1.1rem; color: #666; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+        .service-card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(21, 101, 192, 0.15); transition: transform 0.3s, box-shadow 0.3s; border-top: 4px solid #1976D2; }
+        .service-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(21, 101, 192, 0.25); }
+        .service-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .service-card h3 { color: #1565C0; margin-bottom: 1rem; font-size: 1.5rem; }
+        .products-section { background: #f8f9fa; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
+        .product-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .product-card:hover { transform: scale(1.05); }
+        .product-image { width: 100%; height: 200px; background: linear-gradient(135deg, #1565C0 0%, #1976D2 50%, #42A5F5 100%); display: flex; align-items: center; justify-content: center; font-size: 4rem; }
+        .product-info { padding: 1.5rem; }
+        .product-info h3 { color: #1565C0; margin-bottom: 0.5rem; }
+        .product-price { color: #1976D2; font-size: 1.5rem; font-weight: bold; margin: 1rem 0; }
+        .buy-button { width: 100%; background: #1565C0; color: white; border: none; padding: 0.8rem; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        .buy-button:hover { background: #1976D2; }
+        .about-section { background: linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1976D2 100%); color: white; }
+        .about-section .section-title { color: white; }
+        .about-content { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center; margin-bottom: 3rem; }
+        .about-content ul { list-style: none; padding: 0; }
+        .about-content ul li { padding: 0.5rem 0; font-size: 1.1rem; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; }
+        .feature-card { text-align: center; padding: 2rem; background: rgba(255,255,255,0.15); border-radius: 10px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .feature-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .feature-card h3 { margin-bottom: 0.5rem; font-size: 1.3rem; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; }
+        .stat-card { text-align: center; padding: 1.5rem; background: rgba(255,255,255,0.15); border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); }
+        .stat-number { font-size: 3rem; font-weight: bold; color: #FFD54F; }
+        .payment-section { background: white; }
+        .payment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; max-width: 600px; margin: 0 auto; }
+        .payment-card { background: #f8f9fa; padding: 2rem; border-radius: 15px; text-align: center; transition: transform 0.3s; border: 2px solid #e0e0e0; }
+        .payment-card:hover { transform: translateY(-5px); border-color: #1565C0; }
+        .payment-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+        .contact-section { background: #f8f9fa; }
+        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+        .contact-info { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .contact-item { display: flex; align-items: start; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 10px; }
+        .contact-icon { font-size: 1.5rem; color: #1565C0; min-width: 30px; }
+        .contact-item h3 { color: #1565C0; margin-bottom: 0.3rem; font-size: 1.1rem; }
+        .contact-item a { color: #1976D2; text-decoration: none; }
+        .contact-item a:hover { text-decoration: underline; }
+        .social-links { display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+        .social-link { display: inline-flex; align-items: center; gap: 0.5rem; background: #ffffff; color: #1565C0; padding: 0.8rem 1.5rem; border-radius: 50px; text-decoration: none; transition: transform 0.3s, background 0.3s; font-weight: 600; border: 2px solid #1565C0; }
+        .social-link:hover { transform: translateY(-3px); background: #1565C0; color: white; }
+        .whatsapp-float { position: fixed; bottom: 30px; right: 30px; background: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.3s; z-index: 999; text-decoration: none; }
+        .whatsapp-float:hover { transform: scale(1.1); }
+        footer { background: #0D47A1; color: white; text-align: center; padding: 2rem; }
+        footer a { color: white; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) { 
+            .nav-links { gap: 1rem; font-size: 0.9rem; } 
+            .hero h1 { font-size: 2rem; } 
+            .hero .tagline { font-size: 1.2rem; } 
+            .hero p { font-size: 1rem; } 
+            .about-content, .contact-grid { grid-template-columns: 1fr; } 
+            .stats, .features-grid { grid-template-columns: 1fr; } 
+            .cta-buttons { flex-direction: column; align-items: center; } 
+        }
+    </style>
+</head>
+<body>
+    <a href="https://wa.me/526692711522" class="whatsapp-float" target="_blank" title="Contactar por WhatsApp">💬</a>
+
+    <header>
+        <nav>
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect fill='%231565C0' width='200' height='200'/%3E%3Cg fill='white'%3E%3Cpath d='M80 60h10v20H80z'/%3E%3Cpath d='M110 60h10v20h-10z'/%3E%3Cpath d='M70 80h60v10H70z'/%3E%3Crect x='90' y='90' width='20' height='30' rx='15'/%3E%3Crect x='120' y='70' width='50' height='70' rx='5' stroke='white' stroke-width='8' fill='none'/%3E%3Ccircle cx='145' cy='105' r='15' fill='none' stroke='white' stroke-width='6'/%3E%3Cpath d='M145 95v10m-5-5h10' stroke='white' stroke-width='3'/%3E%3Crect x='125' y='125' width='40' height='8'/%3E%3C/g%3E%3C/svg%3E" alt="MASTERBOARD">
+                </div>
+                MASTERBOARD
+            </div>
+            <ul class="nav-links">
+                <li><a href="#inicio">Inicio</a></li>
+                <li><a href="#servicios">Servicios</a></li>
+                <li><a href="#productos">Productos</a></li>
+                <li><a href="#nosotros">Nosotros</a></li>
+                <li><a href="#pagos">Pagos</a></li>
+                <li><a href="#contacto">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="inicio" class="hero">
+        <div class="hero-content">
+            <h1>MASTERBOARD</h1>
+            <p class="tagline">Soluciones que funcionan.</p>
+            <p>Especialistas en reparación de tarjetas electrónicas de mini splits inverter</p>
+            <div class="cta-buttons">
+                <a href="https://wa.me/526692711522" class="cta-button" target="_blank">Solicita tu Cotización</a>
+                <a href="#servicios" class="cta-button secondary">Conoce Nuestros Servicios</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="servicios" class="section">
+        <h2 class="section-title">Nuestros Servicios</h2>
+        <p class="section-subtitle">Soluciones profesionales en electrónica con garantía de calidad</p>
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">🔧</div>
+                <h3>Reparación de Tarjetas Inverter</h3>
+                <p>Reparación especializada de tarjetas electrónicas de mini splits inverter. Diagnóstico gratuito y soluciones efectivas con 40 días de garantía.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🔍</div>
+                <h3>Diagnóstico Gratuito</h3>
+                <p>Análisis completo de componentes electrónicos con equipo especializado. Identificamos el problema sin costo para ti.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">⚙️</div>
+                <h3>Mantenimiento Preventivo</h3>
+                <p>Servicio de mantenimiento para prolongar la vida útil de tus equipos electrónicos y prevenir fallas futuras.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">📦</div>
+                <h3>Venta de Componentes</h3>
+                <p>Amplio catálogo de componentes electrónicos de calidad para todo tipo de reparaciones.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">🚚</div>
+                <h3>Envíos a Toda la República</h3>
+                <p>Hacemos llegar nuestros servicios y productos a cualquier parte de México con envío seguro.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">💡</div>
+                <h3>Asesoría Técnica</h3>
+                <p>Consultoría especializada en proyectos electrónicos y selección de componentes adecuados para tu necesidad.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="productos" class="section products-section">
+        <h2 class="section-title">Productos Destacados</h2>
+        <p class="section-subtitle">Componentes de alta calidad para todas tus necesidades</p>
+        <div class="products-grid">
+            <div class="product-card">
+                <div class="product-image">📟</div>
+                <div class="product-info">
+                    <h3>Tarjeta Inverter Universal</h3>
+                    <p>Compatible con múltiples marcas de mini splits</p>
+                    <div class="product-price">Consultar Precio</div>
+                    <button class="buy-button" onclick="window.open('https://wa.me/526692711522?text=Hola, me interesa la Tarjeta Inverter Universal', '_blank')">Consultar Disponibilidad</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-image">🔌</div>
+                <div class="product-info">
+                    <h3>Kit de Sensores</h3>
+                    <p>Sensores de temperatura y presión</p>
+                    <div class="product-price">Consultar Precio</div>
+                    <button class="buy-button" onclick="window.open('https://wa.me/526692711522?text=Hola, me interesa el Kit de Sensores', '_blank')">Consultar Disponibilidad</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-image">⚡</div>
+                <div class="product-info">
+                    <h3>Módulos de Potencia</h3>
+                    <p>IGBT y transistores para inverter</p>
+                    <div class="product-price">Consultar Precio</div>
+                    <button class="buy-button" onclick="window.open('https://wa.me/526692711522?text=Hola, me interesan los Módulos de Potencia', '_blank')">Consultar Disponibilidad</button>
+                </div>
+            </div>
+            <div class="product-card">
+                <div class="product-image">🛠️</div>
+                <div class="product-info">
+                    <h3>Componentes Electrónicos</h3>
+                    <p>Capacitores, resistencias, transistores y más</p>
+                    <div class="product-price">Consultar Precio</div>
+                    <button class="buy-button" onclick="window.open('https://wa.me/526692711522?text=Hola, necesito componentes electrónicos', '_blank')">Consultar Disponibilidad</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="nosotros" class="section about-section">
+        <h2 class="section-title">Acerca de MASTERBOARD</h2>
+        <div class="about-content">
+            <div>
+                <h3>Experiencia y Profesionalismo</h3>
+                <p>Somos especialistas en reparación de electrónica, con énfasis en tarjetas de mini splits inverter. Nuestro equipo de ingenieros cuenta con amplia experiencia y las herramientas más avanzadas para diagnosticar y reparar cualquier problema electrónico.</p>
+                <p>Compartimos nuestro conocimiento a través de videos educativos donde mostramos el proceso de reparación de diferentes componentes electrónicos.</p>
+            </div>
+            <div>
+                <h3>¿Por qué elegirnos?</h3>
+                <ul>
+                    <li>✓ Diagnóstico gratuito de tu equipo</li>
+                    <li>✓ 40 días de garantía en reparaciones</li>
+                    <li>✓ Ingenieros certificados y especializados</li>
+                    <li>✓ Componentes de calidad garantizada</li>
+                    <li>✓ Envíos a toda la República Mexicana</li>
+                    <li>✓ Atención personalizada</li>
+                    <li>✓ Precios competitivos</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Diagnóstico Gratuito</h3>
+                <p>Evaluamos tu equipo sin costo</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✅</div>
+                <h3>40 Días de Garantía</h3>
+                <p>Respaldamos nuestro trabajo</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🚚</div>
+                <h3>Envíos Nacionales</h3>
+                <p>A toda la República</p>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">1000+</div>
+                <div>Reparaciones Exitosas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">99%</div>
+                <div>Satisfacción del Cliente</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">40</div>
+                <div>Días de Garantía</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pagos" class="section payment-section">
+        <h2 class="section-title">Métodos de Pago</h2>
+        <p class="section-subtitle">Aceptamos diferentes formas de pago para tu comodidad</p>
+        <div class="payment-grid">
+            <div class="payment-card">
+                <div class="payment-icon">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="10" y="25" width="60" height="30" rx="3" fill="#009EE3" stroke="#006FB8" stroke-width="2"/>
+                        <rect x="10" y="32" width="60" height="8" fill="#006FB8"/>
+                        <rect x="15" y="45" width="20" height="5" rx="1" fill="white"/>
+                    </svg>
+                </div>
+                <h3>MercadoPago</h3>
+                <p>Tarjetas de crédito y débito</p>
+            </div>
+            <div class="payment-card">
+                <div class="payment-icon">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="32" cy="40" r="18" fill="#003087"/>
+                        <circle cx="48" cy="40" r="18" fill="#009CDE"/>
+                        <path d="M40 28c-3 0-5.5 1.5-7 4 1.5 2.5 4 4 7 4s5.5-1.5 7-4c-1.5-2.5-4-4-7-4z" fill="#012169"/>
+                    </svg>
+                </div>
+                <h3>PayPal</h3>
+                <p>Pago seguro internacional</p>
+            </div>
+            <div class="payment-card">
+                <div class="payment-icon">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="20" width="50" height="40" rx="4" fill="#4CAF50" stroke="#388E3C" stroke-width="2"/>
+                        <path d="M35 35h10M35 40h10M35 45h15" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="52" cy="53" r="8" fill="#FFD700" stroke="#FFA000" stroke-width="2"/>
+                        <path d="M52 49v8m-4-4h8" stroke="#388E3C" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h3>Transferencia</h3>
+                <p>Transferencia bancaria directa</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="contacto" class="section contact-section">
+        <h2 class="section-title">Contáctanos</h2>
+        <p class="section-subtitle">Estamos aquí para ayudarte con tus necesidades de reparación electrónica</p>
+        <div class="contact-grid">
+            <div class="contact-info">
+                <div class="contact-item">
+                    <div class="contact-icon">📍</div>
+                    <div>
+                        <h3>Ubicación</h3>
+                        <p>Calle División del Norte #1303<br>
+                        Col. Francisco Villa<br>
+                        Mazatlán, Sinaloa, México<br>
+                        CP 82127</p>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">📱</div>
+                    <div>
+                        <h3>Teléfono y WhatsApp</h3>
+                        <p><a href="https://wa.me/526692711522" target="_blank">+52 669 271 1522</a></p>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">📧</div>
+                    <div>
+                        <h3>Correo Electrónico</h3>
+                        <p><a href="mailto:masterboardmx@gmail.com">masterboardmx@gmail.com</a></p>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">🌐</div>
+                    <div>
+                        <h3>Redes Sociales</h3>
+                        <div class="social-links">
+                            <a href="https://facebook.com/MasterBoard" target="_blank" class="social-link">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                </svg>
+                                Facebook
+                            </a>
+                            <a href="https://instagram.com/masterboardmx" target="_blank" class="social-link">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                </svg>
+                                Instagram
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">🎥</div>
+                    <div>
+                        <h3>Videos de Reparaciones</h3>
+                        <p>Próximamente: Canal de YouTube<br>
+                        <small>(En actualización - Síguenos en redes para enterarte)</small></p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1565C0; margin-bottom: 1.5rem; text-align: center;">Horarios de Atención</h3>
+                    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <p style="margin-bottom: 0.5rem;"><strong>Lunes a Viernes:</strong> 9:00 AM - 7:00 PM</p>
+                        <p style="margin-bottom: 0.5rem;"><strong>Sábado:</strong> 9:00 AM - 2:00 PM</p>
+                        <p><strong>Domingo:</strong> Cerrado</p>
+                    </div>
+                    <a href="https://wa.me/526692711522?text=Hola, me gustaría cotizar una reparación" 
+                       class="cta-button" 
+                       style="width: 100%; text-align: center; display: block; padding: 1rem;"
+                       target="_blank">
+                        💬 Enviar WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p><strong>MASTERBOARD</strong> - Soluciones que funcionan.</p>
+        <p>Especialistas en Reparación Electrónica | Mazatlán, Sinaloa, México</p>
+        <p style="margin-top: 1rem;">
+            <a href="mailto:masterboardmx@gmail.com">masterboardmx@gmail.com</a> | 
+            <a href="https://wa.me/526692711522" target="_blank">+52 669 271 1522</a>
+        </p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">&copy; 2025 MASTERBOARD - Todos los derechos reservados</p>
+    </footer>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.service-card, .product-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s, transform 0.6s';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
