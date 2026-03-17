@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -38,7 +39,7 @@
       border-bottom: 1px solid var(--border);
     }
     .nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font-family: var(--mono); font-size: 1.05rem; font-weight: 700; color: var(--text); letter-spacing: 0.08em; }
-    .nav-logo img { width: 36px; height: 36px; object-fit: contain; filter: invert(1) brightness(2); border-radius: 6px; }
+    .nav-logo-svg { width: 36px; height: 36px; flex-shrink: 0; }
     .nav-links { display: flex; gap: 1.75rem; list-style: none; }
     .nav-links a { font-size: 0.75rem; font-weight: 500; color: var(--text-dim); text-decoration: none; letter-spacing: 0.07em; text-transform: uppercase; transition: color 0.2s; }
     .nav-links a:hover { color: var(--blue); }
@@ -48,8 +49,7 @@
     .hamburger span { width: 22px; height: 2px; background: var(--text); border-radius: 1px; display: block; }
 
     .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 80px 2rem 2rem; }
-    .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(10,132,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(10,132,255,0.04) 1px, transparent 1px); background-size: 60px 60px; }
-    .hero-glow { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(10,132,255,0.12) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+    #hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
     .hero-content { position: relative; z-index: 2; max-width: 900px; text-align: center; }
     .hero-label { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--mono); font-size: 0.68rem; color: var(--blue); letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid rgba(10,132,255,0.3); border-radius: 100px; padding: 0.35rem 1rem; margin-bottom: 2rem; }
     .hero-label::before { content: ''; width: 6px; height: 6px; background: var(--blue); border-radius: 50%; animation: pulse 2s infinite; }
@@ -208,7 +208,21 @@
 
 <nav>
   <a href="#inicio" class="nav-logo">
-    <img src="logo.png" alt="MASTERBOARD">
+    <svg class="nav-logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Plug body -->
+      <path d="M10 18 Q10 24 16 24 Q22 24 22 18" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <line x1="16" y1="24" x2="16" y2="28" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="13" y1="13" x2="13" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <line x1="19" y1="13" x2="19" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <!-- AC unit box -->
+      <rect x="22" y="14" width="11" height="10" rx="2" stroke="white" stroke-width="1.5" fill="none"/>
+      <!-- Fan circle -->
+      <circle cx="27.5" cy="19" r="3" stroke="white" stroke-width="1.5" fill="none"/>
+      <circle cx="27.5" cy="19" r="0.8" fill="white"/>
+      <!-- AC base legs -->
+      <line x1="24" y1="24" x2="24" y2="26" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="31" y1="24" x2="31" y2="26" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
     MASTERBOARD
   </a>
   <ul class="nav-links" id="navLinks">
@@ -224,8 +238,7 @@
 </nav>
 
 <section id="inicio" class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
+  <canvas id="hero-canvas"></canvas>
   <div class="hero-content">
     <div class="hero-label">Mazatlán, Sinaloa — Especialistas Certificados</div>
     <h1>Reparación de<br><em>Tarjetas Inverter</em><br>Profesional</h1>
@@ -456,7 +469,7 @@
         </div>
         <div class="contact-item">
           <div class="ci-icon">✉️</div>
-          <div class="ci-text"><label>Correo Electrónico</label><a href="/cdn-cgi/l/email-protection#670a061413021505080615030a1f27000a060e0b4904080a"><span class="__cf_email__" data-cfemail="5c313d2f28392e3e333d2e3831241c3b313d3530723f3331">[email&#160;protected]</span></a></div>
+          <div class="ci-text"><label>Correo Electrónico</label><a href="mailto:masterboardmx@gmail.com" style="color:var(--blue);">masterboardmx@gmail.com</a></div>
         </div>
         <div class="schedule">
           <h4>Horarios de Atención</h4>
@@ -476,7 +489,7 @@
             <div class="sb-icon" style="background:rgba(255,0,0,0.15);">▶️</div>
             <div><strong>YouTube — @REPARADOOR</strong><span>Videos de reparación y tutoriales técnicos</span></div>
           </a>
-          <a href="https://facebook.com/MasterBoard" class="social-btn" target="_blank">
+          <a href="https://www.facebook.com/profile.php?id=61578899293247" class="social-btn" target="_blank">
             <div class="sb-icon" style="background:rgba(24,119,242,0.15);">📘</div>
             <div><strong>Facebook</strong><span>@MasterBoard</span></div>
           </a>
@@ -498,12 +511,106 @@
   <div style="font-family:var(--mono); font-weight:700; color:var(--text); margin-bottom:0.5rem;">MASTERBOARD</div>
   <div>Especialistas en Reparación Electrónica · Mazatlán, Sinaloa, México</div>
   <div style="margin-top:0.5rem;">
-    <a href="/cdn-cgi/l/email-protection#365b574542534454595744525b4e76515b575f5a1855595b"><span class="__cf_email__" data-cfemail="4825293b3c2d3a2a27293a2c2530082f25292124662b2725">[email&#160;protected]</span></a> &nbsp;·&nbsp;
+    <a href="mailto:masterboardmx@gmail.com">masterboardmx@gmail.com</a> &nbsp;·&nbsp;
     <a href="https://wa.me/526692711522">+52 669 271 1522</a> &nbsp;·&nbsp;
     <a href="https://www.youtube.com/@REPARADOOR" target="_blank">@REPARADOOR</a>
   </div>
   <div style="margin-top:0.75rem; opacity:0.4;">© 2025 MASTERBOARD — Todos los derechos reservados</div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-  function toggleMenu() { document.getElementById('navL
+<script>
+  function toggleMenu() { document.getElementById('navLinks').classList.toggle('open'); }
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const t = document.querySelector(this.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+      document.getElementById('navLinks').classList.remove('open');
+    });
+  });
+
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles, mouse = { x: -9999, y: -9999 };
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+  function createParticles() {
+    const count = Math.min(120, Math.floor((W * H) / 9000));
+    particles = Array.from({ length: count }, () => ({
+      x: rand(0, W), y: rand(0, H),
+      vx: rand(-0.2, 0.2), vy: rand(-0.2, 0.2),
+      r: rand(1, 2.5), alpha: rand(0.25, 0.7)
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // grid
+    ctx.strokeStyle = 'rgba(10,132,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    // center glow
+    const g1 = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.min(W,H)*0.45);
+    g1.addColorStop(0,'rgba(10,132,255,0.10)'); g1.addColorStop(1,'rgba(10,132,255,0)');
+    ctx.fillStyle = g1; ctx.fillRect(0,0,W,H);
+    // mouse glow
+    if (mouse.x > 0) {
+      const g2 = ctx.createRadialGradient(mouse.x,mouse.y,0,mouse.x,mouse.y,200);
+      g2.addColorStop(0,'rgba(10,132,255,0.14)'); g2.addColorStop(1,'rgba(10,132,255,0)');
+      ctx.fillStyle = g2; ctx.fillRect(0,0,W,H);
+    }
+    // connections
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const dm = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+      if (dm < 180) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(10,132,255,${0.4*(1-dm/180)})`;
+        ctx.lineWidth = 0.7;
+        ctx.moveTo(p.x,p.y); ctx.lineTo(mouse.x,mouse.y); ctx.stroke();
+      }
+      for (let j = i+1; j < particles.length; j++) {
+        const q = particles[j];
+        const d = Math.hypot(p.x-q.x, p.y-q.y);
+        if (d < 110) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(10,132,255,${0.18*(1-d/110)})`;
+          ctx.lineWidth = 0.4;
+          ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+        }
+      }
+    }
+    // particles
+    particles.forEach(p => {
+      const dm = Math.hypot(p.x-mouse.x, p.y-mouse.y);
+      if (dm < 130) {
+        const f = (130-dm)/130 * 0.45;
+        p.vx += (p.x-mouse.x)/dm * f;
+        p.vy += (p.y-mouse.y)/dm * f;
+      }
+      p.vx *= 0.97; p.vy *= 0.97;
+      p.vx = Math.max(-1.5,Math.min(1.5,p.vx));
+      p.vy = Math.max(-1.5,Math.min(1.5,p.vy));
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(10,132,255,${p.alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  canvas.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+  });
+  canvas.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+  window.addEventListener('resize', () => { resize(); createParticles(); });
+  resize(); createParticles(); draw();
+</script>
+</body>
+</html>
