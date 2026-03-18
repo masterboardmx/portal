@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root{--blue:#0A84FF;--blue-dim:#0066CC;--orange:#FF6B00;--green:#30D158;--red:#FF453A;--yellow:#FFD60A;--bg:#0A0C10;--bg2:#111318;--bg3:#181C24;--border:rgba(255,255,255,0.08);--text:#E8EAF0;--text-dim:#7A8290;--mono:'Space Mono',monospace;--sans:'Inter',sans-serif;}
+    :root{--blue:#0A84FF;--blue-dim:#0066CC;--orange:#FF6B00;--green:#30D158;--red:#FF453A;--yellow:#FFD60A;--purple:#BF5AF2;--bg:#0A0C10;--bg2:#111318;--bg3:#181C24;--border:rgba(255,255,255,0.08);--text:#E8EAF0;--text-dim:#7A8290;--mono:'Space Mono',monospace;--sans:'Inter',sans-serif;}
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
     input,select,textarea{font-family:var(--sans);font-size:0.875rem;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.65rem 0.9rem;outline:none;transition:border 0.2s;}
@@ -17,6 +17,7 @@
     .btn-blue{background:var(--blue);color:white;}.btn-blue:hover{background:#2296FF;transform:translateY(-1px);}
     .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}.btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--text);}
     .btn-red{background:rgba(255,69,58,0.15);color:var(--red);border:1px solid rgba(255,69,58,0.25);}.btn-red:hover{background:rgba(255,69,58,0.25);}
+    .btn-purple{background:rgba(191,90,242,0.15);color:var(--purple);border:1px solid rgba(191,90,242,0.25);}.btn-purple:hover{background:rgba(191,90,242,0.25);}
     .btn-sm{padding:0.4rem 0.8rem;font-size:0.78rem;}
     #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;}
     .login-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:100%;max-width:380px;}
@@ -30,11 +31,14 @@
     .topbar-logo span{color:var(--blue);}
     .topbar-right{display:flex;align-items:center;gap:0.75rem;}
     .topbar-user{font-size:0.78rem;color:var(--text-dim);}
+    .master-badge{font-size:0.65rem;font-family:var(--mono);background:rgba(191,90,242,0.15);color:var(--purple);border:1px solid rgba(191,90,242,0.3);border-radius:100px;padding:0.2rem 0.6rem;letter-spacing:0.05em;}
     .main{padding-top:56px;display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
     .sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
     .sidebar-item{display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1.5rem;font-size:0.85rem;color:var(--text-dim);cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;}
     .sidebar-item:hover{color:var(--text);background:rgba(255,255,255,0.04);}
     .sidebar-item.active{color:var(--blue);border-left-color:var(--blue);background:rgba(10,132,255,0.08);}
+    .sidebar-item.master-item{color:var(--purple);}
+    .sidebar-item.master-item.active{color:var(--purple);border-left-color:var(--purple);background:rgba(191,90,242,0.08);}
     .sidebar-icon{font-size:1rem;width:20px;text-align:center;}
     .sidebar-section{font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);letter-spacing:0.15em;text-transform:uppercase;padding:1.5rem 1.5rem 0.5rem;opacity:0.5;}
     .content{padding:2rem;background:var(--bg);}
@@ -43,7 +47,7 @@
     .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;}
     .stat-label{font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;font-family:var(--mono);}
     .stat-num{font-family:var(--mono);font-size:2rem;font-weight:700;}
-    .stat-num.blue{color:var(--blue);}.stat-num.green{color:var(--green);}.stat-num.orange{color:var(--orange);}.stat-num.yellow{color:var(--yellow);}
+    .stat-num.blue{color:var(--blue);}.stat-num.green{color:var(--green);}.stat-num.orange{color:var(--orange);}.stat-num.yellow{color:var(--yellow);}.stat-num.purple{color:var(--purple);}
     .table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:1rem;}
     .table-title{font-family:var(--mono);font-size:1rem;font-weight:700;}
     .search-box{position:relative;}.search-box input{width:240px;padding-left:2rem;}
@@ -61,6 +65,14 @@
     .badge-reparacion{background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);}
     .badge-listo{background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);}
     .badge-entregado{background:rgba(255,255,255,0.06);color:var(--text-dim);border:1px solid var(--border);}
+    .badge-crear{background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);}
+    .badge-editar{background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);}
+    .badge-eliminar{background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.3);}
+    .badge-estado{background:rgba(255,214,10,0.12);color:var(--yellow);border:1px solid rgba(255,214,10,0.3);}
+    .user-pill{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-family:var(--mono);padding:0.2rem 0.6rem;border-radius:100px;}
+    .user-Alan{background:rgba(191,90,242,0.15);color:var(--purple);border:1px solid rgba(191,90,242,0.3);}
+    .user-Azul{background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);}
+    .user-Alonso{background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);}
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:center;justify-content:center;padding:1rem;}
     .modal-overlay.open{display:flex;}
     .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
@@ -83,6 +95,12 @@
     .active-reparacion{background:rgba(10,132,255,0.15);color:var(--blue);border-color:rgba(10,132,255,0.4);}
     .active-listo{background:rgba(48,209,88,0.15);color:var(--green);border-color:rgba(48,209,88,0.4);}
     .active-entregado{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.2);}
+    .audit-row{display:flex;gap:1rem;padding:0.85rem 1rem;border-bottom:1px solid var(--border);align-items:flex-start;}
+    .audit-row:last-child{border-bottom:none;}
+    .audit-row:hover{background:rgba(255,255,255,0.02);}
+    .audit-time{font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);white-space:nowrap;min-width:100px;}
+    .audit-detail{font-size:0.83rem;flex:1;}
+    .audit-sub{font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;}
     .notif{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.25rem;font-size:0.85rem;display:none;max-width:300px;}
     .notif.show{display:block;}
     .notif.success{border-color:rgba(48,209,88,0.4);color:var(--green);}
@@ -98,9 +116,9 @@
     <div class="login-sub">Sistema de Taller — Acceso privado</div>
     <label>Usuario</label>
     <input type="text" id="login-user" placeholder="usuario">
-    <label>Contraseña</label>
+    <label>Contrasena</label>
     <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-    <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
+    <div class="login-err" id="login-err">Usuario o contrasena incorrectos</div>
     <button class="btn-blue" style="width:100%;margin-top:1.5rem;" onclick="doLogin()">Entrar</button>
   </div>
 </div>
@@ -110,6 +128,7 @@
     <div class="topbar-logo">MASTER<span>BOARD</span> <span style="font-size:0.65rem;color:var(--text-dim);font-weight:400;"> // TALLER</span></div>
     <div class="topbar-right">
       <span class="topbar-user" id="topbar-user"></span>
+      <span class="master-badge" id="master-badge" style="display:none;">MAESTRO</span>
       <button class="btn-ghost btn-sm" onclick="doLogout()">Salir</button>
     </div>
   </div>
@@ -119,9 +138,15 @@
       <div class="sidebar-item active" onclick="showPage('dashboard')"><span class="sidebar-icon">◈</span> Dashboard</div>
       <div class="sidebar-item" onclick="showPage('ordenes')"><span class="sidebar-icon">◉</span> Ordenes</div>
       <div class="sidebar-item" onclick="showPage('clientes')"><span class="sidebar-icon">◎</span> Clientes</div>
+      <div id="sidebar-master" style="display:none;">
+        <div class="sidebar-section">Maestro</div>
+        <div class="sidebar-item master-item" onclick="showPage('auditoria')"><span class="sidebar-icon">◑</span> Historial</div>
+        <div class="sidebar-item master-item" onclick="showPage('usuarios')"><span class="sidebar-icon">◐</span> Actividad</div>
+      </div>
     </div>
     <div class="content">
 
+      <!-- DASHBOARD -->
       <div class="page active" id="page-dashboard">
         <div style="margin-bottom:1.5rem;">
           <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">Dashboard</div>
@@ -134,9 +159,10 @@
           <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num yellow" id="s-clientes">0</div></div>
         </div>
         <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
-        <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
       </div>
 
+      <!-- ORDENES -->
       <div class="page" id="page-ordenes">
         <div class="table-header">
           <div class="table-title">Ordenes de Reparacion</div>
@@ -153,9 +179,10 @@
             <button class="btn-blue" onclick="openNuevaOrden()">+ Nueva Orden</button>
           </div>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th>Estado</th><th>Tecnico</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-ordenes"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th>Estado</th><th>Tecnico</th><th>Editado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-ordenes"></tbody></table></div>
       </div>
 
+      <!-- CLIENTES -->
       <div class="page" id="page-clientes">
         <div class="table-header">
           <div class="table-title">Clientes</div>
@@ -164,11 +191,53 @@
             <button class="btn-blue" onclick="openNuevoCliente()">+ Nuevo Cliente</button>
           </div>
         </div>
-        <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Telefono</th><th>Email</th><th>Ordenes</th><th>Registro</th><th></th></tr></thead><tbody id="tabla-clientes"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Telefono</th><th>Email</th><th>Ordenes</th><th>Registrado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-clientes"></tbody></table></div>
       </div>
 
+      <!-- AUDITORIA (solo Alan) -->
+      <div class="page" id="page-auditoria">
+        <div class="table-header">
+          <div>
+            <div class="table-title">Historial de Cambios</div>
+            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Todos los movimientos registrados en el sistema</div>
+          </div>
+          <div style="display:flex;gap:0.75rem;align-items:center;">
+            <select id="filter-audit-user" onchange="filterAuditoria()" style="width:160px;">
+              <option value="">Todos los usuarios</option>
+              <option value="Alan">Alan</option>
+              <option value="Azul">Azul</option>
+              <option value="Alonso">Alonso</option>
+            </select>
+            <select id="filter-audit-accion" onchange="filterAuditoria()" style="width:150px;">
+              <option value="">Todas las acciones</option>
+              <option value="crear">Crear</option>
+              <option value="editar">Editar</option>
+              <option value="estado">Cambio estado</option>
+              <option value="eliminar">Eliminar</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap" style="min-width:0;">
+          <div id="audit-lista"></div>
+        </div>
+      </div>
+
+      <!-- ACTIVIDAD POR USUARIO (solo Alan) -->
+      <div class="page" id="page-usuarios">
+        <div class="table-header">
+          <div>
+            <div class="table-title">Actividad por Usuario</div>
+            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Resumen de acciones de cada tecnico</div>
+          </div>
+        </div>
+        <div class="stats-grid" id="user-stats"></div>
+        <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin:1.5rem 0 1rem;">Ultimas acciones por usuario</div>
+        <div class="table-wrap" style="min-width:0;"><div id="user-recent"></div></div>
+      </div>
+
+      <!-- DETALLE ORDEN -->
       <div class="page" id="page-detalle">
-        <button class="btn-ghost btn-sm" onclick="showPage('ordenes')" style="margin-bottom:1.5rem;">← Volver</button>
+        <button class="btn-ghost btn-sm" onclick="showPage('ordenes')" style="margin-bottom:1.5rem;">volver</button>
         <div id="detalle-content"></div>
       </div>
 
@@ -182,12 +251,12 @@
     <div class="form-grid">
       <div class="form-group full"><label>Cliente</label><select id="o-cliente"><option value="">Seleccionar cliente</option></select></div>
       <div class="form-group"><label>Marca</label><input type="text" id="o-marca" placeholder="Mirage, LG, Samsung..."></div>
-      <div class="form-group"><label>Modelo</label><input type="text" id="o-modelo" placeholder="Ej: MSS12HM"></div>
-      <div class="form-group"><label>No. Serie</label><input type="text" id="o-serie" placeholder="Opcional"></div>
-      <div class="form-group"><label>Tecnico</label><input type="text" id="o-tecnico" placeholder="Nombre del tecnico"></div>
-      <div class="form-group full"><label>Falla Reportada</label><textarea id="o-falla" rows="2" placeholder="Problema reportado por el cliente..."></textarea></div>
-      <div class="form-group full"><label>Diagnostico</label><textarea id="o-diagnostico" rows="2" placeholder="Diagnostico tecnico..."></textarea></div>
-      <div class="form-group"><label>Costo Estimado (MXN)</label><input type="number" id="o-costo-est" placeholder="0.00"></div>
+      <div class="form-group"><label>Modelo</label><input type="text" id="o-modelo"></div>
+      <div class="form-group"><label>No. Serie</label><input type="text" id="o-serie"></div>
+      <div class="form-group"><label>Tecnico</label><input type="text" id="o-tecnico"></div>
+      <div class="form-group full"><label>Falla Reportada</label><textarea id="o-falla" rows="2"></textarea></div>
+      <div class="form-group full"><label>Diagnostico</label><textarea id="o-diagnostico" rows="2"></textarea></div>
+      <div class="form-group"><label>Costo Estimado (MXN)</label><input type="number" id="o-costo-est"></div>
       <div class="form-group"><label>Estado</label>
         <select id="o-estado">
           <option value="recibido">Recibido</option>
@@ -197,7 +266,7 @@
           <option value="entregado">Entregado</option>
         </select>
       </div>
-      <div class="form-group full"><label>Notas Internas</label><textarea id="o-notas" rows="2" placeholder="Notas para el equipo..."></textarea></div>
+      <div class="form-group full"><label>Notas Internas</label><textarea id="o-notas" rows="2"></textarea></div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-orden')">Cancelar</button>
@@ -210,10 +279,10 @@
   <div class="modal">
     <div class="modal-title" id="modal-cliente-title">Nuevo Cliente</div>
     <div class="form-grid">
-      <div class="form-group full"><label>Nombre Completo</label><input type="text" id="c-nombre" placeholder="Nombre del cliente"></div>
-      <div class="form-group"><label>Telefono</label><input type="tel" id="c-telefono" placeholder="669 000 0000"></div>
-      <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="correo@ejemplo.com"></div>
-      <div class="form-group full"><label>Direccion</label><input type="text" id="c-direccion" placeholder="Opcional"></div>
+      <div class="form-group full"><label>Nombre Completo</label><input type="text" id="c-nombre"></div>
+      <div class="form-group"><label>Telefono</label><input type="tel" id="c-telefono"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="c-email"></div>
+      <div class="form-group full"><label>Direccion</label><input type="text" id="c-direccion"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-cliente')">Cancelar</button>
@@ -228,8 +297,9 @@
 const SUPABASE_URL='https://qsjscxnlbxwvhgzjjvuh.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzanNjeG5sYnh3dmhnempqdnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjY4NzksImV4cCI6MjA4OTQ0Mjg3OX0.okSdl7TOF1Tcntfcbv44QGJi4k0D4u85IHCNmdsnUg8';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const USERS={'masterboard':'taller2024','tecnico':'mb2024'};
-let currentUser=null,allOrdenes=[],allClientes=[],editingOrdenId=null,editingClienteId=null;
+const USERS={'Azul':'Corona1303','Alan':'Terry1303','Alonso':'Neo1303'};
+const MASTER='Alan';
+let currentUser=null,allOrdenes=[],allClientes=[],allAuditoria=[],editingOrdenId=null,editingClienteId=null;
 
 function doLogin(){
   const u=document.getElementById('login-user').value.trim();
@@ -240,10 +310,23 @@ function doLogin(){
     document.getElementById('app').style.display='block';
     document.getElementById('topbar-user').textContent=u;
     document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    if(u===MASTER){
+      document.getElementById('master-badge').style.display='inline-flex';
+      document.getElementById('sidebar-master').style.display='block';
+    }
     loadAll();
   }else{document.getElementById('login-err').style.display='block';}
 }
-function doLogout(){currentUser=null;document.getElementById('app').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('login-user').value='';document.getElementById('login-pass').value='';}
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('master-badge').style.display='none';
+  document.getElementById('sidebar-master').style.display='none';
+}
 
 function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -254,25 +337,110 @@ function showPage(name){
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
+  if(name==='auditoria')loadAuditoria();
+  if(name==='usuarios')loadActividad();
 }
 
 async function loadAll(){await Promise.all([loadClientes(),loadOrdenes()]);loadDashboard();}
 async function loadClientes(){const{data}=await sb.from('clientes').select('*').order('created_at',{ascending:false});allClientes=data||[];poblarSelectClientes();}
 async function loadOrdenes(){const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').order('fecha_ingreso',{ascending:false});allOrdenes=data||[];}
 
+// ── AUDITORIA ────────────────────────────────────────────────
+async function registrarAuditoria(tabla,registro_id,accion,detalle,cambios){
+  await sb.from('auditoria').insert([{tabla,registro_id,accion,usuario:currentUser,detalle,cambios:cambios||null}]);
+}
+
+async function loadAuditoria(){
+  const{data}=await sb.from('auditoria').select('*').order('created_at',{ascending:false}).limit(200);
+  allAuditoria=data||[];
+  renderAuditoria(allAuditoria);
+}
+
+function renderAuditoria(data){
+  const el=document.getElementById('audit-lista');
+  if(!data.length){el.innerHTML='<div style="padding:3rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">Sin registros aun</div>';return;}
+  el.innerHTML=data.map(a=>`
+    <div class="audit-row">
+      <div class="audit-time">${fmtFechaHora(a.created_at)}</div>
+      <div style="min-width:80px;">${userPill(a.usuario)}</div>
+      <div style="min-width:100px;">${badgeAccion(a.accion)}</div>
+      <div class="audit-detail">
+        <div>${a.detalle||''}</div>
+        ${a.cambios?`<div class="audit-sub">${JSON.stringify(a.cambios)}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function filterAuditoria(){
+  const u=document.getElementById('filter-audit-user').value;
+  const a=document.getElementById('filter-audit-accion').value;
+  let list=allAuditoria;
+  if(u)list=list.filter(x=>x.usuario===u);
+  if(a)list=list.filter(x=>x.accion===a);
+  renderAuditoria(list);
+}
+
+async function loadActividad(){
+  const{data}=await sb.from('auditoria').select('*').order('created_at',{ascending:false}).limit(500);
+  allAuditoria=data||[];
+  const usuarios=['Alan','Azul','Alonso'];
+  const statsEl=document.getElementById('user-stats');
+  statsEl.innerHTML=usuarios.map(u=>{
+    const uData=allAuditoria.filter(a=>a.usuario===u);
+    return`<div class="stat-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">${userPill(u)}<span style="font-size:0.68rem;color:var(--text-dim);font-family:var(--mono);">${u===MASTER?'MAESTRO':'TECNICO'}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:0.8rem;">
+        <div><div style="color:var(--text-dim);font-size:0.68rem;">Creaciones</div><div style="font-family:var(--mono);color:var(--green);">${uData.filter(a=>a.accion==='crear').length}</div></div>
+        <div><div style="color:var(--text-dim);font-size:0.68rem;">Ediciones</div><div style="font-family:var(--mono);color:var(--blue);">${uData.filter(a=>a.accion==='editar').length}</div></div>
+        <div><div style="color:var(--text-dim);font-size:0.68rem;">Estados</div><div style="font-family:var(--mono);color:var(--yellow);">${uData.filter(a=>a.accion==='estado').length}</div></div>
+        <div><div style="color:var(--text-dim);font-size:0.68rem;">Eliminados</div><div style="font-family:var(--mono);color:var(--red);">${uData.filter(a=>a.accion==='eliminar').length}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  const recentEl=document.getElementById('user-recent');
+  const recent=allAuditoria.slice(0,15);
+  recentEl.innerHTML=recent.length?recent.map(a=>`
+    <div class="audit-row">
+      <div class="audit-time">${fmtFechaHora(a.created_at)}</div>
+      <div style="min-width:80px;">${userPill(a.usuario)}</div>
+      <div style="min-width:100px;">${badgeAccion(a.accion)}</div>
+      <div class="audit-detail">${a.detalle||''}</div>
+    </div>`).join(''):'<div style="padding:2rem;text-align:center;color:var(--text-dim);">Sin actividad</div>';
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────
 function loadDashboard(){
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
   document.getElementById('s-clientes').textContent=allClientes.length;
   const tbody=document.getElementById('dash-recent');
-  const recent=allOrdenes.slice(0,8);
-  tbody.innerHTML=recent.length?recent.map(o=>`<tr onclick="verDetalle('${o.id}')" style="cursor:pointer;"><td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td><td>${o.clientes?.nombre||'?'}</td><td>${o.marca} ${o.modelo||''}</td><td>${badgeEstado(o.estado)}</td><td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td></tr>`).join(''):`<tr class="empty-row"><td colspan="5">Sin ordenes aun</td></tr>`;
+  tbody.innerHTML=allOrdenes.slice(0,8).map(o=>`
+    <tr onclick="verDetalle('${o.id}')" style="cursor:pointer;">
+      <td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td>
+      <td>${o.clientes?.nombre||'?'}</td>
+      <td>${o.marca} ${o.modelo||''}</td>
+      <td>${badgeEstado(o.estado)}</td>
+      <td>${o.modificado_por?userPill(o.modificado_por):'<span style="color:var(--text-dim);font-size:0.78rem;">?</span>'}</td>
+      <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td>
+    </tr>`).join('')||`<tr class="empty-row"><td colspan="6">Sin ordenes</td></tr>`;
 }
 
+// ── ORDENES ──────────────────────────────────────────────────
 function renderOrdenes(data){
   const list=data||allOrdenes;
-  document.getElementById('tabla-ordenes').innerHTML=list.length?list.map(o=>`<tr><td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td><td><div style="font-weight:500;">${o.clientes?.nombre||'?'}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.clientes?.telefono||''}</div></td><td><div>${o.marca}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.modelo||''}</div></td><td style="max-width:160px;"><div style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.falla_reportada}</div></td><td>${badgeEstado(o.estado)}</td><td style="color:var(--text-dim);font-size:0.82rem;">${o.tecnico||'?'}</td><td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td><td><div style="display:flex;gap:0.4rem;"><button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button><button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">X</button></div></td></tr>`).join(''):`<tr class="empty-row"><td colspan="8">No hay ordenes</td></tr>`;
+  document.getElementById('tabla-ordenes').innerHTML=list.length?list.map(o=>`
+    <tr>
+      <td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td>
+      <td><div style="font-weight:500;">${o.clientes?.nombre||'?'}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.clientes?.telefono||''}</div></td>
+      <td><div>${o.marca}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.modelo||''}</div></td>
+      <td style="max-width:140px;"><div style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.falla_reportada}</div></td>
+      <td>${badgeEstado(o.estado)}</td>
+      <td style="color:var(--text-dim);font-size:0.82rem;">${o.tecnico||'?'}</td>
+      <td>${o.modificado_por?userPill(o.modificado_por):'<span style="color:var(--text-dim);font-size:0.75rem;">?</span>'}</td>
+      <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td>
+      <td><div style="display:flex;gap:0.4rem;"><button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button><button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">X</button></div></td>
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="9">No hay ordenes</td></tr>`;
 }
 
 function filterOrdenes(){
@@ -286,8 +454,8 @@ function filterOrdenes(){
 
 function openNuevaOrden(){
   editingOrdenId=null;
-  document.getElementById('modal-orden-title').textContent='Nueva Orden de Reparacion';
-  document.getElementById('btn-guardar-orden').textContent='Guardar Orden';
+  document.getElementById('modal-orden-title').textContent='Nueva Orden';
+  document.getElementById('btn-guardar-orden').textContent='Guardar';
   ['o-marca','o-modelo','o-serie','o-tecnico','o-falla','o-diagnostico','o-notas'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('o-costo-est').value='';
   document.getElementById('o-estado').value='recibido';
@@ -318,10 +486,18 @@ async function guardarOrden(){
   const marca=document.getElementById('o-marca').value.trim();
   const falla=document.getElementById('o-falla').value.trim();
   if(!cliente_id||!marca||!falla){notif('Completa cliente, marca y falla','error');return;}
-  const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:parseFloat(document.getElementById('o-costo-est').value)||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString()};
-  let err;
-  if(editingOrdenId){({error:err}=await sb.from('ordenes').update(data).eq('id',editingOrdenId));}
-  else{({error:err}=await sb.from('ordenes').insert([data]));}
+  const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:parseFloat(document.getElementById('o-costo-est').value)||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser};
+  let err,rid;
+  if(editingOrdenId){
+    const old=allOrdenes.find(x=>x.id===editingOrdenId);
+    ({error:err}=await sb.from('ordenes').update(data).eq('id',editingOrdenId));
+    rid=editingOrdenId;
+    await registrarAuditoria('ordenes',rid,'editar',`Edito orden #${old?.folio} - ${marca}`,{estado_anterior:old?.estado,estado_nuevo:data.estado});
+  }else{
+    const{data:d,error:e}=await sb.from('ordenes').insert([data]).select();
+    err=e;rid=d?.[0]?.id;
+    await registrarAuditoria('ordenes',rid,'crear',`Creo orden: ${marca} ${data.modelo||''} - ${falla.substring(0,60)}`);
+  }
   if(err){notif('Error: '+err.message,'error');return;}
   closeModal('modal-orden');
   notif(editingOrdenId?'Orden actualizada':'Orden creada','success');
@@ -329,9 +505,11 @@ async function guardarOrden(){
 }
 
 async function eliminarOrden(id){
-  if(!confirm('Eliminar esta orden?'))return;
+  const o=allOrdenes.find(x=>x.id===id);
+  if(!confirm('Eliminar orden #'+o?.folio+'?'))return;
   const{error}=await sb.from('ordenes').delete().eq('id',id);
   if(error){notif('Error al eliminar','error');return;}
+  await registrarAuditoria('ordenes',id,'eliminar',`Elimino orden #${o?.folio} - ${o?.marca} ${o?.modelo||''}`);
   notif('Orden eliminada','success');
   await loadOrdenes();renderOrdenes();loadDashboard();
 }
@@ -340,8 +518,21 @@ async function verDetalle(id){
   const o=allOrdenes.find(x=>x.id===id);if(!o)return;
   showPage('detalle');
   document.getElementById('detalle-content').innerHTML=`
-    <div class="detail-header"><div><div class="detail-folio">Orden #${o.folio} - ${fmtFecha(o.fecha_ingreso)}</div><div class="detail-name">${o.clientes?.nombre||'Cliente'}</div><div style="color:var(--text-dim);font-size:0.85rem;margin-top:0.25rem;">${o.clientes?.telefono||''}</div></div><button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button></div>
-    <div style="margin-bottom:1.25rem;"><div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.5rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;">Cambiar Estado</div><div class="estado-buttons">${['recibido','diagnostico','reparacion','listo','entregado'].map(e=>`<button class="estado-btn ${o.estado===e?'active-'+e:''}" onclick="cambiarEstado('${o.id}','${e}')">${estadoLabel(e)}</button>`).join('')}</div></div>
+    <div class="detail-header">
+      <div>
+        <div class="detail-folio">Orden #${o.folio} - ${fmtFecha(o.fecha_ingreso)}</div>
+        <div class="detail-name">${o.clientes?.nombre||'Cliente'}</div>
+        <div style="color:var(--text-dim);font-size:0.85rem;margin-top:0.25rem;">${o.clientes?.telefono||''}</div>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        ${o.modificado_por?`<div style="font-size:0.75rem;color:var(--text-dim);">Editado por: ${userPill(o.modificado_por)}</div>`:''}
+        <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button>
+      </div>
+    </div>
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.5rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;">Cambiar Estado</div>
+      <div class="estado-buttons">${['recibido','diagnostico','reparacion','listo','entregado'].map(e=>`<button class="estado-btn ${o.estado===e?'active-'+e:''}" onclick="cambiarEstado('${o.id}','${e}')">${estadoLabel(e)}</button>`).join('')}</div>
+    </div>
     <div class="detail-grid">
       <div class="detail-card"><div class="detail-card-label">Marca</div><div class="detail-card-value">${o.marca}</div></div>
       <div class="detail-card"><div class="detail-card-label">Modelo</div><div class="detail-card-value">${o.modelo||'?'}</div></div>
@@ -356,17 +547,28 @@ async function verDetalle(id){
 }
 
 async function cambiarEstado(id,estado){
-  const{error}=await sb.from('ordenes').update({estado,updated_at:new Date().toISOString()}).eq('id',id);
+  const o=allOrdenes.find(x=>x.id===id);
+  const{error}=await sb.from('ordenes').update({estado,updated_at:new Date().toISOString(),modificado_por:currentUser}).eq('id',id);
   if(error){notif('Error','error');return;}
+  await registrarAuditoria('ordenes',id,'estado',`Cambio estado orden #${o?.folio} a: ${estadoLabel(estado)}`,{de:o?.estado,a:estado});
   await loadOrdenes();notif('Estado: '+estadoLabel(estado),'success');verDetalle(id);
 }
 
+// ── CLIENTES ─────────────────────────────────────────────────
 function renderClientes(data){
   const list=data||allClientes;
   document.getElementById('tabla-clientes').innerHTML=list.length?list.map(c=>{
     const n=allOrdenes.filter(o=>o.cliente_id===c.id).length;
-    return `<tr><td><div style="font-weight:500;">${c.nombre}</div></td><td><a href="https://wa.me/52${(c.telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${c.telefono}</a></td><td style="color:var(--text-dim);font-size:0.82rem;">${c.email||'?'}</td><td><span style="font-family:var(--mono);color:var(--blue);">${n}</span></td><td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(c.created_at)}</td><td><div style="display:flex;gap:0.4rem;"><button class="btn-ghost btn-sm" onclick="editarCliente('${c.id}')">Editar</button><button class="btn-red btn-sm" onclick="eliminarCliente('${c.id}')">X</button></div></td></tr>`;
-  }).join(''):`<tr class="empty-row"><td colspan="6">Sin clientes registrados</td></tr>`;
+    return`<tr>
+      <td><div style="font-weight:500;">${c.nombre}</div></td>
+      <td><a href="https://wa.me/52${(c.telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${c.telefono}</a></td>
+      <td style="color:var(--text-dim);font-size:0.82rem;">${c.email||'?'}</td>
+      <td><span style="font-family:var(--mono);color:var(--blue);">${n}</span></td>
+      <td>${c.modificado_por?userPill(c.modificado_por):'<span style="color:var(--text-dim);font-size:0.75rem;">?</span>'}</td>
+      <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(c.created_at)}</td>
+      <td><div style="display:flex;gap:0.4rem;"><button class="btn-ghost btn-sm" onclick="editarCliente('${c.id}')">Editar</button><button class="btn-red btn-sm" onclick="eliminarCliente('${c.id}')">X</button></div></td>
+    </tr>`;
+  }).join(''):`<tr class="empty-row"><td colspan="7">Sin clientes</td></tr>`;
 }
 
 function filterClientes(){
@@ -398,19 +600,28 @@ async function guardarCliente(){
   const nombre=document.getElementById('c-nombre').value.trim();
   const telefono=document.getElementById('c-telefono').value.trim();
   if(!nombre||!telefono){notif('Nombre y telefono requeridos','error');return;}
-  const data={nombre,telefono,email:document.getElementById('c-email').value.trim(),direccion:document.getElementById('c-direccion').value.trim()};
-  let err;
-  if(editingClienteId){({error:err}=await sb.from('clientes').update(data).eq('id',editingClienteId));}
-  else{({error:err}=await sb.from('clientes').insert([data]));}
+  const data={nombre,telefono,email:document.getElementById('c-email').value.trim(),direccion:document.getElementById('c-direccion').value.trim(),modificado_por:currentUser};
+  let err,rid;
+  if(editingClienteId){
+    ({error:err}=await sb.from('clientes').update(data).eq('id',editingClienteId));
+    rid=editingClienteId;
+    await registrarAuditoria('clientes',rid,'editar',`Edito cliente: ${nombre}`);
+  }else{
+    const{data:d,error:e}=await sb.from('clientes').insert([data]).select();
+    err=e;rid=d?.[0]?.id;
+    await registrarAuditoria('clientes',rid,'crear',`Registro cliente: ${nombre} - ${telefono}`);
+  }
   if(err){notif('Error: '+err.message,'error');return;}
   closeModal('modal-cliente');notif(editingClienteId?'Cliente actualizado':'Cliente registrado','success');
   await loadClientes();renderClientes();loadDashboard();
 }
 
 async function eliminarCliente(id){
-  if(!confirm('Eliminar este cliente y sus ordenes?'))return;
+  const c=allClientes.find(x=>x.id===id);
+  if(!confirm('Eliminar cliente '+c?.nombre+' y sus ordenes?'))return;
   const{error}=await sb.from('clientes').delete().eq('id',id);
   if(error){notif('Error','error');return;}
+  await registrarAuditoria('clientes',id,'eliminar',`Elimino cliente: ${c?.nombre}`);
   notif('Cliente eliminado','success');await loadAll();renderClientes();
 }
 
@@ -418,12 +629,13 @@ function poblarSelectClientes(){
   document.getElementById('o-cliente').innerHTML='<option value="">Seleccionar cliente</option>'+allClientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
 }
 
-function badgeEstado(e){
-  const L={recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',listo:'Listo',entregado:'Entregado'};
-  return `<span class="badge badge-${e}">${L[e]||e}</span>`;
-}
+// ── HELPERS ──────────────────────────────────────────────────
+function badgeEstado(e){const L={recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',listo:'Listo',entregado:'Entregado'};return`<span class="badge badge-${e}">${L[e]||e}</span>`;}
+function badgeAccion(a){const L={crear:'Crear',editar:'Editar',estado:'Estado',eliminar:'Eliminar'};return`<span class="badge badge-${a}">${L[a]||a}</span>`;}
 function estadoLabel(e){return{recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',listo:'Listo',entregado:'Entregado'}[e]||e;}
+function userPill(u){return`<span class="user-pill user-${u}">${u}</span>`;}
 function fmtFecha(f){if(!f)return'?';return new Date(f).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtFechaHora(f){if(!f)return'?';return new Date(f).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function notif(msg,type){const el=document.getElementById('notif');el.textContent=msg;el.className='notif show '+(type||'');setTimeout(()=>el.className='notif',3000);}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
