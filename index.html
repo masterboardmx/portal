@@ -6,6 +6,7 @@
   <meta name="description" content="MASTERBOARD - Especialistas en reparación de tarjetas electrónicas de mini splits inverter en Mazatlán, Sinaloa. Diagnóstico gratuito, 40 días de garantía.">
   <meta name="keywords" content="reparación electrónica, mini splits inverter, tarjetas electrónicas, Mazatlán, Sinaloa, inverter, Mirage">
   <title>Reparación de Tarjetas Inverter en Mazatlán | MASTERBOARD</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230A0C10'/%3E%3Cpath d='M8 17 Q8 22 13 22 Q18 22 18 17' stroke='%230A84FF' stroke-width='2' stroke-linecap='round' fill='none'/%3E%3Cline x1='13' y1='22' x2='13' y2='25' stroke='%230A84FF' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='11' y1='12' x2='11' y2='17' stroke='%230A84FF' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='15' y1='12' x2='15' y2='17' stroke='%230A84FF' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='19' y='13' width='9' height='8' rx='2' stroke='%230A84FF' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='23.5' cy='17' r='2.5' stroke='%230A84FF' stroke-width='1.5' fill='none'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -246,6 +247,7 @@
     <li><a href="#youtube">YouTube</a></li>
     <li><a href="#bitacora">Bitácora</a></li>
     <li><a href="#contacto">Contacto</a></li>
+    <li><a href="/taller.html" style="color:var(--blue);">⚙ Taller</a></li>
   </ul>
   <a href="https://wa.me/526692711522" class="nav-cta" target="_blank">COTIZAR →</a>
   <a href="/taller.html" class="nav-cta" style="background:transparent;border:1px solid rgba(10,132,255,0.4);color:var(--blue);margin-left:0.5rem;" title="Acceso interno">⚙ Taller</a>
@@ -484,7 +486,7 @@
         </div>
         <div class="contact-item">
           <div class="ci-icon">✉️</div>
-          <div class="ci-text"><label>Correo Electrónico</label><a href="/cdn-cgi/l/email-protection#731e1200071601111c1201171e0b33141e121a1f5d101c1e" style="color:var(--blue);"><span class="__cf_email__" data-cfemail="5934382a2d3c2b3b36382b3d3421193e34383035773a3634">[email&#160;protected]</span></a></div>
+          <div class="ci-text"><label>Correo Electrónico</label><span id="email-contact" style="color:var(--blue);cursor:pointer;font-size:0.85rem;"></span></div>
         </div>
         <div class="schedule">
           <h4>Horarios de Atención</h4>
@@ -526,7 +528,7 @@
   <div style="font-family:var(--mono); font-weight:700; color:var(--text); margin-bottom:0.5rem;">MASTERBOARD</div>
   <div>Especialistas en Reparación Electrónica · Mazatlán, Sinaloa, México</div>
   <div style="margin-top:0.5rem;">
-    <a href="/cdn-cgi/l/email-protection#55383426213027373a342731382d153238343c397b363a38"><span class="__cf_email__" data-cfemail="204d4153544552424f4152444d5860474d41494c0e434f4d">[email&#160;protected]</span></a> &nbsp;·&nbsp;
+    <span id="email-footer"></span> &nbsp;·&nbsp;
     <a href="https://wa.me/526692711522">+52 669 271 1522</a> &nbsp;·&nbsp;
     <a href="https://www.youtube.com/@REPARADOOR" target="_blank">@REPARADOOR</a>
   </div>
@@ -536,6 +538,14 @@
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   // ── MENU ────────────────────────────────────────────────────
   function toggleMenu() { document.getElementById('navLinks').classList.toggle('open'); }
+  // email anti-cloudflare
+  (function(){
+    const u='masterboardmx',d='gmail.com',e=u+'@'+d;
+    const c=document.getElementById('email-contact');
+    const f=document.getElementById('email-footer');
+    if(c){c.innerHTML='<a href="mailto:'+e+'" style="color:var(--blue);text-decoration:none;">'+e+'</a>';}
+    if(f){f.innerHTML='<a href="mailto:'+e+'" style="color:var(--text-dim);text-decoration:none;">'+e+'</a>';}
+  })();
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', function(e) {
       const t = document.querySelector(this.getAttribute('href'));
