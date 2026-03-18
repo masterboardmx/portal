@@ -1,0 +1,44 @@
+-- Tabla de clientes
+create table clientes (
+  id uuid default gen_random_uuid() primary key,
+  nombre text not null,
+  telefono text not null,
+  email text,
+  direccion text,
+  created_at timestamp with time zone default now()
+);
+
+-- Tabla de órdenes de reparación
+create table ordenes (
+  id uuid default gen_random_uuid() primary key,
+  cliente_id uuid references clientes(id) on delete cascade,
+  folio serial,
+  marca text not null,
+  modelo text,
+  numero_serie text,
+  falla_reportada text not null,
+  diagnostico text,
+  costo_estimado numeric(10,2),
+  costo_final numeric(10,2),
+  estado text default 'recibido' check (estado in ('recibido','diagnostico','reparacion','listo','entregado')),
+  tecnico text,
+  notas text,
+  fecha_ingreso timestamp with time zone default now(),
+  fecha_entrega timestamp with time zone,
+  updated_at timestamp with time zone default now()
+);
+
+-- Habilitar Row Level Security
+alter table clientes enable row level security;
+alter table ordenes enable row level security;
+
+-- Políticas: acceso total con anon key (la app tiene su propio login)
+create policy "acceso_clientes" on clientes for all using (true) with check (true);
+create policy "acceso_ordenes" on ordenes for all using (true) with check (true);
+
+-- Índices para búsqueda rápida
+create index on clientes (telefono);
+create index on clientes (nombre);
+create index on ordenes (cliente_id);
+create index on ordenes (estado);
+create index on ordenes (folio);
