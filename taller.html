@@ -400,14 +400,15 @@ async function doLogin(){
       document.getElementById('bnav-auditoria').style.display='flex';
     }
     loadAll();
-    // registrar inicio de sesion
+    // registrar inicio de sesion con detalles del dispositivo
+    const ua=navigator.userAgent;
+    const browser=ua.includes('Chrome')&&!ua.includes('Edg')?'Chrome':ua.includes('Safari')&&!ua.includes('Chrome')?'Safari':ua.includes('Firefox')?'Firefox':ua.includes('Edg')?'Edge':'Otro';
+    const os=ua.includes('iPhone')?'iPhone':ua.includes('iPad')?'iPad':ua.includes('Android')?'Android':ua.includes('Windows')?'Windows':ua.includes('Mac')?'Mac':'Otro';
+    const tipo=ua.includes('Mobile')||ua.includes('iPhone')||ua.includes('Android')?'Celular':'Computadora';
     await sb.from('auditoria').insert([{
-      tabla:'sesiones',
-      registro_id:null,
-      accion:'login',
-      usuario:u,
-      detalle:`Inicio de sesion — ${navigator.userAgent.includes('Mobile')?'Celular':'Computadora'}`,
-      cambios:{dispositivo:navigator.userAgent.includes('Mobile')?'mobile':'desktop',hora:new Date().toISOString()}
+      tabla:'sesiones',registro_id:null,accion:'login',usuario:u,
+      detalle:`Inicio sesion desde ${tipo} · ${os} · ${browser}`,
+      cambios:{tipo,os,browser,hora:new Date().toISOString()}
     }]);
   }else{document.getElementById('login-err').style.display='block';}
 }
@@ -488,24 +489,32 @@ async function loadSesiones(){
 }
 
 function renderSesiones(data){
-  const dispositivo=r=>r.cambios?.dispositivo==='mobile'?'📱 Celular':'🖥️ Computadora';
-  const accionLabel=a=>a==='login'?'<span style="color:var(--green);font-family:var(--mono);font-size:0.75rem;">ENTRO</span>':'<span style="color:var(--text-dim);font-family:var(--mono);font-size:0.75rem;">SALIO</span>';
-  // desktop
+  const osIcon=os=>({iPhone:'📱',iPad:'📱',Android:'📱',Windows:'🖥️',Mac:'💻'}[os]||'💻');
+  const browserIcon=b=>({Chrome:'🌐',Safari:'🧭',Firefox:'🦊',Edge:'🌀'}[b]||'🌐');
+  const accionLabel=a=>a==='login'
+    ?'<span style="color:var(--green);font-family:var(--mono);font-size:0.72rem;background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.3);padding:0.2rem 0.6rem;border-radius:100px;">ENTRÓ</span>'
+    :'<span style="color:var(--text-dim);font-family:var(--mono);font-size:0.72rem;background:rgba(255,255,255,0.06);border:1px solid var(--border);padding:0.2rem 0.6rem;border-radius:100px;">SALIÓ</span>';
+  const dispositivo=s=>{
+    const c=s.cambios||{};
+    const os=c.os||'?'; const browser=c.browser||'?'; const tipo=c.tipo||'?';
+    return `${osIcon(os)} ${os} · ${browserIcon(browser)} ${browser}`;
+  };
+  // desktop table
   const tbody=document.getElementById('tabla-sesiones');
   if(tbody) tbody.innerHTML=data.length?data.map(s=>`
     <tr>
       <td>${userPill(s.usuario)}</td>
       <td>${accionLabel(s.accion)}</td>
-      <td style="font-size:0.82rem;color:var(--text-dim);">${dispositivo(s)}</td>
+      <td style="font-size:0.82rem;">${dispositivo(s)}</td>
       <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${fmtFechaHora(s.created_at)}</td>
-    </tr>`).join(''):`<tr class="empty-row"><td colspan="4">Sin registros</td></tr>`;
-  // mobile
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="4">Sin registros aun</td></tr>`;
+  // mobile cards
   const mob=document.getElementById('mobile-sesiones');
   if(mob) mob.innerHTML=data.length?data.map(s=>`
     <div class="m-card" style="cursor:default;">
       <div class="m-card-top">${userPill(s.usuario)}${accionLabel(s.accion)}</div>
-      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.3rem;">${dispositivo(s)}</div>
-      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-top:0.25rem;">${fmtFechaHora(s.created_at)}</div>
+      <div style="font-size:0.82rem;margin-top:0.4rem;">${dispositivo(s)}</div>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;">${fmtFechaHora(s.created_at)}</div>
     </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Sin registros</div>';
 }
 
