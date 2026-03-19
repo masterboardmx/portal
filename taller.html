@@ -126,10 +126,10 @@
   .sidebar{display:none;}
   .form-grid{grid-template-columns:1fr;}
   .detail-grid{grid-template-columns:1fr;}
-  .stats-grid{grid-template-columns:1fr 1fr;gap:0.75rem;}
-  .stat-card{padding:1rem;}
+  .stats-grid{display:grid;grid-template-columns:calc(50% - 0.375rem) calc(50% - 0.375rem);gap:0.75rem;width:100%;box-sizing:border-box;}
+  .stat-card{padding:0.875rem;min-width:0;overflow:hidden;box-sizing:border-box;}
   .stat-num{font-size:1.6rem;}
-  .content{padding:1rem 0.85rem 5.5rem;}
+  .content{padding:1rem 0.85rem 5.5rem;overflow-x:hidden;max-width:100vw;box-sizing:border-box;}
   .table-header{flex-direction:column;align-items:flex-start;gap:0.75rem;}
   .table-header > div:last-child{width:100%;flex-wrap:wrap;}
   .table-header > div:last-child input,
@@ -139,15 +139,10 @@
   .modal-overlay{align-items:flex-end;padding:0;}
   .topbar{padding:0 1rem;}
   .topbar-logo span:last-of-type{display:none;}
-  /* hide desktop tables, show mobile cards */
   .desktop-table{display:none !important;}
   .mobile-list{display:block;}
-  /* dashboard recent table — keep but simplify */
-  #dash-recent td:nth-child(4),
-  #dash-recent td:nth-child(6),
-  #dash-recent th:nth-child(4),
-  #dash-recent th:nth-child(6){display:none;}
-  .table-wrap{border-radius:10px;}
+  .table-wrap{overflow-x:auto;width:100%;}
+  td,th{padding:0.7rem 0.5rem;font-size:0.78rem;}
 }
 /* BOTTOM NAV MÓVIL */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,12,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;}
@@ -157,7 +152,7 @@
 .bottom-nav-item.master{color:var(--purple);}
 .bottom-nav-item.master.active{color:var(--purple);}
 .bottom-nav-icon{font-size:1.3rem;}
-@media(max-width:768px){.bottom-nav{display:block;}}
+@media(max-width:768px){html,body{overflow-x:hidden;max-width:100vw;} .bottom-nav{display:block;}}
 ```
 
   </style>
@@ -215,7 +210,8 @@
       <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num yellow" id="s-clientes">0</div></div>
     </div>
     <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
-    <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
+    <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
+    <div class="mobile-list" id="dash-recent-mobile"></div>
   </div>
 
   <!-- ORDENES -->
@@ -490,8 +486,9 @@ function loadDashboard(){
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
   document.getElementById('s-clientes').textContent=allClientes.length;
-  const tbody=document.getElementById('dash-recent');
-  tbody.innerHTML=allOrdenes.slice(0,8).map(o=>`
+  const recent=allOrdenes.slice(0,8);
+  // desktop
+  document.getElementById('dash-recent').innerHTML=recent.length?recent.map(o=>`
     <tr onclick="verDetalle('${o.id}')" style="cursor:pointer;">
       <td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td>
       <td>${o.clientes?.nombre||'?'}</td>
@@ -500,7 +497,23 @@ function loadDashboard(){
       <td>${badgeEstado(o.estado)}</td>
       <td>${o.modificado_por?userPill(o.modificado_por):'<span style="color:var(--text-dim);font-size:0.78rem;">?</span>'}</td>
       <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td>
-    </tr>`).join('')||`<tr class="empty-row"><td colspan="7">Sin ordenes</td></tr>`;
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="7">Sin ordenes aun</td></tr>`;
+  // mobile cards
+  const mob=document.getElementById('dash-recent-mobile');
+  if(mob){mob.innerHTML=recent.length?recent.map(o=>`
+    <div class="m-card" onclick="verDetalle('${o.id}')">
+      <div class="m-card-top">
+        <span class="m-card-folio">#${o.folio}</span>
+        ${badgeEstado(o.estado)}
+      </div>
+      <div class="m-card-name">${o.clientes?.nombre||'?'}</div>
+      <a href="https://wa.me/52${(o.clientes?.telefono||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" class="m-card-phone" style="display:block;margin:0.2rem 0;">${o.clientes?.telefono||''}</a>
+      <div class="m-card-equipo">${o.marca} ${o.modelo||''}</div>
+      <div class="m-card-bottom">
+        <span style="font-size:0.75rem;color:var(--text-dim);">${fmtFecha(o.fecha_ingreso)}</span>
+        ${o.modificado_por?userPill(o.modificado_por):''}
+      </div>
+    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;font-size:0.85rem;">Sin ordenes aun</div>';}
 }
 
 // ── ORDENES ──────────────────────────────────────────────────
