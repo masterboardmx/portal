@@ -105,7 +105,33 @@
     .notif.show{display:block;}
     .notif.success{border-color:rgba(48,209,88,0.4);color:var(--green);}
     .notif.error{border-color:rgba(255,69,58,0.4);color:var(--red);}
-    @media(max-width:768px){.main{grid-template-columns:1fr;}.sidebar{display:none;}.form-grid{grid-template-columns:1fr;}.detail-grid{grid-template-columns:1fr;}.stats-grid{grid-template-columns:1fr 1fr;}}
+    @media(max-width:768px){
+      .main{grid-template-columns:1fr;}
+      .sidebar{display:none;}
+      .form-grid{grid-template-columns:1fr;}
+      .detail-grid{grid-template-columns:1fr;}
+      .stats-grid{grid-template-columns:1fr 1fr;}
+      .content{padding:1rem 0.75rem 5rem;}
+      .table-header{flex-direction:column;align-items:flex-start;}
+      .table-header > div:last-child{width:100%;flex-direction:column;}
+      .table-header > div:last-child input,.table-header > div:last-child select{width:100%;}
+      .search-box{width:100%;}.search-box input{width:100%;}
+      .modal{border-radius:16px 16px 0 0;max-height:92vh;margin-top:auto;width:100%;max-width:100%;}
+      .modal-overlay{align-items:flex-end;padding:0;}
+      th{font-size:0.6rem;padding:0.6rem 0.6rem;}
+      td{padding:0.7rem 0.6rem;font-size:0.8rem;}
+      .topbar{padding:0 1rem;}
+      .topbar-logo span:last-of-type{display:none;}
+    }
+    /* BOTTOM NAV MÓVIL */
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,12,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;}
+    .bottom-nav-items{display:flex;justify-content:space-around;}
+    .bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.4rem 1rem;cursor:pointer;color:var(--text-dim);transition:color 0.15s;font-size:0.65rem;font-family:var(--mono);letter-spacing:0.05em;border:none;background:none;}
+    .bottom-nav-item.active{color:var(--blue);}
+    .bottom-nav-item.master{color:var(--purple);}
+    .bottom-nav-item.master.active{color:var(--purple);}
+    .bottom-nav-icon{font-size:1.3rem;}
+    @media(max-width:768px){.bottom-nav{display:block;}}
   </style>
 </head>
 <body>
@@ -246,6 +272,15 @@
   </div>
 </div>
 
+<div class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-items">
+    <button class="bottom-nav-item active" id="bnav-dashboard" onclick="showPage('dashboard')"><span class="bottom-nav-icon">◈</span>Dashboard</button>
+    <button class="bottom-nav-item" id="bnav-ordenes" onclick="showPage('ordenes')"><span class="bottom-nav-icon">◉</span>Ordenes</button>
+    <button class="bottom-nav-item" id="bnav-clientes" onclick="showPage('clientes')"><span class="bottom-nav-icon">◎</span>Clientes</button>
+    <button class="bottom-nav-item master" id="bnav-auditoria" style="display:none;" onclick="showPage('auditoria')"><span class="bottom-nav-icon">◑</span>Historial</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-orden">
   <div class="modal">
     <div class="modal-title" id="modal-orden-title">Nueva Orden</div>
@@ -315,6 +350,7 @@ function doLogin(){
     if(u===MASTER){
       document.getElementById('master-badge').style.display='inline-flex';
       document.getElementById('sidebar-master').style.display='block';
+      document.getElementById('bnav-auditoria').style.display='flex';
     }
     loadAll();
   }else{document.getElementById('login-err').style.display='block';}
@@ -333,9 +369,12 @@ function doLogout(){
 function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   const map={dashboard:0,ordenes:1,clientes:2};
   if(map[name]!==undefined)document.querySelectorAll('.sidebar-item')[map[name]].classList.add('active');
+  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',auditoria:'bnav-auditoria'};
+  if(bmap[name]){const b=document.getElementById(bmap[name]);if(b)b.classList.add('active');}
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
@@ -470,10 +509,10 @@ function openNuevaOrden(){
 function editarOrden(id){
   const o=allOrdenes.find(x=>x.id===id);if(!o)return;
   editingOrdenId=id;
-  document.getElementById('modal-orden-title').textContent='Editar Orden #'+o.folio;
+  document.getElementById('modal-orden-title').textContent='Editar Orden';
   document.getElementById('btn-guardar-orden').textContent='Actualizar';
   document.getElementById('o-cliente').value=o.cliente_id||'';
-  document.getElementById('o-folio').value='';
+  document.getElementById('o-folio').value=o.folio||'';
   document.getElementById('o-marca').value=o.marca||'';
   document.getElementById('o-modelo').value=o.modelo||'';
   document.getElementById('o-serie').value=o.numero_serie||'';
@@ -493,7 +532,7 @@ async function guardarOrden(){
   if(!cliente_id||!marca||!falla){notif('Completa cliente, marca y falla','error');return;}
   const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:parseFloat(document.getElementById('o-costo-est').value)||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser};
   const folioManual=parseInt(document.getElementById('o-folio').value);
-  if(folioManual&&!editingOrdenId)data.folio=folioManual;
+  if(folioManual) data.folio=folioManual;
   let err,rid;
   if(editingOrdenId){
     const old=allOrdenes.find(x=>x.id===editingOrdenId);
