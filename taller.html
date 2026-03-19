@@ -437,9 +437,18 @@ function doLogout(){
   document.getElementById('login-pass').value='';
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
+  document.getElementById('bnav-auditoria').style.display='none';
+  document.getElementById('bnav-usuarios').style.display='none';
+  document.getElementById('bnav-sesiones').style.display='none';
 }
 
 function showPage(name){
+  // proteger paginas de maestro
+  const masterPages=['auditoria','usuarios','sesiones'];
+  if(masterPages.includes(name) && currentUser!==MASTER){
+    notif('Acceso restringido','error');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
@@ -466,6 +475,7 @@ async function registrarAuditoria(tabla,registro_id,accion,detalle,cambios){
 }
 
 async function loadAuditoria(){
+  if(currentUser!==MASTER){notif('Acceso restringido','error');showPage('dashboard');return;}
   const{data}=await sb.from('auditoria').select('*').order('created_at',{ascending:false}).limit(200);
   allAuditoria=data||[];
   renderAuditoria(allAuditoria);
@@ -496,6 +506,7 @@ function filterAuditoria(){
 }
 
 async function loadSesiones(){
+  if(currentUser!==MASTER){notif('Acceso restringido','error');showPage('dashboard');return;}
   const{data}=await sb.from('auditoria').select('*').eq('tabla','sesiones').order('created_at',{ascending:false}).limit(200);
   renderSesiones(data||[]);
 }
@@ -538,6 +549,7 @@ async function filterSesiones(){
 }
 
 async function loadActividad(){
+  if(currentUser!==MASTER){notif('Acceso restringido','error');showPage('dashboard');return;}
   const{data}=await sb.from('auditoria').select('*').order('created_at',{ascending:false}).limit(500);
   allAuditoria=data||[];
   const usuarios=['Alan','Azul','Alonso'];
