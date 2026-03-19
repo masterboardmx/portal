@@ -367,7 +367,7 @@ function doLogin(){
     currentUser=u;
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app').style.display='block';
-    document.getElementById('bottom-nav').style.display='block';
+    document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'block':'';
     document.getElementById('topbar-user').textContent=u;
     document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     if(u===MASTER){
@@ -770,6 +770,10 @@ function fmtFechaHora(f){if(!f)return'?';return new Date(f).toLocaleString('es-M
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function notif(msg,type){const el=document.getElementById('notif');el.textContent=msg;el.className='notif show '+(type||'');setTimeout(()=>el.className='notif',3000);}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+window.addEventListener('resize',()=>{
+  if(!currentUser)return;
+  document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'block':'none';
+});
 </script>
 </body>
 </html>
