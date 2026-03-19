@@ -145,11 +145,11 @@
     /* BOTTOM NAV MÓVIL */
     .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,12,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;}
     .bottom-nav-items{display:flex;justify-content:space-around;}
-    .bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.4rem 1rem;cursor:pointer;color:var(--text-dim);transition:color 0.15s;font-size:0.65rem;font-family:var(--mono);letter-spacing:0.05em;border:none;background:none;}
+    .bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.15rem;padding:0.3rem 0.4rem;cursor:pointer;color:var(--text-dim);transition:color 0.15s;font-size:0.58rem;font-family:var(--mono);letter-spacing:0.02em;border:none;background:none;flex:1;}
     .bottom-nav-item.active{color:var(--blue);}
     .bottom-nav-item.master{color:var(--purple);}
     .bottom-nav-item.master.active{color:var(--purple);}
-    .bottom-nav-icon{font-size:1.3rem;}
+    .bottom-nav-icon{font-size:1.1rem;}
     @media(max-width:768px){html,body{overflow-x:hidden;max-width:100vw;} .bottom-nav{display:block;}}
   </style>
 </head>
@@ -324,6 +324,8 @@
     <button class="bottom-nav-item" id="bnav-ordenes" onclick="showPage('ordenes')"><span class="bottom-nav-icon">◉</span>Ordenes</button>
     <button class="bottom-nav-item" id="bnav-clientes" onclick="showPage('clientes')"><span class="bottom-nav-icon">◎</span>Clientes</button>
     <button class="bottom-nav-item master" id="bnav-auditoria" style="display:none;" onclick="showPage('auditoria')"><span class="bottom-nav-icon">◑</span>Historial</button>
+    <button class="bottom-nav-item master" id="bnav-usuarios" style="display:none;" onclick="showPage('usuarios')"><span class="bottom-nav-icon">◐</span>Actividad</button>
+    <button class="bottom-nav-item master" id="bnav-sesiones" style="display:none;" onclick="showPage('sesiones')"><span class="bottom-nav-icon">◍</span>Sesiones</button>
   </div>
 </div>
 
@@ -398,6 +400,8 @@ async function doLogin(){
       document.getElementById('master-badge').style.display='inline-flex';
       document.getElementById('sidebar-master').style.display='block';
       document.getElementById('bnav-auditoria').style.display='flex';
+      document.getElementById('bnav-usuarios').style.display='flex';
+      document.getElementById('bnav-sesiones').style.display='flex';
     }
     loadAll();
     // registrar inicio de sesion con detalles del dispositivo
@@ -434,7 +438,7 @@ function showPage(name){
   document.getElementById('page-'+name).classList.add('active');
   const map={dashboard:0,ordenes:1,clientes:2};
   if(map[name]!==undefined)document.querySelectorAll('.sidebar-item')[map[name]].classList.add('active');
-  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',auditoria:'bnav-auditoria'};
+  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
   if(bmap[name]){const b=document.getElementById(bmap[name]);if(b)b.classList.add('active');}
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
