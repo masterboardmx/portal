@@ -160,7 +160,7 @@
           <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num yellow" id="s-clientes">0</div></div>
         </div>
         <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
-        <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
       </div>
 
       <!-- ORDENES -->
@@ -251,6 +251,7 @@
     <div class="modal-title" id="modal-orden-title">Nueva Orden</div>
     <div class="form-grid">
       <div class="form-group full"><label>Cliente</label><select id="o-cliente"><option value="">Seleccionar cliente</option></select></div>
+      <div class="form-group"><label>Folio (dejar vacío = automático)</label><input type="number" id="o-folio" placeholder="Ej: 150"></div>
       <div class="form-group"><label>Marca</label><input type="text" id="o-marca" placeholder="Mirage, LG, Samsung..."></div>
       <div class="form-group"><label>Modelo</label><input type="text" id="o-modelo"></div>
       <div class="form-group"><label>No. Serie</label><input type="text" id="o-serie"></div>
@@ -420,11 +421,12 @@ function loadDashboard(){
     <tr onclick="verDetalle('${o.id}')" style="cursor:pointer;">
       <td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td>
       <td>${o.clientes?.nombre||'?'}</td>
+      <td><a href="https://wa.me/52${(o.clientes?.telefono||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:none;font-family:var(--mono);font-size:0.78rem;">${o.clientes?.telefono||'?'}</a></td>
       <td>${o.marca} ${o.modelo||''}</td>
       <td>${badgeEstado(o.estado)}</td>
       <td>${o.modificado_por?userPill(o.modificado_por):'<span style="color:var(--text-dim);font-size:0.78rem;">?</span>'}</td>
       <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td>
-    </tr>`).join('')||`<tr class="empty-row"><td colspan="6">Sin ordenes</td></tr>`;
+    </tr>`).join('')||`<tr class="empty-row"><td colspan="7">Sin ordenes</td></tr>`;
 }
 
 // ── ORDENES ──────────────────────────────────────────────────
@@ -459,6 +461,7 @@ function openNuevaOrden(){
   document.getElementById('btn-guardar-orden').textContent='Guardar';
   ['o-marca','o-modelo','o-serie','o-tecnico','o-falla','o-diagnostico','o-notas'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('o-costo-est').value='';
+  document.getElementById('o-folio').value='';
   document.getElementById('o-estado').value='recibido';
   document.getElementById('o-cliente').value='';
   document.getElementById('modal-orden').classList.add('open');
@@ -470,6 +473,7 @@ function editarOrden(id){
   document.getElementById('modal-orden-title').textContent='Editar Orden #'+o.folio;
   document.getElementById('btn-guardar-orden').textContent='Actualizar';
   document.getElementById('o-cliente').value=o.cliente_id||'';
+  document.getElementById('o-folio').value='';
   document.getElementById('o-marca').value=o.marca||'';
   document.getElementById('o-modelo').value=o.modelo||'';
   document.getElementById('o-serie').value=o.numero_serie||'';
@@ -488,6 +492,8 @@ async function guardarOrden(){
   const falla=document.getElementById('o-falla').value.trim();
   if(!cliente_id||!marca||!falla){notif('Completa cliente, marca y falla','error');return;}
   const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:parseFloat(document.getElementById('o-costo-est').value)||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser};
+  const folioManual=parseInt(document.getElementById('o-folio').value);
+  if(folioManual&&!editingOrdenId)data.folio=folioManual;
   let err,rid;
   if(editingOrdenId){
     const old=allOrdenes.find(x=>x.id===editingOrdenId);
