@@ -188,6 +188,7 @@
         <div class="sidebar-section">Maestro</div>
         <div class="sidebar-item master-item" onclick="showPage('auditoria')"><span class="sidebar-icon">◑</span> Historial</div>
         <div class="sidebar-item master-item" onclick="showPage('usuarios')"><span class="sidebar-icon">◐</span> Actividad</div>
+        <div class="sidebar-item master-item" onclick="showPage('sesiones')"><span class="sidebar-icon">◍</span> Sesiones</div>
       </div>
     </div>
     <div class="content">
@@ -284,6 +285,29 @@
         <div class="table-wrap" style="min-width:0;"><div id="user-recent"></div></div>
       </div>
 
+      <!-- SESIONES (solo Alan) -->
+      <div class="page" id="page-sesiones">
+        <div class="table-header">
+          <div>
+            <div class="table-title">Inicios de Sesion</div>
+            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Registro de quién entró y cuándo</div>
+          </div>
+          <select id="filter-sesion-user" onchange="filterSesiones()" style="width:160px;">
+            <option value="">Todos los usuarios</option>
+            <option value="Alan">Alan</option>
+            <option value="Azul">Azul</option>
+            <option value="Alonso">Alonso</option>
+          </select>
+        </div>
+        <div class="table-wrap desktop-table">
+          <table>
+            <thead><tr><th>Usuario</th><th>Accion</th><th>Dispositivo</th><th>Fecha y Hora</th></tr></thead>
+            <tbody id="tabla-sesiones"></tbody>
+          </table>
+        </div>
+        <div class="mobile-list" id="mobile-sesiones"></div>
+      </div>
+
       <!-- DETALLE ORDEN -->
       <div class="page" id="page-detalle">
         <button class="btn-ghost btn-sm" onclick="showPage('ordenes')" style="margin-bottom:1.5rem;">volver</button>
@@ -360,7 +384,7 @@ const USERS={'Azul':'Corona1303','Alan':'Terry1303','Alonso':'Neo1303'};
 const MASTER='Alan';
 let currentUser=null,allOrdenes=[],allClientes=[],allAuditoria=[],editingOrdenId=null,editingClienteId=null;
 
-function doLogin(){
+async function doLogin(){
   const u=document.getElementById('login-user').value.trim();
   const p=document.getElementById('login-pass').value;
   if(USERS[u]&&USERS[u]===p){
@@ -376,10 +400,22 @@ function doLogin(){
       document.getElementById('bnav-auditoria').style.display='flex';
     }
     loadAll();
+    // registrar inicio de sesion
+    await sb.from('auditoria').insert([{
+      tabla:'sesiones',
+      registro_id:null,
+      accion:'login',
+      usuario:u,
+      detalle:`Inicio de sesion — ${navigator.userAgent.includes('Mobile')?'Celular':'Computadora'}`,
+      cambios:{dispositivo:navigator.userAgent.includes('Mobile')?'mobile':'desktop',hora:new Date().toISOString()}
+    }]);
   }else{document.getElementById('login-err').style.display='block';}
 }
 
 function doLogout(){
+  if(currentUser){
+    sb.from('auditoria').insert([{tabla:'sesiones',registro_id:null,accion:'logout',usuario:currentUser,detalle:`Cerro sesion`,cambios:{hora:new Date().toISOString()}}]);
+  }
   currentUser=null;
   document.getElementById('app').style.display='none';
   document.getElementById('bottom-nav').style.display='none';
@@ -404,6 +440,7 @@ function showPage(name){
   if(name==='clientes')renderClientes();
   if(name==='auditoria')loadAuditoria();
   if(name==='usuarios')loadActividad();
+  if(name==='sesiones')loadSesiones();
 }
 
 async function loadAll(){await Promise.all([loadClientes(),loadOrdenes()]);loadDashboard();}
@@ -443,6 +480,40 @@ function filterAuditoria(){
   if(u)list=list.filter(x=>x.usuario===u);
   if(a)list=list.filter(x=>x.accion===a);
   renderAuditoria(list);
+}
+
+async function loadSesiones(){
+  const{data}=await sb.from('auditoria').select('*').eq('tabla','sesiones').order('created_at',{ascending:false}).limit(200);
+  renderSesiones(data||[]);
+}
+
+function renderSesiones(data){
+  const dispositivo=r=>r.cambios?.dispositivo==='mobile'?'📱 Celular':'🖥️ Computadora';
+  const accionLabel=a=>a==='login'?'<span style="color:var(--green);font-family:var(--mono);font-size:0.75rem;">ENTRO</span>':'<span style="color:var(--text-dim);font-family:var(--mono);font-size:0.75rem;">SALIO</span>';
+  // desktop
+  const tbody=document.getElementById('tabla-sesiones');
+  if(tbody) tbody.innerHTML=data.length?data.map(s=>`
+    <tr>
+      <td>${userPill(s.usuario)}</td>
+      <td>${accionLabel(s.accion)}</td>
+      <td style="font-size:0.82rem;color:var(--text-dim);">${dispositivo(s)}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${fmtFechaHora(s.created_at)}</td>
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="4">Sin registros</td></tr>`;
+  // mobile
+  const mob=document.getElementById('mobile-sesiones');
+  if(mob) mob.innerHTML=data.length?data.map(s=>`
+    <div class="m-card" style="cursor:default;">
+      <div class="m-card-top">${userPill(s.usuario)}${accionLabel(s.accion)}</div>
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.3rem;">${dispositivo(s)}</div>
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-top:0.25rem;">${fmtFechaHora(s.created_at)}</div>
+    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Sin registros</div>';
+}
+
+async function filterSesiones(){
+  const u=document.getElementById('filter-sesion-user').value;
+  const{data}=await sb.from('auditoria').select('*').eq('tabla','sesiones').order('created_at',{ascending:false}).limit(200);
+  const list=u?(data||[]).filter(s=>s.usuario===u):data||[];
+  renderSesiones(list);
 }
 
 async function loadActividad(){
