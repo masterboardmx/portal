@@ -200,6 +200,7 @@
         <div class="sidebar-item master-item" onclick="showPage('auditoria')"><span class="sidebar-icon">◑</span> Historial</div>
         <div class="sidebar-item master-item" onclick="showPage('usuarios')"><span class="sidebar-icon">◐</span> Actividad</div>
         <div class="sidebar-item master-item" onclick="showPage('sesiones')"><span class="sidebar-icon">◍</span> Sesiones</div>
+        <div class="sidebar-item master-item" onclick="showPage('backup')"><span class="sidebar-icon">💾</span> Backup</div>
       </div>
     </div>
     <div class="content">
@@ -319,6 +320,29 @@
         <div class="mobile-list" id="mobile-sesiones"></div>
       </div>
 
+      <!-- BACKUP (solo Alan) -->
+      <div class="page" id="page-backup">
+        <div style="margin-bottom:1.5rem;">
+          <div class="table-title">Backup y Restauración</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Descarga y restaura todos los datos del taller</div>
+        </div>
+        <!-- Backup -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
+          <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:0.5rem;">💾 Descargar Backup</div>
+          <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem;">Exporta todos tus clientes, órdenes, contabilidad e historial en un archivo JSON. Guárdalo en un lugar seguro.</div>
+          <div id="backup-info" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:1rem;"></div>
+          <button class="btn-blue" onclick="descargarBackup()" id="btn-backup">⬇ Descargar Backup</button>
+        </div>
+        <!-- Restaurar -->
+        <div style="background:var(--bg2);border:1px solid rgba(255,69,58,0.2);border-radius:12px;padding:1.5rem;">
+          <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:0.5rem;color:var(--red);">⚠ Restaurar Backup</div>
+          <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem;">Sube un archivo de backup previamente descargado. <strong style="color:var(--red);">Esto reemplazará todos los datos actuales.</strong></div>
+          <input type="file" id="backup-file" accept=".json" style="display:none;" onchange="restaurarBackup(event)">
+          <button class="btn-red" onclick="document.getElementById('backup-file').click()">⬆ Seleccionar archivo de Backup</button>
+          <div id="restore-status" style="margin-top:0.75rem;font-size:0.82rem;display:none;"></div>
+        </div>
+      </div>
+
       <!-- CONTABILIDAD (solo Alan) -->
       <div class="page" id="page-contabilidad">
         <div style="margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
@@ -362,6 +386,47 @@
         <div class="mobile-list" id="mobile-cont"></div>
       </div>
 
+      <!-- BACKUP (solo Alan) -->
+      <div class="page" id="page-backup">
+        <div style="margin-bottom:2rem;">
+          <div class="table-title">Backup del Sistema</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Descarga y restaura todos los datos del taller</div>
+        </div>
+        <!-- Descargar -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <div style="font-size:2rem;">💾</div>
+            <div>
+              <div style="font-family:var(--mono);font-weight:700;margin-bottom:0.25rem;">Descargar Backup</div>
+              <div style="font-size:0.8rem;color:var(--text-dim);">Exporta todos los datos como archivo JSON. Guárdalo en un lugar seguro.</div>
+            </div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.8rem;color:var(--text-dim);">
+            Incluye: <span style="color:var(--text);">Clientes · Órdenes · Contabilidad · Auditoría</span>
+          </div>
+          <button class="btn-blue" onclick="descargarBackup()" id="btn-backup" style="width:100%;">⬇ Descargar Backup Completo</button>
+          <div id="backup-status" style="font-size:0.78rem;color:var(--text-dim);margin-top:0.75rem;text-align:center;"></div>
+        </div>
+        <!-- Restaurar -->
+        <div style="background:var(--bg2);border:1px solid rgba(255,69,58,0.25);border-radius:12px;padding:1.5rem;">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <div style="font-size:2rem;">⚠️</div>
+            <div>
+              <div style="font-family:var(--mono);font-weight:700;margin-bottom:0.25rem;">Restaurar Backup</div>
+              <div style="font-size:0.8rem;color:var(--text-dim);">Importa un archivo de backup. <strong style="color:var(--red);">Solo agrega datos nuevos</strong>, no borra los existentes.</div>
+            </div>
+          </div>
+          <input type="file" id="backup-file" accept=".json" style="display:none;" onchange="restaurarBackup(this)">
+          <button class="btn-ghost" onclick="document.getElementById('backup-file').click()" style="width:100%;border-color:rgba(255,69,58,0.3);color:var(--red);">⬆ Seleccionar archivo de Backup</button>
+          <div id="restore-status" style="font-size:0.78rem;margin-top:0.75rem;text-align:center;"></div>
+        </div>
+        <!-- Historial de backups -->
+        <div style="margin-top:1.5rem;">
+          <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.75rem;">Último backup descargado</div>
+          <div id="ultimo-backup" style="font-size:0.85rem;color:var(--text-dim);">Sin registros</div>
+        </div>
+      </div>
+
       <!-- DETALLE ORDEN -->
       <div class="page" id="page-detalle">
         <button class="btn-ghost btn-sm" onclick="showPage('ordenes')" style="margin-bottom:1.5rem;">volver</button>
@@ -377,10 +442,12 @@
     <button class="bottom-nav-item active" id="bnav-dashboard" onclick="showPage('dashboard')"><span class="bottom-nav-icon">◈</span>Dashboard</button>
     <button class="bottom-nav-item" id="bnav-ordenes" onclick="showPage('ordenes')"><span class="bottom-nav-icon">◉</span>Ordenes</button>
     <button class="bottom-nav-item" id="bnav-clientes" onclick="showPage('clientes')"><span class="bottom-nav-icon">◎</span>Clientes</button>
+    <button class="bottom-nav-item master" id="bnav-backup" style="display:none;" onclick="showPage('backup')"><span class="bottom-nav-icon">💾</span>Backup</button>
     <button class="bottom-nav-item master" id="bnav-contabilidad" style="display:none;" onclick="showPage('contabilidad')"><span class="bottom-nav-icon">💰</span>Contab.</button>
     <button class="bottom-nav-item master" id="bnav-auditoria" style="display:none;" onclick="showPage('auditoria')"><span class="bottom-nav-icon">◑</span>Historial</button>
     <button class="bottom-nav-item master" id="bnav-usuarios" style="display:none;" onclick="showPage('usuarios')"><span class="bottom-nav-icon">◐</span>Actividad</button>
     <button class="bottom-nav-item master" id="bnav-sesiones" style="display:none;" onclick="showPage('sesiones')"><span class="bottom-nav-icon">◍</span>Sesiones</button>
+    <button class="bottom-nav-item master" id="bnav-backup" style="display:none;" onclick="showPage('backup')"><span class="bottom-nav-icon">💾</span>Backup</button>
   </div>
 </div>
 
@@ -522,10 +589,12 @@ async function doLogin(){
     if(u===MASTER){
       document.getElementById('master-badge').style.display='inline-flex';
       document.getElementById('sidebar-master').style.display='block';
+      document.getElementById('bnav-backup').style.display='flex';
       document.getElementById('bnav-contabilidad').style.display='flex';
       document.getElementById('bnav-auditoria').style.display='flex';
       document.getElementById('bnav-usuarios').style.display='flex';
       document.getElementById('bnav-sesiones').style.display='flex';
+      document.getElementById('bnav-backup').style.display='flex';
     }
     loadAll();
     // registrar inicio de sesion con detalles del dispositivo
@@ -553,10 +622,12 @@ function doLogout(){
   document.getElementById('login-pass').value='';
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
+  document.getElementById('bnav-backup').style.display='none';
   document.getElementById('bnav-contabilidad').style.display='none';
   document.getElementById('bnav-auditoria').style.display='none';
   document.getElementById('bnav-usuarios').style.display='none';
   document.getElementById('bnav-sesiones').style.display='none';
+  document.getElementById('bnav-backup').style.display='none';
 }
 
 function showPage(name){
@@ -572,12 +643,14 @@ function showPage(name){
   document.getElementById('page-'+name).classList.add('active');
   const map={dashboard:0,ordenes:1,clientes:2};
   if(map[name]!==undefined)document.querySelectorAll('.sidebar-item')[map[name]].classList.add('active');
-  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
+  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
   if(bmap[name]){const b=document.getElementById(bmap[name]);if(b)b.classList.add('active');}
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
+  if(name==='backup')loadBackupInfo();
   if(name==='contabilidad')loadContabilidad();
+  if(name==='backup')loadBackupPage();
   if(name==='auditoria')loadAuditoria();
   if(name==='usuarios')loadActividad();
   if(name==='sesiones')loadSesiones();
@@ -982,6 +1055,179 @@ function poblarSelectClientes(){
   document.getElementById('o-cliente').innerHTML='<option value="">Seleccionar cliente</option>'+allClientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
 }
 
+// ── BACKUP ───────────────────────────────────────────────────
+async function loadBackupInfo(){
+  const [c1,c2,c3,c4] = await Promise.all([
+    sb.from('clientes').select('id',{count:'exact',head:true}),
+    sb.from('ordenes').select('id',{count:'exact',head:true}),
+    sb.from('contabilidad').select('id',{count:'exact',head:true}),
+    sb.from('auditoria').select('id',{count:'exact',head:true})
+  ]);
+  const el=document.getElementById('backup-info');
+  if(el) el.innerHTML=`
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+      <span>👥 <strong>${c1.count||0}</strong> clientes</span>
+      <span>📋 <strong>${c2.count||0}</strong> órdenes</span>
+      <span>💰 <strong>${c3.count||0}</strong> movimientos</span>
+      <span>📝 <strong>${c4.count||0}</strong> registros de historial</span>
+    </div>`;
+}
+
+async function descargarBackup(){
+  const btn=document.getElementById('btn-backup');
+  btn.textContent='Generando...';btn.disabled=true;
+  try{
+    const [clientes,ordenes,contabilidad,auditoria] = await Promise.all([
+      sb.from('clientes').select('*'),
+      sb.from('ordenes').select('*'),
+      sb.from('contabilidad').select('*'),
+      sb.from('auditoria').select('*')
+    ]);
+    const backup={
+      version:1,
+      fecha:new Date().toISOString(),
+      generado_por:currentUser,
+      datos:{
+        clientes:clientes.data||[],
+        ordenes:ordenes.data||[],
+        contabilidad:contabilidad.data||[],
+        auditoria:auditoria.data||[]
+      }
+    };
+    const json=JSON.stringify(backup,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const fecha=new Date().toISOString().split('T')[0];
+    a.href=url;a.download=`masterboard-backup-${fecha}.json`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    notif('Backup descargado correctamente','success');
+    await registrarAuditoria('backup',null,'crear',`Descargó backup completo del sistema`);
+  }catch(e){notif('Error al generar backup','error');}
+  btn.textContent='⬇ Descargar Backup';btn.disabled=false;
+}
+
+async function restaurarBackup(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const statusEl=document.getElementById('restore-status');
+  statusEl.style.display='block';
+  statusEl.style.color='var(--yellow)';
+  statusEl.textContent='Leyendo archivo...';
+  try{
+    const text=await file.text();
+    const backup=JSON.parse(text);
+    if(!backup.version||!backup.datos){statusEl.style.color='var(--red)';statusEl.textContent='Archivo de backup inválido.';return;}
+    const {clientes,ordenes,contabilidad,auditoria}=backup.datos;
+    if(!confirm(`¿Restaurar backup del ${backup.fecha?.split('T')[0]}?\n\nEsto reemplazará:\n• ${clientes?.length||0} clientes\n• ${ordenes?.length||0} órdenes\n• ${contabilidad?.length||0} movimientos\n\nEsta acción no se puede deshacer.`)){
+      statusEl.style.display='none';return;
+    }
+    statusEl.textContent='Restaurando clientes...';
+    if(clientes?.length){await sb.from('clientes').delete().neq('id','00000000-0000-0000-0000-000000000000');await sb.from('clientes').insert(clientes);}
+    statusEl.textContent='Restaurando órdenes...';
+    if(ordenes?.length){await sb.from('ordenes').delete().neq('id','00000000-0000-0000-0000-000000000000');await sb.from('ordenes').insert(ordenes);}
+    statusEl.textContent='Restaurando contabilidad...';
+    if(contabilidad?.length){await sb.from('contabilidad').delete().neq('id','00000000-0000-0000-0000-000000000000');await sb.from('contabilidad').insert(contabilidad);}
+    statusEl.style.color='var(--green)';
+    statusEl.textContent=`✓ Backup restaurado correctamente — ${clientes?.length||0} clientes, ${ordenes?.length||0} órdenes, ${contabilidad?.length||0} movimientos.`;
+    await loadAll();
+    notif('Backup restaurado con éxito','success');
+  }catch(e){
+    statusEl.style.color='var(--red)';
+    statusEl.textContent='Error al restaurar: '+e.message;
+  }
+  event.target.value='';
+}
+
+// ── BACKUP ───────────────────────────────────────────────────
+function loadBackupPage(){
+  const ultimo=localStorage.getItem('ultimo_backup');
+  const el=document.getElementById('ultimo-backup');
+  if(el) el.textContent=ultimo?`Descargado el ${ultimo}`:'Sin registros aun';
+}
+
+async function descargarBackup(){
+  const btn=document.getElementById('btn-backup');
+  const status=document.getElementById('backup-status');
+  btn.disabled=true;btn.textContent='⏳ Descargando...';
+  status.textContent='Obteniendo datos...';
+  try{
+    const[{data:clientes},{data:ordenes},{data:cont},{data:audit}]=await Promise.all([
+      sb.from('clientes').select('*'),
+      sb.from('ordenes').select('*'),
+      sb.from('contabilidad').select('*'),
+      sb.from('auditoria').select('*').limit(1000)
+    ]);
+    const backup={
+      version:'1.0',
+      fecha:new Date().toISOString(),
+      taller:'MASTERBOARD',
+      datos:{clientes:clientes||[],ordenes:ordenes||[],contabilidad:cont||[],auditoria:audit||[]}
+    };
+    const json=JSON.stringify(backup,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const fecha=new Date().toISOString().split('T')[0];
+    a.href=url;a.download=`masterboard-backup-${fecha}.json`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    const ahora=new Date().toLocaleString('es-MX',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('ultimo_backup',ahora);
+    document.getElementById('ultimo-backup').textContent=`Descargado el ${ahora}`;
+    status.style.color='var(--green)';
+    status.textContent=`✓ Backup completo — ${(clientes||[]).length} clientes, ${(ordenes||[]).length} órdenes, ${(cont||[]).length} movimientos`;
+  }catch(e){
+    status.style.color='var(--red)';
+    status.textContent='Error al descargar: '+e.message;
+  }
+  btn.disabled=false;btn.textContent='⬇ Descargar Backup Completo';
+}
+
+async function restaurarBackup(input){
+  const file=input.files[0];if(!file)return;
+  const status=document.getElementById('restore-status');
+  status.style.color='var(--text-dim)';
+  status.textContent='Leyendo archivo...';
+  try{
+    const text=await file.text();
+    const backup=JSON.parse(text);
+    if(!backup.datos||!backup.version){status.style.color='var(--red)';status.textContent='Archivo de backup inválido';return;}
+    if(!confirm(`¿Restaurar backup del ${backup.fecha?.split('T')[0]}?\n\nSe agregarán los datos que no existan. No se borrarán datos actuales.`)){status.textContent='';return;}
+    status.textContent='Restaurando clientes...';
+    let ok=0,err=0;
+    const{datos}=backup;
+    if(datos.clientes?.length){
+      for(const c of datos.clientes){
+        const{error}=await sb.from('clientes').upsert(c,{onConflict:'id',ignoreDuplicates:true});
+        error?err++:ok++;
+      }
+    }
+    status.textContent='Restaurando órdenes...';
+    if(datos.ordenes?.length){
+      for(const o of datos.ordenes){
+        const{error}=await sb.from('ordenes').upsert(o,{onConflict:'id',ignoreDuplicates:true});
+        error?err++:ok++;
+      }
+    }
+    status.textContent='Restaurando contabilidad...';
+    if(datos.contabilidad?.length){
+      for(const c of datos.contabilidad){
+        const{error}=await sb.from('contabilidad').upsert(c,{onConflict:'id',ignoreDuplicates:true});
+        error?err++:ok++;
+      }
+    }
+    await loadAll();
+    status.style.color='var(--green)';
+    status.textContent=`✓ Restauración completa — ${ok} registros restaurados${err?`, ${err} errores`:''}`;
+  }catch(e){
+    status.style.color='var(--red)';
+    status.textContent='Error: '+e.message;
+  }
+  input.value='';
+}
+
 // ── CONTABILIDAD ─────────────────────────────────────────────
 let allMovimientos=[], graficaChart=null, contTipo='todos';
 
@@ -1210,7 +1456,8 @@ window.addEventListener('resize',()=>{
   document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'flex':'none';
 });
 // Registrar Service Worker para PWA
-if('serviceWorker' in navigator){
+// Keepalive — evita que Supabase se pause por inactividad
+setInterval(()=>{ sb.from('clientes').select('id').limit(1).then(()=>{}); }, 4 * 60 * 1000);
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 </script>
