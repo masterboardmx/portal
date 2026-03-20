@@ -928,8 +928,9 @@ async function verDetalle(id){
         <div class="detail-name">${o.clientes?.nombre||'Cliente'}</div>
         <div style="color:var(--text-dim);font-size:0.85rem;margin-top:0.25rem;">${o.clientes?.telefono||''}</div>
       </div>
-      <div style="display:flex;gap:0.5rem;align-items:center;">
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
         ${o.modificado_por?`<div style="font-size:0.75rem;color:var(--text-dim);">Editado por: ${userPill(o.modificado_por)}</div>`:''}
+        <button class="btn-ghost btn-sm" onclick="generarCotizacion('${o.id}')">📄 Cotización</button>
         <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button>
       </div>
     </div>
@@ -947,7 +948,283 @@ async function verDetalle(id){
       <div class="detail-card"><div class="detail-card-label">Costo Estimado</div><div class="detail-card-value">${o.costo_estimado?'$'+Number(o.costo_estimado).toLocaleString('es-MX'):'?'}</div></div>
       <div class="detail-card"><div class="detail-card-label">Costo Final</div><div class="detail-card-value">${o.costo_final?'$'+Number(o.costo_final).toLocaleString('es-MX'):'?'}</div></div>
       ${o.notas?`<div class="detail-card" style="grid-column:1/-1"><div class="detail-card-label">Notas</div><div class="detail-card-value">${o.notas}</div></div>`:''}
+    </div>
+    <!-- FOTOS -->
+    <div style="margin-top:1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+        <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;">Fotos de la Orden</div>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="file" id="foto-input" accept="image/*" multiple style="display:none;" onchange="subirFotos('${o.id}', this)">
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('foto-input').click()">📁 Subir</button>
+          <button class="btn-ghost btn-sm" onclick="tomarFoto('${o.id}')">📷 Tomar Foto</button>
+          <input type="file" id="camara-input" accept="image/*" capture="environment" style="display:none;" onchange="subirFotos('${o.id}', this)">
+        </div>
+      </div>
+      <div style="margin-bottom:0.75rem;">
+        <select id="foto-tipo" style="width:200px;">
+          <option value="antes">📥 Al recibir (antes)</option>
+          <option value="despues">📤 Reparación terminada (después)</option>
+          <option value="danio">🔍 Componente dañado</option>
+        </select>
+      </div>
+      <div id="fotos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.75rem;">
+        <div style="text-align:center;color:var(--text-dim);font-size:0.82rem;padding:2rem;grid-column:1/-1;">Cargando fotos...</div>
+      </div>
     </div>`;
+  cargarFotos(id);
+}
+
+// ── FOTOS ─────────────────────────────────────────────────────
+async function comprimirImagen(file, maxW=1200, quality=0.75){
+  return new Promise(resolve=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      canvas.toBlob(blob=>resolve(blob),'image/jpeg',quality);
+      URL.revokeObjectURL(url);
+    };
+    img.src=url;
+  });
+}
+
+function tomarFoto(ordenId){
+  document.getElementById('camara-input').click();
+}
+
+async function subirFotos(ordenId, input){
+  const files=Array.from(input.files);
+  if(!files.length)return;
+  const tipo=document.getElementById('foto-tipo')?.value||'antes';
+  const tipoLabel={antes:'Antes',despues:'Después',danio:'Daño'};
+  notif(`Subiendo ${files.length} foto(s)...`,'');
+  let ok=0;
+  for(const file of files){
+    try{
+      const compressed=await comprimirImagen(file);
+      const ext='jpg';
+      const nombre=`${ordenId}/${tipo}_${Date.now()}.${ext}`;
+      const{error}=await sb.storage.from('reparaciones').upload(nombre,compressed,{contentType:'image/jpeg',upsert:false});
+      if(!error)ok++;
+    }catch(e){console.error(e);}
+  }
+  input.value='';
+  notif(`✓ ${ok} foto(s) subida(s)`,'success');
+  cargarFotos(ordenId);
+}
+
+async function cargarFotos(ordenId){
+  const grid=document.getElementById('fotos-grid');
+  if(!grid)return;
+  const{data,error}=await sb.storage.from('reparaciones').list(ordenId,{sortBy:{column:'created_at',order:'desc'}});
+  if(error||!data||!data.length){
+    grid.innerHTML='<div style="text-align:center;color:var(--text-dim);font-size:0.82rem;padding:2rem;grid-column:1/-1;">Sin fotos aún — sube o toma una foto</div>';
+    return;
+  }
+  const tipoIcon={antes:'📥',despues:'📤',danio:'🔍'};
+  grid.innerHTML=data.map(f=>{
+    const url=`https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/${ordenId}/${f.name}`;
+    const tipo=f.name.split('_')[0];
+    const label=tipoIcon[tipo]||'📷';
+    return`<div style="position:relative;border-radius:10px;overflow:hidden;background:var(--bg3);border:1px solid var(--border);">
+      <img src="${url}" style="width:100%;height:130px;object-fit:cover;display:block;cursor:pointer;" onclick="verFotoGrande('${url}')" loading="lazy">
+      <div style="padding:0.4rem 0.6rem;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:0.72rem;color:var(--text-dim);">${label} ${tipo}</span>
+        <button onclick="eliminarFoto('${ordenId}','${f.name}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:0.9rem;padding:0;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function verFotoGrande(url){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  overlay.innerHTML=`<img src="${url}" style="max-width:95vw;max-height:90vh;border-radius:8px;object-fit:contain;">
+    <button style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.15);border:none;color:white;font-size:1.5rem;width:40px;height:40px;border-radius:50%;cursor:pointer;">✕</button>`;
+  overlay.onclick=()=>document.body.removeChild(overlay);
+  document.body.appendChild(overlay);
+}
+
+async function eliminarFoto(ordenId, nombre){
+  if(!confirm('¿Eliminar esta foto?'))return;
+  const{error}=await sb.storage.from('reparaciones').remove([`${ordenId}/${nombre}`]);
+  if(error){notif('Error al eliminar','error');return;}
+  notif('Foto eliminada','success');
+  cargarFotos(ordenId);
+}
+
+// ── COTIZACIÓN PDF ────────────────────────────────────────────
+function generarCotizacion(id){
+  const o=allOrdenes.find(x=>x.id===id);if(!o)return;
+  const cliente=o.clientes||{};
+  const hoy=new Date();
+  const fecha=`${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+  const monto=o.costo_estimado?Number(o.costo_estimado):0;
+  const montoFmt=monto?'$'+monto.toLocaleString('es-MX',{minimumFractionDigits:2}):'$0.00';
+  const desc=o.diagnostico||o.falla_reportada||'Servicio de reparación';
+  const equipo=`${o.marca}${o.modelo?' '+o.modelo:''}`;
+
+  const logoSVG=`<svg width="60" height="60" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <rect width="512" height="512" rx="60" fill="#0a0c10"/>
+    <g stroke="white" stroke-width="28" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="165" y1="80" x2="165" y2="180"/>
+      <line x1="215" y1="80" x2="215" y2="180"/>
+      <path d="M140 175 Q140 240 190 240 Q240 240 240 175"/>
+      <line x1="190" y1="240" x2="190" y2="300"/>
+      <rect x="270" y="120" width="190" height="150" rx="18"/>
+      <circle cx="365" cy="195" r="52"/>
+      <circle cx="365" cy="195" r="18"/>
+      <line x1="310" y1="290" x2="310" y2="330"/>
+      <line x1="420" y1="290" x2="420" y2="330"/>
+    </g>
+  </svg>`;
+
+  const html=`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:Arial,sans-serif;font-size:11pt;color:#111;background:white;}
+  .page{padding:30px 40px;max-width:820px;margin:0 auto;}
+
+  /* HEADER */
+  .header{display:flex;justify-content:space-between;align-items:flex-start;background:#1a2a4a;color:white;padding:20px 24px;margin-bottom:0;}
+  .header-left{display:flex;align-items:center;gap:14px;}
+  .logo-svg{width:64px;height:64px;flex-shrink:0;}
+  .empresa-nombre{font-size:1.3rem;font-weight:900;letter-spacing:0.08em;color:white;}
+  .empresa-info{font-size:0.72rem;color:#ccd;margin-top:3px;line-height:1.7;}
+  .header-right{text-align:right;}
+  .cot-titulo{font-size:1.8rem;font-weight:900;color:white;letter-spacing:0.05em;}
+  .cot-datos{margin-top:10px;display:grid;grid-template-columns:auto auto;gap:2px 16px;text-align:left;}
+  .cot-datos .lbl{font-size:0.72rem;font-weight:700;color:#aac;text-transform:uppercase;letter-spacing:0.08em;}
+  .cot-datos .val{font-size:0.82rem;color:white;font-weight:600;}
+
+  /* DESCRIPCION */
+  .desc-section{border:1px solid #ccc;border-top:none;padding:16px 24px;}
+  .desc-titulo{font-weight:700;font-size:0.9rem;margin-bottom:8px;text-transform:uppercase;}
+  .desc-texto{font-size:0.88rem;line-height:1.7;text-transform:uppercase;}
+
+  /* TABLA */
+  .tabla{width:100%;border-collapse:collapse;margin-top:0;}
+  .tabla th{background:#1a2a4a;color:white;padding:10px 14px;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-align:left;}
+  .tabla th.center{text-align:center;}
+  .tabla th.right{text-align:right;}
+  .tabla td{padding:12px 14px;border:1px solid #ddd;font-size:0.88rem;vertical-align:middle;}
+  .tabla td.center{text-align:center;}
+  .tabla td.right{text-align:right;}
+  .tabla .producto-cel{min-height:80px;}
+  .tabla tfoot td{padding:8px 14px;border:1px solid #ddd;font-size:0.85rem;}
+  .tabla tfoot .lbl{font-weight:700;text-align:right;}
+  .tabla tfoot .val{text-align:right;font-weight:700;}
+  .tabla tfoot .total-row td{background:#1a2a4a;color:white;font-weight:900;font-size:0.95rem;}
+  .valida{font-size:0.8rem;color:#555;font-style:italic;padding:8px 14px;border:1px solid #ddd;border-top:none;}
+
+  /* TERMINOS */
+  .terminos{margin-top:24px;border-top:2px solid #1a2a4a;padding-top:12px;}
+  .terminos-titulo{font-weight:700;font-size:0.85rem;color:#1a2a4a;margin-bottom:6px;text-transform:uppercase;}
+  .terminos-texto{font-size:0.78rem;color:#444;line-height:1.7;text-align:justify;}
+
+  @media print{
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .page{padding:15px 20px;}
+    .no-print{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- BOTON IMPRIMIR -->
+  <div class="no-print" style="margin-bottom:12px;text-align:right;">
+    <button onclick="window.print()" style="background:#1a2a4a;color:white;border:none;padding:10px 22px;border-radius:6px;font-size:0.9rem;cursor:pointer;font-weight:700;">🖨 Imprimir / Guardar PDF</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-svg">${logoSVG}</div>
+      <div>
+        <div class="empresa-nombre">MASTERBOARD</div>
+        <div class="empresa-info">
+          CALLE DIVISIÓN DEL NORTE #1303<br>
+          COL. FRANCISCO VILLA.<br>
+          MAZATLÁN, SIN. CP.82127<br>
+          Tel: 669-271-1522
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="cot-titulo">COTIZACIÓN</div>
+      <div class="cot-datos">
+        <span class="lbl">FECHA:</span><span class="val">${fecha}</span>
+        <span class="lbl">CLIENTE:</span><span class="val">${(cliente.nombre||'').toUpperCase()}</span>
+        <span class="lbl">TELÉFONO:</span><span class="val">${cliente.telefono||''}</span>
+        <span class="lbl">FOLIO:</span><span class="val">${o.folio}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESCRIPCION -->
+  <div class="desc-section">
+    <div class="desc-titulo">Descripción:</div>
+    <div class="desc-texto">${desc}</div>
+  </div>
+
+  <!-- TABLA -->
+  <table class="tabla">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th class="center">Cantidad</th>
+        <th class="right">Precio</th>
+        <th class="right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="producto-cel">${equipo.toUpperCase()}${o.numero_serie?`<br><span style="font-size:0.78rem;color:#666;">No. Serie: ${o.numero_serie}</span>`:''}</td>
+        <td class="center">1</td>
+        <td class="right">${montoFmt}</td>
+        <td class="right">${montoFmt}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" class="valida" style="border:1px solid #ddd;">Cotización válida por 15 días*</td>
+        <td class="lbl">SUBTOTAL</td>
+        <td class="val">${montoFmt} MXN</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="border:1px solid #ddd;"></td>
+        <td class="lbl">DESCUENTO</td>
+        <td class="val">-</td>
+      </tr>
+      <tr class="total-row">
+        <td colspan="2"></td>
+        <td style="text-align:right;font-weight:900;">TOTAL</td>
+        <td style="text-align:right;font-weight:900;">${montoFmt} MXN</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- TERMINOS -->
+  <div class="terminos">
+    <div class="terminos-titulo">Términos y Condiciones</div>
+    <div class="terminos-texto">Las reparaciones realizadas cuentan con una garantía de 40 días, aplicable únicamente sobre los trabajos efectuados. La garantía no cubre daños ocasionados por mal uso, condiciones externas como humedad, sobrecargas eléctricas o intervenciones posteriores de terceros. Para hacerla válida es indispensable presentar este recibo.</div>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
 }
 
 async function cambiarEstado(id,estado){
