@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -11,6 +12,7 @@
   <link rel="apple-touch-icon" href="./favicon-192.png">
   <title>MASTERBOARD — Sistema de Taller</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root{--blue:#0A84FF;--blue-dim:#0066CC;--orange:#FF6B00;--green:#30D158;--red:#FF453A;--yellow:#FFD60A;--purple:#BF5AF2;--bg:#0A0C10;--bg2:#111318;--bg3:#181C24;--border:rgba(255,255,255,0.08);--text:#E8EAF0;--text-dim:#7A8290;--mono:'Space Mono',monospace;--sans:'Inter',sans-serif;}
@@ -107,57 +109,62 @@
     .audit-time{font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);white-space:nowrap;min-width:100px;}
     .audit-detail{font-size:0.83rem;flex:1;}
     .audit-sub{font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem;}
-    .notif{position:fixed;bottom:5rem;right:1rem;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.25rem;font-size:0.85rem;display:none;max-width:280px;}
+    .stat-num.red{color:var(--red);}
+    .badge-ingreso{background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);}
+    .badge-gasto{background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.3);}bottom:5rem;right:1rem;z-index:9999;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:0.9rem 1.25rem;font-size:0.85rem;display:none;max-width:280px;}
     .notif.show{display:block;}
     .notif.success{border-color:rgba(48,209,88,0.4);color:var(--green);}
     .notif.error{border-color:rgba(255,69,58,0.4);color:var(--red);}
 
-    /* MOBILE CARD LIST — hidden on desktop */
-    .mobile-list{display:none !important;}
-    .m-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:0.75rem;cursor:pointer;transition:border-color 0.2s;}
-    .m-card:hover{border-color:rgba(10,132,255,0.3);}
-    .m-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;}
-    .m-card-folio{font-family:var(--mono);font-size:0.82rem;color:var(--blue);font-weight:700;}
-    .m-card-name{font-size:0.9rem;font-weight:500;margin-bottom:0.2rem;}
-    .m-card-phone{font-size:0.8rem;color:var(--blue);}
-    .m-card-equipo{font-size:0.82rem;color:var(--text-dim);margin:0.35rem 0;}
-    .m-card-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;}
-    .m-card-actions{display:flex;gap:0.5rem;margin-top:0.75rem;}
-    .m-card-actions button{flex:1;padding:0.55rem;font-size:0.78rem;}
+```
+/* MOBILE CARD LIST — hidden on desktop */
+.mobile-list{display:none !important;}
+.m-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:0.75rem;cursor:pointer;transition:border-color 0.2s;}
+.m-card:hover{border-color:rgba(10,132,255,0.3);}
+.m-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;}
+.m-card-folio{font-family:var(--mono);font-size:0.82rem;color:var(--blue);font-weight:700;}
+.m-card-name{font-size:0.9rem;font-weight:500;margin-bottom:0.2rem;}
+.m-card-phone{font-size:0.8rem;color:var(--blue);}
+.m-card-equipo{font-size:0.82rem;color:var(--text-dim);margin:0.35rem 0;}
+.m-card-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;}
+.m-card-actions{display:flex;gap:0.5rem;margin-top:0.75rem;}
+.m-card-actions button{flex:1;padding:0.55rem;font-size:0.78rem;}
 
-    @media(max-width:768px){
-      .main{grid-template-columns:1fr;}
-      .sidebar{display:none;}
-      .form-grid{grid-template-columns:1fr;}
-      .detail-grid{grid-template-columns:1fr;}
-      .stats-grid{display:grid;grid-template-columns:calc(50% - 0.375rem) calc(50% - 0.375rem);gap:0.75rem;width:100%;box-sizing:border-box;}
-      .stat-card{padding:0.875rem;min-width:0;overflow:hidden;box-sizing:border-box;}
-      .stat-num{font-size:1.6rem;}
-      .content{padding:1rem 0.85rem 5.5rem;overflow-x:hidden;max-width:100vw;box-sizing:border-box;padding-top:calc(1rem + env(safe-area-inset-top));}
-      .table-header{flex-direction:column;align-items:flex-start;gap:0.75rem;}
-      .table-header > div:last-child{width:100%;flex-wrap:wrap;}
-      .table-header > div:last-child input,
-      .table-header > div:last-child select{width:100%;}
-      .search-box{width:100%;}.search-box input{width:100%;}
-      .modal{border-radius:20px 20px 0 0;max-height:94vh;margin-top:auto;width:100%;max-width:100%;}
-      .modal-overlay{align-items:flex-end;padding:0;}
-      .topbar{padding:0 1rem;}
-      .topbar-logo span:last-of-type{display:none;}
-      .desktop-table{display:none !important;}
-      .mobile-list{display:block !important;}
-      .table-wrap{overflow-x:auto;width:100%;}
-      td,th{padding:0.7rem 0.5rem;font-size:0.78rem;}
-    }
-    /* BOTTOM NAV MÓVIL */
-    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,12,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;padding-bottom:max(0.5rem, env(safe-area-inset-bottom));}
-    .bottom-nav-items{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0;scrollbar-width:none;}
-    .bottom-nav-items::-webkit-scrollbar{display:none;}
-    .bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.5rem 0;cursor:pointer;color:var(--text-dim);transition:color 0.15s;font-size:0.65rem;font-family:var(--mono);letter-spacing:0.04em;border:none;background:none;flex:0 0 33.333vw;min-width:33.333vw;}
-    .bottom-nav-item.active{color:var(--blue);}
-    .bottom-nav-item.master{color:var(--purple);}
-    .bottom-nav-item.master.active{color:var(--purple);}
-    .bottom-nav-icon{font-size:1.25rem;}
-    @media(max-width:768px){html,body{overflow-x:hidden;max-width:100vw;} .bottom-nav{display:block;}}
+@media(max-width:768px){
+  .main{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .form-grid{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr;}
+  .stats-grid{display:grid;grid-template-columns:calc(50% - 0.375rem) calc(50% - 0.375rem);gap:0.75rem;width:100%;box-sizing:border-box;}
+  .stat-card{padding:0.875rem;min-width:0;overflow:hidden;box-sizing:border-box;}
+  .stat-num{font-size:1.6rem;}
+  .content{padding:1rem 0.85rem 5.5rem;overflow-x:hidden;max-width:100vw;box-sizing:border-box;padding-top:calc(1rem + env(safe-area-inset-top));}
+  .table-header{flex-direction:column;align-items:flex-start;gap:0.75rem;}
+  .table-header > div:last-child{width:100%;flex-wrap:wrap;}
+  .table-header > div:last-child input,
+  .table-header > div:last-child select{width:100%;}
+  .search-box{width:100%;}.search-box input{width:100%;}
+  .modal{border-radius:20px 20px 0 0;max-height:94vh;margin-top:auto;width:100%;max-width:100%;}
+  .modal-overlay{align-items:flex-end;padding:0;}
+  .topbar{padding:0 1rem;}
+  .topbar-logo span:last-of-type{display:none;}
+  .desktop-table{display:none !important;}
+  .mobile-list{display:block !important;}
+  .table-wrap{overflow-x:auto;width:100%;}
+  td,th{padding:0.7rem 0.5rem;font-size:0.78rem;}
+}
+/* BOTTOM NAV MÓVIL */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,12,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;padding-bottom:max(0.5rem, env(safe-area-inset-bottom));}
+.bottom-nav-items{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0;scrollbar-width:none;}
+.bottom-nav-items::-webkit-scrollbar{display:none;}
+.bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.5rem 0;cursor:pointer;color:var(--text-dim);transition:color 0.15s;font-size:0.65rem;font-family:var(--mono);letter-spacing:0.04em;border:none;background:none;flex:0 0 33.333vw;min-width:33.333vw;}
+.bottom-nav-item.active{color:var(--blue);}
+.bottom-nav-item.master{color:var(--purple);}
+.bottom-nav-item.master.active{color:var(--purple);}
+.bottom-nav-icon{font-size:1.25rem;}
+@media(max-width:768px){html,body{overflow-x:hidden;max-width:100vw;} .bottom-nav{display:block;}}
+```
+
   </style>
 </head>
 <body>
@@ -193,6 +200,7 @@
       <div class="sidebar-item" onclick="showPage('clientes')"><span class="sidebar-icon">◎</span> Clientes</div>
       <div id="sidebar-master" style="display:none;">
         <div class="sidebar-section">Maestro</div>
+        <div class="sidebar-item master-item" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
         <div class="sidebar-item master-item" onclick="showPage('auditoria')"><span class="sidebar-icon">◑</span> Historial</div>
         <div class="sidebar-item master-item" onclick="showPage('usuarios')"><span class="sidebar-icon">◐</span> Actividad</div>
         <div class="sidebar-item master-item" onclick="showPage('sesiones')"><span class="sidebar-icon">◍</span> Sesiones</div>
@@ -200,128 +208,174 @@
     </div>
     <div class="content">
 
-      <!-- DASHBOARD -->
-      <div class="page active" id="page-dashboard">
-        <div style="margin-bottom:1.5rem;">
-          <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">Dashboard</div>
-          <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.25rem;" id="dash-fecha"></div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card"><div class="stat-label">Total Ordenes</div><div class="stat-num blue" id="s-total">0</div></div>
-          <div class="stat-card"><div class="stat-label">En Proceso</div><div class="stat-num orange" id="s-proceso">0</div></div>
-          <div class="stat-card"><div class="stat-label">Listas</div><div class="stat-num green" id="s-listas">0</div></div>
-          <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num yellow" id="s-clientes">0</div></div>
-        </div>
-        <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
-        <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
-        <div class="mobile-list" id="dash-recent-mobile"></div>
-      </div>
-
-      <!-- ORDENES -->
-      <div class="page" id="page-ordenes">
-        <div class="table-header">
-          <div class="table-title">Ordenes de Reparacion</div>
-          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-            <div class="search-box"><span class="search-icon">&#9906;</span><input type="text" id="search-ordenes" placeholder="Buscar..." oninput="filterOrdenes()"></div>
-            <select id="filter-estado" onchange="filterOrdenes()" style="width:160px;">
-              <option value="">Todos</option>
-              <option value="recibido">Recibido</option>
-              <option value="diagnostico">Diagnostico</option>
-              <option value="reparacion">Reparacion</option>
-              <option value="listo">Listo</option>
-              <option value="entregado">Entregado</option>
-            </select>
-            <button class="btn-blue" onclick="openNuevaOrden()">+ Nueva Orden</button>
-          </div>
-        </div>
-        <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th>Estado</th><th>Tecnico</th><th>Editado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-ordenes"></tbody></table></div>
-        <div class="mobile-list" id="mobile-ordenes"></div>
-      </div>
-
-      <!-- CLIENTES -->
-      <div class="page" id="page-clientes">
-        <div class="table-header">
-          <div class="table-title">Clientes</div>
-          <div style="display:flex;gap:0.75rem;align-items:center;">
-            <div class="search-box"><span class="search-icon">&#9906;</span><input type="text" id="search-clientes" placeholder="Nombre, telefono..." oninput="filterClientes()"></div>
-            <button class="btn-blue" onclick="openNuevoCliente()">+ Nuevo Cliente</button>
-          </div>
-        </div>
-        <div class="table-wrap desktop-table"><table><thead><tr><th>Nombre</th><th>Telefono</th><th>Email</th><th>Ordenes</th><th>Registrado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-clientes"></tbody></table></div>
-        <div class="mobile-list" id="mobile-clientes"></div>
-      </div>
-
-      <!-- AUDITORIA (solo Alan) -->
-      <div class="page" id="page-auditoria">
-        <div class="table-header">
-          <div>
-            <div class="table-title">Historial de Cambios</div>
-            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Todos los movimientos registrados en el sistema</div>
-          </div>
-          <div style="display:flex;gap:0.75rem;align-items:center;">
-            <select id="filter-audit-user" onchange="filterAuditoria()" style="width:160px;">
-              <option value="">Todos los usuarios</option>
-              <option value="Alan">Alan</option>
-              <option value="Azul">Azul</option>
-              <option value="Alonso">Alonso</option>
-            </select>
-            <select id="filter-audit-accion" onchange="filterAuditoria()" style="width:150px;">
-              <option value="">Todas las acciones</option>
-              <option value="crear">Crear</option>
-              <option value="editar">Editar</option>
-              <option value="estado">Cambio estado</option>
-              <option value="eliminar">Eliminar</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-wrap" style="min-width:0;">
-          <div id="audit-lista"></div>
-        </div>
-      </div>
-
-      <!-- ACTIVIDAD POR USUARIO (solo Alan) -->
-      <div class="page" id="page-usuarios">
-        <div class="table-header">
-          <div>
-            <div class="table-title">Actividad por Usuario</div>
-            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Resumen de acciones de cada tecnico</div>
-          </div>
-        </div>
-        <div class="stats-grid" id="user-stats"></div>
-        <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin:1.5rem 0 1rem;">Ultimas acciones por usuario</div>
-        <div class="table-wrap" style="min-width:0;"><div id="user-recent"></div></div>
-      </div>
-
-      <!-- SESIONES (solo Alan) -->
-      <div class="page" id="page-sesiones">
-        <div class="table-header">
-          <div>
-            <div class="table-title">Inicios de Sesion</div>
-            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Registro de quién entró y cuándo</div>
-          </div>
-          <select id="filter-sesion-user" onchange="filterSesiones()" style="width:160px;">
-            <option value="">Todos los usuarios</option>
-            <option value="Alan">Alan</option>
-            <option value="Azul">Azul</option>
-            <option value="Alonso">Alonso</option>
-          </select>
-        </div>
-        <div class="table-wrap desktop-table">
-          <table>
-            <thead><tr><th>Usuario</th><th>Accion</th><th>Dispositivo</th><th>Fecha y Hora</th></tr></thead>
-            <tbody id="tabla-sesiones"></tbody>
-          </table>
-        </div>
-        <div class="mobile-list" id="mobile-sesiones"></div>
-      </div>
-
-      <!-- DETALLE ORDEN -->
-      <div class="page" id="page-detalle">
-        <button class="btn-ghost btn-sm" onclick="showPage('ordenes')" style="margin-bottom:1.5rem;">volver</button>
-        <div id="detalle-content"></div>
-      </div>
-
+```
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div style="margin-bottom:1.5rem;">
+      <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">Dashboard</div>
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.25rem;" id="dash-fecha"></div>
     </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Total Ordenes</div><div class="stat-num blue" id="s-total">0</div></div>
+      <div class="stat-card"><div class="stat-label">En Proceso</div><div class="stat-num orange" id="s-proceso">0</div></div>
+      <div class="stat-card"><div class="stat-label">Listas</div><div class="stat-num green" id="s-listas">0</div></div>
+      <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num yellow" id="s-clientes">0</div></div>
+    </div>
+    <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
+    <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
+    <div class="mobile-list" id="dash-recent-mobile"></div>
+  </div>
+
+  <!-- ORDENES -->
+  <div class="page" id="page-ordenes">
+    <div class="table-header">
+      <div class="table-title">Ordenes de Reparacion</div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <div class="search-box"><span class="search-icon">&#9906;</span><input type="text" id="search-ordenes" placeholder="Buscar..." oninput="filterOrdenes()"></div>
+        <select id="filter-estado" onchange="filterOrdenes()" style="width:160px;">
+          <option value="">Todos</option>
+          <option value="recibido">Recibido</option>
+          <option value="diagnostico">Diagnostico</option>
+          <option value="reparacion">Reparacion</option>
+          <option value="listo">Listo</option>
+          <option value="entregado">Entregado</option>
+        </select>
+        <button class="btn-blue" onclick="openNuevaOrden()">+ Nueva Orden</button>
+      </div>
+    </div>
+    <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th>Estado</th><th>Tecnico</th><th>Editado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-ordenes"></tbody></table></div>
+    <div class="mobile-list" id="mobile-ordenes"></div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div class="page" id="page-clientes">
+    <div class="table-header">
+      <div class="table-title">Clientes</div>
+      <div style="display:flex;gap:0.75rem;align-items:center;">
+        <div class="search-box"><span class="search-icon">&#9906;</span><input type="text" id="search-clientes" placeholder="Nombre, telefono..." oninput="filterClientes()"></div>
+        <button class="btn-blue" onclick="openNuevoCliente()">+ Nuevo Cliente</button>
+      </div>
+    </div>
+    <div class="table-wrap desktop-table"><table><thead><tr><th>Nombre</th><th>Telefono</th><th>Email</th><th>Ordenes</th><th>Registrado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-clientes"></tbody></table></div>
+    <div class="mobile-list" id="mobile-clientes"></div>
+  </div>
+
+  <!-- AUDITORIA (solo Alan) -->
+  <div class="page" id="page-auditoria">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Historial de Cambios</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Todos los movimientos registrados en el sistema</div>
+      </div>
+      <div style="display:flex;gap:0.75rem;align-items:center;">
+        <select id="filter-audit-user" onchange="filterAuditoria()" style="width:160px;">
+          <option value="">Todos los usuarios</option>
+          <option value="Alan">Alan</option>
+          <option value="Azul">Azul</option>
+          <option value="Alonso">Alonso</option>
+        </select>
+        <select id="filter-audit-accion" onchange="filterAuditoria()" style="width:150px;">
+          <option value="">Todas las acciones</option>
+          <option value="crear">Crear</option>
+          <option value="editar">Editar</option>
+          <option value="estado">Cambio estado</option>
+          <option value="eliminar">Eliminar</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap" style="min-width:0;">
+      <div id="audit-lista"></div>
+    </div>
+  </div>
+
+  <!-- ACTIVIDAD POR USUARIO (solo Alan) -->
+  <div class="page" id="page-usuarios">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Actividad por Usuario</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Resumen de acciones de cada tecnico</div>
+      </div>
+    </div>
+    <div class="stats-grid" id="user-stats"></div>
+    <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin:1.5rem 0 1rem;">Ultimas acciones por usuario</div>
+    <div class="table-wrap" style="min-width:0;"><div id="user-recent"></div></div>
+  </div>
+
+  <!-- SESIONES (solo Alan) -->
+  <div class="page" id="page-sesiones">
+    <div class="table-header">
+      <div>
+        <div class="table-title">Inicios de Sesion</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Registro de quién entró y cuándo</div>
+      </div>
+      <select id="filter-sesion-user" onchange="filterSesiones()" style="width:160px;">
+        <option value="">Todos los usuarios</option>
+        <option value="Alan">Alan</option>
+        <option value="Azul">Azul</option>
+        <option value="Alonso">Alonso</option>
+      </select>
+    </div>
+    <div class="table-wrap desktop-table">
+      <table>
+        <thead><tr><th>Usuario</th><th>Accion</th><th>Dispositivo</th><th>Fecha y Hora</th></tr></thead>
+        <tbody id="tabla-sesiones"></tbody>
+      </table>
+    </div>
+    <div class="mobile-list" id="mobile-sesiones"></div>
+  </div>
+
+  <!-- CONTABILIDAD (solo Alan) -->
+  <div class="page" id="page-contabilidad">
+    <div style="margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <div class="table-title">Contabilidad</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;">Balance financiero del taller</div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <select id="cont-mes" onchange="loadContabilidad()" style="width:140px;">
+          <option value="">Todo el tiempo</option>
+        </select>
+        <button class="btn-blue" onclick="openNuevoMovimiento('ingreso')">+ Ingreso</button>
+        <button class="btn-ghost" onclick="openNuevoMovimiento('gasto')">+ Gasto</button>
+      </div>
+    </div>
+    <!-- Stats -->
+    <div class="stats-grid" style="margin-bottom:1.5rem;">
+      <div class="stat-card"><div class="stat-label">Ingresos</div><div class="stat-num green" id="c-ingresos">$0</div></div>
+      <div class="stat-card"><div class="stat-label">Gastos</div><div class="stat-num red" id="c-gastos">$0</div></div>
+      <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-num" id="c-balance">$0</div></div>
+      <div class="stat-card"><div class="stat-label">Por Cobrar</div><div class="stat-num yellow" id="c-cobrar">$0</div></div>
+    </div>
+    <!-- Grafica simple -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Últimos 6 meses</div>
+      <canvas id="grafica-cont" height="120"></canvas>
+    </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <button id="tab-todos" class="btn-blue btn-sm" onclick="filtrarMovimientos('todos')">Todos</button>
+      <button id="tab-ingresos" class="btn-ghost btn-sm" onclick="filtrarMovimientos('ingreso')">Ingresos</button>
+      <button id="tab-gastos" class="btn-ghost btn-sm" onclick="filtrarMovimientos('gasto')">Gastos</button>
+      <button id="tab-cobrar" class="btn-ghost btn-sm" onclick="filtrarMovimientos('cobrar')">Por Cobrar</button>
+    </div>
+    <!-- Desktop table -->
+    <div class="table-wrap desktop-table">
+      <table><thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th>Método</th><th>Monto</th><th></th></tr></thead>
+      <tbody id="tabla-cont"></tbody></table>
+    </div>
+    <!-- Mobile cards -->
+    <div class="mobile-list" id="mobile-cont"></div>
+  </div>
+
+  <!-- DETALLE ORDEN -->
+  <div class="page" id="page-detalle">
+    <button class="btn-ghost btn-sm" onclick="showPage('ordenes')" style="margin-bottom:1.5rem;">volver</button>
+    <div id="detalle-content"></div>
+  </div>
+
+</div>
+```
+
   </div>
 </div>
 
@@ -330,9 +384,76 @@
     <button class="bottom-nav-item active" id="bnav-dashboard" onclick="showPage('dashboard')"><span class="bottom-nav-icon">◈</span>Dashboard</button>
     <button class="bottom-nav-item" id="bnav-ordenes" onclick="showPage('ordenes')"><span class="bottom-nav-icon">◉</span>Ordenes</button>
     <button class="bottom-nav-item" id="bnav-clientes" onclick="showPage('clientes')"><span class="bottom-nav-icon">◎</span>Clientes</button>
+    <button class="bottom-nav-item master" id="bnav-contabilidad" style="display:none;" onclick="showPage('contabilidad')"><span class="bottom-nav-icon">💰</span>Contab.</button>
     <button class="bottom-nav-item master" id="bnav-auditoria" style="display:none;" onclick="showPage('auditoria')"><span class="bottom-nav-icon">◑</span>Historial</button>
     <button class="bottom-nav-item master" id="bnav-usuarios" style="display:none;" onclick="showPage('usuarios')"><span class="bottom-nav-icon">◐</span>Actividad</button>
     <button class="bottom-nav-item master" id="bnav-sesiones" style="display:none;" onclick="showPage('sesiones')"><span class="bottom-nav-icon">◍</span>Sesiones</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-cont">
+  <div class="modal">
+    <div class="modal-title" id="modal-cont-title">Nuevo Ingreso</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Categoría</label>
+        <select id="cont-categoria">
+          <option value="">— Seleccionar —</option>
+          <optgroup label="Ingresos" id="opt-ingresos">
+            <option value="Reparación">Reparación</option>
+            <option value="Venta componente">Venta componente</option>
+            <option value="Diagnóstico">Diagnóstico</option>
+            <option value="Bitácora">Bitácora/Manual</option>
+            <option value="Otro ingreso">Otro ingreso</option>
+          </optgroup>
+          <optgroup label="Gastos" id="opt-gastos" style="display:none;">
+            <option value="Componentes">Componentes</option>
+            <option value="Herramientas">Herramientas</option>
+            <option value="Renta">Renta/Local</option>
+            <option value="Servicios">Servicios (luz, internet)</option>
+            <option value="Envío">Envío/Paquetería</option>
+            <option value="Publicidad">Publicidad</option>
+            <option value="Otro gasto">Otro gasto</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Monto (MXN)</label>
+        <input type="number" id="cont-monto" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group full">
+        <label>Descripción</label>
+        <input type="text" id="cont-descripcion" placeholder="Describe el movimiento...">
+      </div>
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="cont-fecha">
+      </div>
+      <div class="form-group">
+        <label>Método de Pago</label>
+        <select id="cont-metodo">
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="mercadopago">MercadoPago</option>
+          <option value="paypal">PayPal</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Orden relacionada (opcional)</label>
+        <select id="cont-orden">
+          <option value="">— Sin orden —</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Notas</label>
+        <textarea id="cont-notas" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-cont')">Cancelar</button>
+      <button class="btn-blue" onclick="guardarMovimiento()" id="btn-guardar-cont">Guardar</button>
+    </div>
   </div>
 </div>
 
@@ -406,6 +527,7 @@ async function doLogin(){
     if(u===MASTER){
       document.getElementById('master-badge').style.display='inline-flex';
       document.getElementById('sidebar-master').style.display='block';
+      document.getElementById('bnav-contabilidad').style.display='flex';
       document.getElementById('bnav-auditoria').style.display='flex';
       document.getElementById('bnav-usuarios').style.display='flex';
       document.getElementById('bnav-sesiones').style.display='flex';
@@ -436,6 +558,7 @@ function doLogout(){
   document.getElementById('login-pass').value='';
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
+  document.getElementById('bnav-contabilidad').style.display='none';
   document.getElementById('bnav-auditoria').style.display='none';
   document.getElementById('bnav-usuarios').style.display='none';
   document.getElementById('bnav-sesiones').style.display='none';
@@ -454,11 +577,12 @@ function showPage(name){
   document.getElementById('page-'+name).classList.add('active');
   const map={dashboard:0,ordenes:1,clientes:2};
   if(map[name]!==undefined)document.querySelectorAll('.sidebar-item')[map[name]].classList.add('active');
-  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
+  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
   if(bmap[name]){const b=document.getElementById(bmap[name]);if(b)b.classList.add('active');}
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
+  if(name==='contabilidad')loadContabilidad();
   if(name==='auditoria')loadAuditoria();
   if(name==='usuarios')loadActividad();
   if(name==='sesiones')loadSesiones();
@@ -863,6 +987,219 @@ function poblarSelectClientes(){
   document.getElementById('o-cliente').innerHTML='<option value="">Seleccionar cliente</option>'+allClientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
 }
 
+// ── CONTABILIDAD ─────────────────────────────────────────────
+let allMovimientos=[], graficaChart=null, contTipo='todos';
+
+async function loadContabilidad(){
+  const mes=document.getElementById('cont-mes')?.value;
+  let q=sb.from('contabilidad').select('*,ordenes(folio,marca),clientes(nombre)').order('fecha',{ascending:false});
+  if(mes){const[y,m]=mes.split('-');const ini=`${y}-${m}-01`;const fin=new Date(y,m,0).toISOString().split('T')[0];q=q.gte('fecha',ini).lte('fecha',fin);}
+  const{data}=await q;
+  allMovimientos=data||[];
+  poblarSelectMeses();
+  poblarSelectOrdenes();
+  actualizarStats();
+  renderMovimientos(allMovimientos);
+  renderGrafica();
+}
+
+function poblarSelectMeses(){
+  const sel=document.getElementById('cont-mes');
+  if(!sel)return;
+  const meses=new Set();
+  allMovimientos.forEach(m=>meses.add(m.fecha.substring(0,7)));
+  // Get all months data regardless of filter
+  sb.from('contabilidad').select('fecha').then(({data})=>{
+    const todosM=new Set((data||[]).map(r=>r.fecha.substring(0,7)));
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Todo el tiempo</option>';
+    [...todosM].sort().reverse().forEach(m=>{
+      const[y,mo]=m.split('-');
+      const label=new Date(y,mo-1).toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+      sel.innerHTML+=`<option value="${m}" ${cur===m?'selected':''}>${label}</option>`;
+    });
+  });
+}
+
+function poblarSelectOrdenes(){
+  const sel=document.getElementById('cont-orden');
+  if(!sel)return;
+  sel.innerHTML='<option value="">— Sin orden —</option>'+
+    allOrdenes.map(o=>`<option value="${o.id}">#${o.folio} — ${o.clientes?.nombre||'?'} (${o.marca})</option>`).join('');
+}
+
+function actualizarStats(){
+  const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
+  const gastos=allMovimientos.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
+  const balance=ingresos-gastos;
+  // Cuentas por cobrar: ordenes listas o entregadas sin ingreso registrado
+  const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
+  const porCobrar=allOrdenes.filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
+    .reduce((a,o)=>a+Number(o.costo_estimado||0),0);
+  document.getElementById('c-ingresos').textContent='$'+ingresos.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('c-gastos').textContent='$'+gastos.toLocaleString('es-MX',{minimumFractionDigits:2});
+  const balEl=document.getElementById('c-balance');
+  balEl.textContent='$'+Math.abs(balance).toLocaleString('es-MX',{minimumFractionDigits:2});
+  balEl.className='stat-num '+(balance>=0?'green':'red');
+  document.getElementById('c-cobrar').textContent='$'+porCobrar.toLocaleString('es-MX',{minimumFractionDigits:2});
+}
+
+function filtrarMovimientos(tipo){
+  contTipo=tipo;
+  ['todos','ingresos','gastos','cobrar'].forEach(t=>{
+    const btn=document.getElementById('tab-'+t);
+    if(btn){btn.className=t===tipo?'btn-blue btn-sm':'btn-ghost btn-sm';}
+  });
+  if(tipo==='cobrar'){
+    const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
+    const porCobrar=allOrdenes.filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id));
+    renderCobrar(porCobrar);
+  } else {
+    const list=tipo==='todos'?allMovimientos:allMovimientos.filter(m=>m.tipo===tipo);
+    renderMovimientos(list);
+  }
+}
+
+function renderMovimientos(list){
+  const metodoIcon={efectivo:'💵',transferencia:'🏦',mercadopago:'💳',paypal:'🅿️',otro:'💱'};
+  // desktop
+  const tbody=document.getElementById('tabla-cont');
+  if(tbody) tbody.innerHTML=list.length?list.map(m=>`
+    <tr>
+      <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${m.fecha}</td>
+      <td><span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'↑ Ingreso':'↓ Gasto'}</span></td>
+      <td style="font-size:0.82rem;">${m.categoria}</td>
+      <td><div style="font-size:0.85rem;">${m.descripcion}</div>${m.ordenes?`<div style="font-size:0.72rem;color:var(--blue);">#${m.ordenes.folio}</div>`:''}</td>
+      <td style="font-size:0.82rem;color:var(--text-dim);">${metodoIcon[m.metodo_pago]||''} ${m.metodo_pago}</td>
+      <td style="font-family:var(--mono);font-weight:700;color:${m.tipo==='ingreso'?'var(--green)':'var(--red)'};">${m.tipo==='ingreso'?'+':'-'}$${Number(m.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+      <td><button class="btn-red btn-sm" onclick="eliminarMovimiento('${m.id}')">✕</button></td>
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="7">Sin movimientos</td></tr>`;
+  // mobile
+  const mob=document.getElementById('mobile-cont');
+  if(mob) mob.innerHTML=list.length?list.map(m=>`
+    <div class="m-card" style="cursor:default;">
+      <div class="m-card-top">
+        <span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'↑ Ingreso':'↓ Gasto'}</span>
+        <span style="font-family:var(--mono);font-weight:700;color:${m.tipo==='ingreso'?'var(--green)':'var(--red)'};">${m.tipo==='ingreso'?'+':'-'}$${Number(m.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      </div>
+      <div style="font-weight:500;margin:0.4rem 0;">${m.descripcion}</div>
+      <div style="font-size:0.78rem;color:var(--text-dim);">${m.categoria} · ${m.metodo_pago} · ${m.fecha}</div>
+      ${m.ordenes?`<div style="font-size:0.75rem;color:var(--blue);margin-top:0.2rem;">Orden #${m.ordenes.folio}</div>`:''}
+      <div class="m-card-actions"><button class="btn-red" onclick="eliminarMovimiento('${m.id}')">✕ Eliminar</button></div>
+    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Sin movimientos</div>';
+}
+
+function renderCobrar(ordenes){
+  const tbody=document.getElementById('tabla-cont');
+  if(tbody) tbody.innerHTML=ordenes.length?ordenes.map(o=>`
+    <tr onclick="verDetalle('${o.id}')" style="cursor:pointer;">
+      <td style="font-size:0.78rem;color:var(--text-dim);">${fmtFecha(o.fecha_ingreso)}</td>
+      <td><span class="badge badge-listo">Por Cobrar</span></td>
+      <td>${o.clientes?.nombre||'?'}</td>
+      <td>${o.marca} ${o.modelo||''}</td>
+      <td><span style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">#${o.folio}</span></td>
+      <td style="font-family:var(--mono);font-weight:700;color:var(--yellow);">$${Number(o.costo_estimado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+      <td><button class="btn-blue btn-sm" onclick="event.stopPropagation();registrarCobroOrden('${o.id}')">Cobrar</button></td>
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="7">Todo cobrado</td></tr>`;
+  const mob=document.getElementById('mobile-cont');
+  if(mob) mob.innerHTML=ordenes.length?ordenes.map(o=>`
+    <div class="m-card" onclick="verDetalle('${o.id}')">
+      <div class="m-card-top"><span class="m-card-folio">#${o.folio}</span><span class="badge badge-listo">Por cobrar</span></div>
+      <div class="m-card-name">${o.clientes?.nombre||'?'}</div>
+      <div class="m-card-equipo">${o.marca} ${o.modelo||''}</div>
+      <div class="m-card-bottom">
+        <span style="font-family:var(--mono);color:var(--yellow);font-weight:700;">$${Number(o.costo_estimado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+        <button class="btn-blue btn-sm" onclick="event.stopPropagation();registrarCobroOrden('${o.id}')">Cobrar</button>
+      </div>
+    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Todo cobrado</div>';
+}
+
+async function registrarCobroOrden(ordenId){
+  const o=allOrdenes.find(x=>x.id===ordenId);
+  if(!o)return;
+  const monto=o.costo_final||o.costo_estimado||0;
+  const{error}=await sb.from('contabilidad').insert([{
+    tipo:'ingreso',categoria:'Reparación',
+    descripcion:`Cobro reparación #${o.folio} — ${o.marca} ${o.modelo||''} — ${o.clientes?.nombre||'?'}`,
+    monto,orden_id:ordenId,cliente_id:o.cliente_id,
+    fecha:new Date().toISOString().split('T')[0],
+    metodo_pago:'efectivo',registrado_por:currentUser
+  }]);
+  if(error){notif('Error al registrar cobro','error');return;}
+  notif(`Cobro de $${Number(monto).toLocaleString('es-MX')} registrado`,'success');
+  loadContabilidad();
+}
+
+function renderGrafica(){
+  const canvas=document.getElementById('grafica-cont');
+  if(!canvas)return;
+  // Últimos 6 meses
+  const meses=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date();d.setMonth(d.getMonth()-i);
+    meses.push(d.toISOString().substring(0,7));
+  }
+  const labels=meses.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleDateString('es-MX',{month:'short'});});
+  const dataIngresos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='ingreso'&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
+  const dataGastos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='gasto'&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
+  if(graficaChart)graficaChart.destroy();
+  graficaChart=new Chart(canvas,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Ingresos',data:dataIngresos,backgroundColor:'rgba(48,209,88,0.7)',borderRadius:6},
+      {label:'Gastos',data:dataGastos,backgroundColor:'rgba(255,69,58,0.7)',borderRadius:6}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#7A8290',font:{size:11}}}},scales:{x:{ticks:{color:'#7A8290'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#7A8290',callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,0.05)'}}}}
+  });
+}
+
+let editingContId=null, contTipoActual='ingreso';
+function openNuevoMovimiento(tipo){
+  editingContId=null;
+  contTipoActual=tipo;
+  document.getElementById('modal-cont-title').textContent=tipo==='ingreso'?'Nuevo Ingreso':'Nuevo Gasto';
+  document.getElementById('btn-guardar-cont').textContent='Guardar';
+  document.getElementById('cont-categoria').value='';
+  document.getElementById('cont-monto').value='';
+  document.getElementById('cont-descripcion').value='';
+  document.getElementById('cont-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('cont-metodo').value='efectivo';
+  document.getElementById('cont-notas').value='';
+  document.getElementById('cont-orden').value='';
+  document.getElementById('opt-ingresos').style.display=tipo==='ingreso'?'':'none';
+  document.getElementById('opt-gastos').style.display=tipo==='gasto'?'':'none';
+  poblarSelectOrdenes();
+  document.getElementById('modal-cont').classList.add('open');
+}
+
+async function guardarMovimiento(){
+  const monto=parseFloat(document.getElementById('cont-monto').value);
+  const desc=document.getElementById('cont-descripcion').value.trim();
+  const cat=document.getElementById('cont-categoria').value;
+  if(!monto||!desc||!cat){notif('Completa monto, categoría y descripción','error');return;}
+  const data={
+    tipo:contTipoActual,categoria:cat,descripcion:desc,monto,
+    fecha:document.getElementById('cont-fecha').value,
+    metodo_pago:document.getElementById('cont-metodo').value,
+    notas:document.getElementById('cont-notas').value.trim(),
+    orden_id:document.getElementById('cont-orden').value||null,
+    registrado_por:currentUser
+  };
+  const{error}=await sb.from('contabilidad').insert([data]);
+  if(error){notif('Error: '+error.message,'error');return;}
+  closeModal('modal-cont');
+  notif(contTipoActual==='ingreso'?'Ingreso registrado':'Gasto registrado','success');
+  loadContabilidad();
+}
+
+async function eliminarMovimiento(id){
+  if(!confirm('¿Eliminar este movimiento?'))return;
+  const{error}=await sb.from('contabilidad').delete().eq('id',id);
+  if(error){notif('Error','error');return;}
+  notif('Movimiento eliminado','success');
+  loadContabilidad();
+}
+
 // ── HELPERS ──────────────────────────────────────────────────
 function badgeEstado(e){const L={recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',listo:'Listo',entregado:'Entregado'};return`<span class="badge badge-${e}">${L[e]||e}</span>`;}
 function badgeAccion(a){const L={crear:'Crear',editar:'Editar',estado:'Estado',eliminar:'Eliminar'};return`<span class="badge badge-${a}">${L[a]||a}</span>`;}
@@ -882,5 +1219,6 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 </script>
+
 </body>
 </html>
