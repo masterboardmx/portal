@@ -1455,9 +1455,10 @@ window.addEventListener('resize',()=>{
   if(!currentUser)return;
   document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'flex':'none';
 });
-// Registrar Service Worker para PWA
 // Keepalive — evita que Supabase se pause por inactividad
 setInterval(()=>{ sb.from('clientes').select('id').limit(1).then(()=>{}); }, 4 * 60 * 1000);
+// Registrar Service Worker para PWA
+if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
 </script>
