@@ -531,7 +531,13 @@
       <div class="form-group"><label>Tecnico</label><input type="text" id="o-tecnico"></div>
       <div class="form-group full"><label>Falla Reportada</label><textarea id="o-falla" rows="2"></textarea></div>
       <div class="form-group full"><label>Diagnostico</label><textarea id="o-diagnostico" rows="2"></textarea></div>
-      <div class="form-group"><label>Costo Estimado (MXN)</label><input type="number" id="o-costo-est"></div>
+      <!-- ITEMS DE COTIZACION -->
+      <div class="form-group full">
+        <label>Productos / Servicios (para cotización)</label>
+        <div id="items-container"></div>
+        <button type="button" class="btn-ghost btn-sm" style="margin-top:0.5rem;width:100%;" onclick="agregarItem()">+ Agregar producto/servicio</button>
+      </div>
+      <div class="form-group"><label>Costo Estimado (MXN) <span style="color:var(--text-dim);font-size:0.7rem;">calculado automático</span></label><input type="number" id="o-costo-est" placeholder="0.00" readonly style="opacity:0.7;"></div>
       <div class="form-group"><label>Estado</label>
         <select id="o-estado">
           <option value="recibido">Recibido</option>
@@ -540,6 +546,26 @@
           <option value="listo">Listo para Entregar</option>
           <option value="entregado">Entregado</option>
         </select>
+      </div>
+      <!-- IMPUESTOS -->
+      <div class="form-group full">
+        <label>Impuestos</label>
+        <div style="display:flex;gap:1.5rem;margin-top:0.5rem;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;text-transform:none;letter-spacing:0;color:var(--text);">
+            <input type="checkbox" id="o-iva" onchange="recalcularCosto()" style="width:16px;height:16px;cursor:pointer;">
+            <span>IVA 16%</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.85rem;text-transform:none;letter-spacing:0;color:var(--text);">
+            <input type="checkbox" id="o-isr" onchange="recalcularCosto()" style="width:16px;height:16px;cursor:pointer;">
+            <span>ISR 1.25%</span>
+          </label>
+        </div>
+        <div id="resumen-impuestos" style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-dim);display:none;">
+          <div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--border);"><span>Subtotal:</span><span id="r-subtotal">$0.00</span></div>
+          <div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--border);" id="r-iva-row"><span>IVA 16%:</span><span id="r-iva">$0.00</span></div>
+          <div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--border);" id="r-isr-row"><span>ISR 1.25%:</span><span id="r-isr">$0.00</span></div>
+          <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-weight:700;color:var(--text);"><span>Total:</span><span id="r-total">$0.00</span></div>
+        </div>
       </div>
       <div class="form-group full"><label>Notas Internas</label><textarea id="o-notas" rows="2"></textarea></div>
     </div>
@@ -860,6 +886,11 @@ function openNuevaOrden(){
   document.getElementById('o-costo-est').value='';
   document.getElementById('o-folio').value='';
   document.getElementById('o-estado').value='recibido';
+  document.getElementById('o-iva').checked=false;
+  document.getElementById('o-isr').checked=false;
+  document.getElementById('resumen-impuestos').style.display='none';
+  document.getElementById('items-container').innerHTML='';
+  agregarItem();
   document.getElementById('o-cliente').value='';
   document.getElementById('modal-orden').classList.add('open');
 }
@@ -877,9 +908,16 @@ function editarOrden(id){
   document.getElementById('o-tecnico').value=o.tecnico||'';
   document.getElementById('o-falla').value=o.falla_reportada||'';
   document.getElementById('o-diagnostico').value=o.diagnostico||'';
-  document.getElementById('o-costo-est').value=o.costo_estimado||'';
   document.getElementById('o-estado').value=o.estado||'recibido';
   document.getElementById('o-notas').value=o.notas||'';
+  document.getElementById('o-iva').checked=o.aplica_iva||false;
+  document.getElementById('o-isr').checked=o.aplica_isr||false;
+  // Load items
+  document.getElementById('items-container').innerHTML='';
+  const items=o.items||[];
+  if(items.length){items.forEach(it=>agregarItem(it.descripcion,it.cantidad,it.precio));}
+  else{agregarItem();}
+  recalcularCosto();
   document.getElementById('modal-orden').classList.add('open');
 }
 
@@ -888,7 +926,14 @@ async function guardarOrden(){
   const marca=document.getElementById('o-marca').value.trim();
   const falla=document.getElementById('o-falla').value.trim();
   if(!cliente_id||!marca||!falla){notif('Completa cliente, marca y falla','error');return;}
-  const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:parseFloat(document.getElementById('o-costo-est').value)||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser};
+  const items=getItems();
+  const subtotal=items.reduce((a,i)=>a+i.cantidad*i.precio,0);
+  const iva=document.getElementById('o-iva').checked;
+  const isr=document.getElementById('o-isr').checked;
+  const ivaAmt=iva?subtotal*0.16:0;
+  const isrAmt=isr?subtotal*0.0125:0;
+  const total=subtotal+ivaAmt+isrAmt;
+  const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:total||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser,aplica_iva:iva,aplica_isr:isr,items:items};
   const folioManual=parseInt(document.getElementById('o-folio').value);
   if(folioManual) data.folio=folioManual;
   let err,rid;
@@ -1058,174 +1103,128 @@ async function eliminarFoto(ordenId, nombre){
 }
 
 // ── COTIZACIÓN PDF ────────────────────────────────────────────
+
+// ── ITEMS Y CALCULOS ─────────────────────────────────────────
+function agregarItem(desc,cant,precio){
+  desc=desc||'';cant=cant||1;precio=precio||0;
+  const c=document.getElementById('items-container');
+  const div=document.createElement('div');
+  div.style.cssText='display:grid;grid-template-columns:1fr 60px 100px 32px;gap:0.5rem;margin-bottom:0.5rem;align-items:center;';
+  div.innerHTML=`
+    <input type="text" placeholder="Descripción" value="${desc}" oninput="recalcularCosto()" style="font-size:0.82rem;padding:0.5rem 0.7rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;">
+    <input type="number" placeholder="Cant" value="${cant}" min="1" oninput="recalcularCosto()" style="font-size:0.82rem;padding:0.5rem 0.4rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;text-align:center;">
+    <input type="number" placeholder="Precio" value="${precio||''}" min="0" step="0.01" oninput="recalcularCosto()" style="font-size:0.82rem;padding:0.5rem 0.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;">
+    <button onclick="this.parentElement.remove();recalcularCosto()" style="background:rgba(255,69,58,0.15);color:var(--red);border:1px solid rgba(255,69,58,0.3);border-radius:6px;padding:0.4rem;cursor:pointer;font-size:0.85rem;width:32px;">✕</button>`;
+  c.appendChild(div);
+}
+
+function getItems(){
+  const rows=document.getElementById('items-container').children;
+  const items=[];
+  for(const row of rows){
+    const inputs=row.querySelectorAll('input');
+    const desc=inputs[0].value.trim();
+    const cant=parseInt(inputs[1].value)||1;
+    const precio=parseFloat(inputs[2].value)||0;
+    if(desc||precio)items.push({descripcion:desc,cantidad:cant,precio});
+  }
+  return items;
+}
+
+function recalcularCosto(){
+  const items=getItems();
+  const subtotal=items.reduce((a,i)=>a+i.cantidad*i.precio,0);
+  const iva=document.getElementById('o-iva')?.checked;
+  const isr=document.getElementById('o-isr')?.checked;
+  const ivaAmt=iva?subtotal*0.16:0;
+  const isrAmt=isr?subtotal*0.0125:0;
+  const total=subtotal+ivaAmt+isrAmt;
+  document.getElementById('o-costo-est').value=total?total.toFixed(2):'';
+  const res=document.getElementById('resumen-impuestos');
+  if(subtotal>0&&(iva||isr)){
+    res.style.display='block';
+    document.getElementById('r-subtotal').textContent='$'+subtotal.toLocaleString('es-MX',{minimumFractionDigits:2});
+    document.getElementById('r-iva-row').style.display=iva?'flex':'none';
+    document.getElementById('r-iva').textContent='$'+ivaAmt.toLocaleString('es-MX',{minimumFractionDigits:2});
+    document.getElementById('r-isr-row').style.display=isr?'flex':'none';
+    document.getElementById('r-isr').textContent='$'+isrAmt.toLocaleString('es-MX',{minimumFractionDigits:2});
+    document.getElementById('r-total').textContent='$'+total.toLocaleString('es-MX',{minimumFractionDigits:2});
+  } else { res.style.display='none'; }
+}
+
 function generarCotizacion(id){
   const o=allOrdenes.find(x=>x.id===id);if(!o)return;
   const cliente=o.clientes||{};
   const hoy=new Date();
-  const fecha=`${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
-  const monto=o.costo_estimado?Number(o.costo_estimado):0;
-  const montoFmt=monto?'$'+monto.toLocaleString('es-MX',{minimumFractionDigits:2}):'$0.00';
-  const desc=o.diagnostico||o.falla_reportada||'Servicio de reparación';
-  const equipo=`${o.marca}${o.modelo?' '+o.modelo:''}`;
+  const fecha=String(hoy.getDate()).padStart(2,'0')+'/'+String(hoy.getMonth()+1).padStart(2,'0')+'/'+hoy.getFullYear();
+  const items=o.items&&o.items.length?o.items:[{descripcion:(o.marca+' '+(o.modelo||'')).trim(),cantidad:1,precio:o.costo_estimado||0}];
+  const iva=o.aplica_iva||false;
+  const isr=o.aplica_isr||false;
+  const subtotal=items.reduce((a,i)=>a+i.cantidad*i.precio,0);
+  const ivaAmt=iva?subtotal*0.16:0;
+  const isrAmt=isr?subtotal*0.0125:0;
+  const total=subtotal+ivaAmt+isrAmt;
+  const fmt=n=>'$'+Number(n).toLocaleString('es-MX',{minimumFractionDigits:2});
+  const desc=o.diagnostico||o.falla_reportada||'Servicio de reparacion';
+  const logoSrc='data:image/png;base64,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brXZMair/krnFy9eoNf3czVkZQxbnMnAC+1evnxp7rqYB1WxSv/DZ8+egVykQD5kJXWiy3hi8EI+E1bHIgALpH/hFEUpFUqYH5RaIKPmVFmQgEpUwr++UuNdmtkuJ5BrprRSSpUhiqJGw2k4DU61Nk1lLGIMDDfi4cOHGRmPkHYPSrgF9+7fRxU5L9F43LhxE1saWHh/KS0tK+uJiRcgWISAEEIMwxQXq+YtWIi0w06WZaO2bL18+UpFyag3GRBBXbP2p8NHjiqVSlilz3Hc/PkLTb+MzlIEBDflt992ffr52H/++ae4WLV6zdqJk6ZWiAU9JgbMc1FR8dBhI/ftP0DTdFbWkxEjP01KTjH9+g3zbHFHeGewFAtEqKAQARFkQQREkAUREEEWREAEWRABEWRBBESQBREQQRZEQARZEAERZEEERJAFERBBFkRABFkQARFkQQREkAUREEEWREAEWRABEWRBBESQBREQQRZEQARZEAERZEEERJAFERBBFkRABFkQARFkQQREkAUREEEWREAEWRABEWRBBESQBREQQRZEQARZEAERZEEERJAFERBBFkRABFkQARFkQQREkAUREEEWREAEWRABEWRBBESQBREQQRZEQARZEAERZEEERJAFERBBFv8HdTiirVqKjqcAAAAASUVORK5CYII=';
+  const itemsRows=items.map(it=>'<tr><td>'+it.descripcion+'</td><td style="text-align:center">'+it.cantidad+'</td><td style="text-align:right">'+fmt(it.precio)+'</td><td style="text-align:right">'+fmt(it.cantidad*it.precio)+'</td></tr>').join('');
+  const ivaRow=iva?'<tr><td colspan="2" style="border:1px solid #ddd;"></td><td style="text-align:right;font-weight:700;padding:8px 14px;border:1px solid #ddd;">IVA</td><td style="text-align:right;font-weight:700;padding:8px 14px;border:1px solid #ddd;">'+fmt(ivaAmt)+' MXN</td></tr>':'';
+  const isrRow=isr?'<tr><td colspan="2" style="border:1px solid #ddd;"></td><td style="text-align:right;font-weight:700;padding:8px 14px;border:1px solid #ddd;">ISR</td><td style="text-align:right;font-weight:700;padding:8px 14px;border:1px solid #ddd;">'+fmt(isrAmt)+' MXN</td></tr>':'';
 
-  const logoSVG=`<svg width="60" height="60" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-    <rect width="512" height="512" rx="60" fill="#0a0c10"/>
-    <g stroke="white" stroke-width="28" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="165" y1="80" x2="165" y2="180"/>
-      <line x1="215" y1="80" x2="215" y2="180"/>
-      <path d="M140 175 Q140 240 190 240 Q240 240 240 175"/>
-      <line x1="190" y1="240" x2="190" y2="300"/>
-      <rect x="270" y="120" width="190" height="150" rx="18"/>
-      <circle cx="365" cy="195" r="52"/>
-      <circle cx="365" cy="195" r="18"/>
-      <line x1="310" y1="290" x2="310" y2="330"/>
-      <line x1="420" y1="290" x2="420" y2="330"/>
-    </g>
-  </svg>`;
-
-  const html=`<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:Arial,sans-serif;font-size:11pt;color:#111;background:white;}
-  .page{padding:30px 40px;max-width:820px;margin:0 auto;}
-
-  /* HEADER */
-  .header{display:flex;justify-content:space-between;align-items:flex-start;background:#1a2a4a;color:white;padding:20px 24px;margin-bottom:0;}
-  .header-left{display:flex;align-items:center;gap:14px;}
-  .logo-svg{width:64px;height:64px;flex-shrink:0;}
-  .empresa-nombre{font-size:1.3rem;font-weight:900;letter-spacing:0.08em;color:white;}
-  .empresa-info{font-size:0.72rem;color:#ccd;margin-top:3px;line-height:1.7;}
-  .header-right{text-align:right;}
-  .cot-titulo{font-size:1.8rem;font-weight:900;color:white;letter-spacing:0.05em;}
-  .cot-datos{margin-top:10px;display:grid;grid-template-columns:auto auto;gap:2px 16px;text-align:left;}
-  .cot-datos .lbl{font-size:0.72rem;font-weight:700;color:#aac;text-transform:uppercase;letter-spacing:0.08em;}
-  .cot-datos .val{font-size:0.82rem;color:white;font-weight:600;}
-
-  /* DESCRIPCION */
-  .desc-section{border:1px solid #ccc;border-top:none;padding:16px 24px;}
-  .desc-titulo{font-weight:700;font-size:0.9rem;margin-bottom:8px;text-transform:uppercase;}
-  .desc-texto{font-size:0.88rem;line-height:1.7;text-transform:uppercase;}
-
-  /* TABLA */
-  .tabla{width:100%;border-collapse:collapse;margin-top:0;}
-  .tabla th{background:#1a2a4a;color:white;padding:10px 14px;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-align:left;}
-  .tabla th.center{text-align:center;}
-  .tabla th.right{text-align:right;}
-  .tabla td{padding:12px 14px;border:1px solid #ddd;font-size:0.88rem;vertical-align:middle;}
-  .tabla td.center{text-align:center;}
-  .tabla td.right{text-align:right;}
-  .tabla .producto-cel{min-height:80px;}
-  .tabla tfoot td{padding:8px 14px;border:1px solid #ddd;font-size:0.85rem;}
-  .tabla tfoot .lbl{font-weight:700;text-align:right;}
-  .tabla tfoot .val{text-align:right;font-weight:700;}
-  .tabla tfoot .total-row td{background:#1a2a4a;color:white;font-weight:900;font-size:0.95rem;}
-  .valida{font-size:0.8rem;color:#555;font-style:italic;padding:8px 14px;border:1px solid #ddd;border-top:none;}
-
-  /* TERMINOS */
-  .terminos{margin-top:24px;border-top:2px solid #1a2a4a;padding-top:12px;}
-  .terminos-titulo{font-weight:700;font-size:0.85rem;color:#1a2a4a;margin-bottom:6px;text-transform:uppercase;}
-  .terminos-texto{font-size:0.78rem;color:#444;line-height:1.7;text-align:justify;}
-
-  @media print{
-    body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    .page{padding:15px 20px;}
-    .no-print{display:none;}
-  }
-</style>
-</head>
-<body>
-<div class="page">
-
-  <!-- BOTON IMPRIMIR -->
-  <div class="no-print" style="margin-bottom:12px;text-align:right;">
-    <button onclick="window.print()" style="background:#1a2a4a;color:white;border:none;padding:10px 22px;border-radius:6px;font-size:0.9rem;cursor:pointer;font-weight:700;">🖨 Imprimir / Guardar PDF</button>
-  </div>
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-left">
-      <div class="logo-svg">${logoSVG}</div>
-      <div>
-        <div class="empresa-nombre">MASTERBOARD</div>
-        <div class="empresa-info">
-          CALLE DIVISIÓN DEL NORTE #1303<br>
-          COL. FRANCISCO VILLA.<br>
-          MAZATLÁN, SIN. CP.82127<br>
-          Tel: 669-271-1522
-        </div>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="cot-titulo">COTIZACIÓN</div>
-      <div class="cot-datos">
-        <span class="lbl">FECHA:</span><span class="val">${fecha}</span>
-        <span class="lbl">CLIENTE:</span><span class="val">${(cliente.nombre||'').toUpperCase()}</span>
-        <span class="lbl">TELÉFONO:</span><span class="val">${cliente.telefono||''}</span>
-        <span class="lbl">FOLIO:</span><span class="val">${o.folio}</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- DESCRIPCION -->
-  <div class="desc-section">
-    <div class="desc-titulo">Descripción:</div>
-    <div class="desc-texto">${desc}</div>
-  </div>
-
-  <!-- TABLA -->
-  <table class="tabla">
-    <thead>
-      <tr>
-        <th>Producto</th>
-        <th class="center">Cantidad</th>
-        <th class="right">Precio</th>
-        <th class="right">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="producto-cel">${equipo.toUpperCase()}${o.numero_serie?`<br><span style="font-size:0.78rem;color:#666;">No. Serie: ${o.numero_serie}</span>`:''}</td>
-        <td class="center">1</td>
-        <td class="right">${montoFmt}</td>
-        <td class="right">${montoFmt}</td>
-      </tr>
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2" class="valida" style="border:1px solid #ddd;">Cotización válida por 15 días*</td>
-        <td class="lbl">SUBTOTAL</td>
-        <td class="val">${montoFmt} MXN</td>
-      </tr>
-      <tr>
-        <td colspan="2" style="border:1px solid #ddd;"></td>
-        <td class="lbl">DESCUENTO</td>
-        <td class="val">-</td>
-      </tr>
-      <tr class="total-row">
-        <td colspan="2"></td>
-        <td style="text-align:right;font-weight:900;">TOTAL</td>
-        <td style="text-align:right;font-weight:900;">${montoFmt} MXN</td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <!-- TERMINOS -->
-  <div class="terminos">
-    <div class="terminos-titulo">Términos y Condiciones</div>
-    <div class="terminos-texto">Las reparaciones realizadas cuentan con una garantía de 40 días, aplicable únicamente sobre los trabajos efectuados. La garantía no cubre daños ocasionados por mal uso, condiciones externas como humedad, sobrecargas eléctricas o intervenciones posteriores de terceros. Para hacerla válida es indispensable presentar este recibo.</div>
-  </div>
-
-</div>
-</body>
-</html>`;
+  const html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><style>'
+    +'*{margin:0;padding:0;box-sizing:border-box;}'
+    +'body{font-family:Arial,sans-serif;font-size:11pt;color:#111;background:white;}'
+    +'.page{padding:30px 40px;max-width:820px;margin:0 auto;}'
+    +'.header{display:flex;justify-content:space-between;align-items:flex-start;background:#1a2a4a;color:white;padding:20px 24px;}'
+    +'.header-left{display:flex;align-items:center;gap:14px;}'
+    +'.logo-img{width:64px;height:64px;border-radius:10px;}'
+    +'.empresa-nombre{font-size:1.3rem;font-weight:900;letter-spacing:0.08em;color:white;}'
+    +'.empresa-info{font-size:0.72rem;color:#ccd;margin-top:3px;line-height:1.7;}'
+    +'.cot-titulo{font-size:1.8rem;font-weight:900;color:white;letter-spacing:0.05em;}'
+    +'.cot-datos{margin-top:10px;display:grid;grid-template-columns:auto auto;gap:2px 16px;}'
+    +'.lbl{font-size:0.72rem;font-weight:700;color:#aac;text-transform:uppercase;letter-spacing:0.08em;}'
+    +'.val{font-size:0.82rem;color:white;font-weight:600;}'
+    +'.desc-section{border:1px solid #ccc;border-top:none;padding:16px 24px;}'
+    +'.desc-titulo{font-weight:700;font-size:0.9rem;margin-bottom:8px;text-transform:uppercase;}'
+    +'.desc-texto{font-size:0.88rem;line-height:1.7;text-transform:uppercase;white-space:pre-line;}'
+    +'.tabla{width:100%;border-collapse:collapse;}'
+    +'.tabla th{background:#1a2a4a;color:white;padding:10px 14px;font-size:0.8rem;font-weight:700;text-transform:uppercase;}'
+    +'.tabla td{padding:12px 14px;border:1px solid #ddd;font-size:0.88rem;vertical-align:middle;}'
+    +'.total-row td{background:#1a2a4a;color:white;font-weight:900;font-size:0.95rem;padding:10px 14px;}'
+    +'.terminos{margin-top:24px;border-top:2px solid #1a2a4a;padding-top:12px;}'
+    +'.terminos-titulo{font-weight:700;font-size:0.85rem;color:#1a2a4a;margin-bottom:6px;text-transform:uppercase;}'
+    +'.terminos-texto{font-size:0.78rem;color:#444;line-height:1.7;text-align:justify;}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{padding:15px 20px;}.no-print{display:none;}}'
+    +'</style></head><body><div class="page">'
+    +'<div class="no-print" style="margin-bottom:12px;text-align:right;"><button onclick="window.print()" style="background:#1a2a4a;color:white;border:none;padding:10px 22px;border-radius:6px;font-size:0.9rem;cursor:pointer;font-weight:700;">&#128424; Imprimir / Guardar PDF</button></div>'
+    +'<div class="header"><div class="header-left">'
+    +'<img src="'+logoSrc+'" class="logo-img">'
+    +'<div><div class="empresa-nombre">MASTERBOARD</div>'
+    +'<div class="empresa-info">CALLE DIVISIÓN DEL NORTE #1303<br>COL. FRANCISCO VILLA.<br>MAZATLÁN, SIN. CP.82127<br>Tel: 669-271-1522</div></div></div>'
+    +'<div style="text-align:right"><div class="cot-titulo">COTIZACIÓN</div>'
+    +'<div class="cot-datos"><span class="lbl">FECHA:</span><span class="val">'+fecha+'</span>'
+    +'<span class="lbl">CLIENTE:</span><span class="val">'+(cliente.nombre||'').toUpperCase()+'</span>'
+    +'<span class="lbl">TELÉFONO:</span><span class="val">'+(cliente.telefono||'')+'</span>'
+    +'<span class="lbl">FOLIO:</span><span class="val">'+o.folio+'</span></div></div></div>'
+    +'<div class="desc-section"><div class="desc-titulo">Descripción:</div><div class="desc-texto">'+desc+'</div></div>'
+    +'<table class="tabla"><thead><tr><th>Producto</th><th style="text-align:center">Cantidad</th><th style="text-align:right">Precio</th><th style="text-align:right">Total</th></tr></thead>'
+    +'<tbody>'+itemsRows+'<tr><td colspan="4" style="height:30px;border:1px solid #ddd;"></td></tr></tbody>'
+    +'<tfoot>'
+    +'<tr><td colspan="2" style="font-size:0.8rem;color:#555;font-style:italic;padding:8px 14px;border:1px solid #ddd;">Cotización válida por 15 días*</td>'
+    +'<td style="text-align:right;font-weight:700;padding:8px 14px;border:1px solid #ddd;">SUBTOTAL</td>'
+    +'<td style="text-align:right;font-weight:700;padding:8px 14px;border:1px solid #ddd;">'+fmt(subtotal)+' MXN</td></tr>'
+    +ivaRow+isrRow
+    +'<tr class="total-row"><td colspan="2"></td><td style="text-align:right;">TOTAL</td><td style="text-align:right;">'+fmt(total)+' MXN</td></tr>'
+    +'</tfoot></table>'
+    +'<div class="terminos"><div class="terminos-titulo">Términos y Condiciones</div>'
+    +'<div class="terminos-texto">Las reparaciones realizadas cuentan con una garantía de 40 días, aplicable únicamente sobre los trabajos efectuados. La garantía no cubre daños ocasionados por mal uso, condiciones externas como humedad, sobrecargas eléctricas o intervenciones posteriores de terceros. Para hacerla válida es indispensable presentar este recibo.</div></div>'
+    +'</div></body></html>';
 
   const win=window.open('','_blank');
   win.document.write(html);
   win.document.close();
 }
+
 
 async function cambiarEstado(id,estado){
   const o=allOrdenes.find(x=>x.id===id);
