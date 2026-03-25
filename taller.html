@@ -202,6 +202,11 @@
         <div class="sidebar-item master-item" onclick="showPage('sesiones')"><span class="sidebar-icon">◍</span> Sesiones</div>
         <div class="sidebar-item master-item" onclick="showPage('backup')"><span class="sidebar-icon">💾</span> Backup</div>
       </div>
+      <!-- Contabilidad solo para Alonso -->
+      <div id="sidebar-cont-alonso" style="display:none;">
+        <div class="sidebar-section">Extra</div>
+        <div class="sidebar-item master-item" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
+      </div>
     </div>
     <div class="content">
 
@@ -600,6 +605,7 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const USERS={'Azul':'Corona1303','Alan':'Terry1303','Alonso':'Neo1303'};
 const MASTER='Alan';
+const CONTABILIDAD_USERS=['Alan','Alonso'];
 let currentUser=null,allOrdenes=[],allClientes=[],allAuditoria=[],editingOrdenId=null,editingClienteId=null;
 
 async function doLogin(){
@@ -621,6 +627,12 @@ async function doLogin(){
       document.getElementById('bnav-usuarios').style.display='flex';
       document.getElementById('bnav-sesiones').style.display='flex';
       document.getElementById('bnav-backup').style.display='flex';
+    }
+    if(CONTABILIDAD_USERS.includes(u)&&u!==MASTER){
+      // Alonso: solo contabilidad del menú maestro
+      document.getElementById('bnav-contabilidad').style.display='flex';
+      // Agregar contabilidad al sidebar sin mostrar todo el bloque maestro
+      document.getElementById('sidebar-cont-alonso').style.display='block';
     }
     loadAll();
     // registrar inicio de sesion con detalles del dispositivo
@@ -648,6 +660,7 @@ function doLogout(){
   document.getElementById('login-pass').value='';
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
+  document.getElementById('sidebar-cont-alonso').style.display='none';
   document.getElementById('bnav-backup').style.display='none';
   document.getElementById('bnav-contabilidad').style.display='none';
   document.getElementById('bnav-auditoria').style.display='none';
@@ -658,10 +671,13 @@ function doLogout(){
 
 function showPage(name){
   // proteger paginas de maestro
-  const masterPages=['auditoria','usuarios','sesiones'];
+  const masterPages=['auditoria','usuarios','sesiones','backup'];
+  const contPages=['contabilidad'];
   if(masterPages.includes(name) && currentUser!==MASTER){
-    notif('Acceso restringido','error');
-    return;
+    notif('Acceso restringido','error');return;
+  }
+  if(contPages.includes(name) && !CONTABILIDAD_USERS.includes(currentUser)){
+    notif('Acceso restringido','error');return;
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
