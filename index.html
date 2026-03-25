@@ -37,6 +37,8 @@
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 2.5rem; height: 64px;
+      padding-top: env(safe-area-inset-top);
+      height: calc(64px + env(safe-area-inset-top));
       background: rgba(10,12,16,0.9); backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
@@ -244,10 +246,10 @@
   </a>
   <ul class="nav-links" id="navLinks">
     <li><a href="#inicio">Inicio</a></li>
+    <li><a href="#bitacora">Bitácora</a></li>
     <li><a href="#servicios">Servicios</a></li>
     <li><a href="#productos">Productos</a></li>
     <li><a href="#youtube">YouTube</a></li>
-    <li><a href="#bitacora">Bitácora</a></li>
     <li><a href="#contacto">Contacto</a></li>
     <li><a href="/taller.html" style="color:var(--blue);">⚙ Taller</a></li>
   </ul>
@@ -272,6 +274,44 @@
       <div class="hero-stat"><div class="num counter" data-target="40">0</div><div class="label">Días Garantía</div></div>
       <div class="hero-stat"><div class="num counter" data-target="99" data-suffix="%">0</div><div class="label">Satisfacción</div></div>
       <div class="hero-stat"><div class="num counter" data-prefix="$" data-target="0">0</div><div class="label">Diagnóstico</div></div>
+    </div>
+  </div>
+</section>
+
+
+<section id="bitacora">
+  <div class="container">
+    <div class="section-label reveal">// PRODUCTO DIGITAL</div>
+    <h2 class="section-title reveal" style="margin-bottom:0.5rem;">Bitácora de Tarjetas Inverter</h2>
+    <p class="section-sub reveal" style="margin-bottom:2rem;">El recurso técnico definitivo para técnicos y entusiastas de la electrónica.</p>
+    <div class="bitacora-card reveal-scale">
+      <div class="bitacora-left">
+        <div class="bitacora-left-inner">
+          <div class="bit-badge">📒 PRODUCTO DIGITAL</div>
+          <div class="bit-title">Bitácora <span>Mirage</span><br>Inverter</div>
+          <div class="bit-sub">Guía técnica especializada en tarjetas Mirage. Distribuida vía grupo privado de Telegram.</div>
+          <div class="bit-price-row"><span class="bit-currency">MXN</span><span class="bit-price">$600</span></div>
+          <div class="bit-price-note">Pago único · Acceso inmediato · Sin mensualidad</div>
+          <a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20la%20Bitácora%20Mirage%20Inverter" class="btn-tg" target="_blank">
+            <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.867l-2.965-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.963.692z"/></svg>
+            OBTENER EN TELEGRAM
+          </a>
+        </div>
+      </div>
+      <div class="bitacora-right">
+        <h3>¿Qué incluye?</h3>
+        <ul class="bit-features">
+          <li><div class="bit-icon">📋</div><div><strong>Bitácora Técnica Mirage</strong><span>Documentación detallada de fallas, componentes y soluciones en tarjetas inverter marca Mirage.</span></div></li>
+          <li><div class="bit-icon">💬</div><div><strong>Grupo Privado de Telegram</strong><span>Acceso al grupo donde resolvemos dudas técnicas en tiempo real. Comunidad activa de técnicos.</span></div></li>
+          <li><div class="bit-icon">🔧</div><div><strong>Apoyo en tu Primera Reparación</strong><span>Te guiamos en tu primera reparación paso a paso. Soporte personalizado para que salga perfecta.</span></div></li>
+          <li><div class="bit-icon">🔄</div><div><strong>Actualizaciones Incluidas</strong><span>Recibes todas las actualizaciones futuras de esta bitácora sin costo adicional.</span></div></li>
+          <li><div class="bit-icon">📚</div><div><strong>Acceso a Futuros Manuales</strong><span>Acceso anticipado y a precio especial a futuros manuales de otras marcas inverter.</span></div></li>
+        </ul>
+        <div class="bit-offer">
+          <h4>🔥 OFERTA — Te ayudamos en tu primera reparación</h4>
+          <p>Con la compra de la Bitácora entras al grupo privado, tienes la guía técnica completa, apoyo directo para tu primera reparación, y acceso a todos los futuros manuales de otras marcas. Una sola inversión, conocimiento para toda la vida.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -326,24 +366,12 @@
   <div class="container">
     <div class="section-label reveal">// PRODUCTOS</div>
     <h2 class="section-title reveal">Componentes Disponibles</h2>
-    <p class="section-sub reveal">Pregunta por disponibilidad y precios vía WhatsApp.</p>
-    <div class="products-grid">
-      <div class="product-card reveal stagger-1">
-        <div class="product-visual"><div class="pvc"></div><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.2" stroke-linecap="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 7V5M10 7V5M14 7V5M18 7V5M6 17v2M10 17v2M14 17v2M18 17v2M2 12h20"/></svg></div>
-        <div class="product-body"><h3>Tarjeta Inverter Universal</h3><p>Compatible con múltiples marcas de mini splits</p><div class="product-badge">CONSULTAR PRECIO</div><a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20la%20Tarjeta%20Inverter%20Universal" class="btn-wa" target="_blank">💬 Consultar vía WhatsApp</a></div>
-      </div>
-      <div class="product-card reveal stagger-2">
-        <div class="product-visual"><div class="pvc"></div><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
-        <div class="product-body"><h3>Kit de Sensores</h3><p>Sensores de temperatura y presión para mini splits</p><div class="product-badge">CONSULTAR PRECIO</div><a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20el%20Kit%20de%20Sensores" class="btn-wa" target="_blank">💬 Consultar vía WhatsApp</a></div>
-      </div>
-      <div class="product-card reveal stagger-3">
-        <div class="product-visual"><div class="pvc"></div><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-        <div class="product-body"><h3>Módulos de Potencia</h3><p>IGBTs y transistores para circuitos inverter</p><div class="product-badge">CONSULTAR PRECIO</div><a href="https://wa.me/526692711522?text=Hola,%20me%20interesan%20los%20Módulos%20de%20Potencia" class="btn-wa" target="_blank">💬 Consultar vía WhatsApp</a></div>
-      </div>
-      <div class="product-card reveal stagger-4">
-        <div class="product-visual"><div class="pvc"></div><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
-        <div class="product-body"><h3>Componentes Generales</h3><p>Capacitores, resistencias, diodos, transistores</p><div class="product-badge">CONSULTAR PRECIO</div><a href="https://wa.me/526692711522?text=Hola,%20me%20interesan%20componentes%20electrónicos" class="btn-wa" target="_blank">💬 Consultar vía WhatsApp</a></div>
-      </div>
+    <p class="section-sub reveal">Próximamente tendremos componentes y refacciones disponibles para compra directa.</p>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;background:rgba(255,255,255,0.03);border:1px dashed rgba(10,132,255,0.25);border-radius:16px;text-align:center;" class="reveal">
+      <div style="font-size:3rem;margin-bottom:1rem;">🔧</div>
+      <div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--blue);letter-spacing:0.1em;margin-bottom:0.75rem;">PRÓXIMAMENTE</div>
+      <p style="color:var(--text-dim);font-size:0.9rem;max-width:400px;line-height:1.7;">Estamos preparando nuestro catálogo de componentes. Por ahora puedes consultarnos directamente vía WhatsApp.</p>
+      <a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20un%20componente%20electrónico" class="btn-wa" target="_blank" style="margin-top:1.5rem;display:inline-flex;align-items:center;gap:0.5rem;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);color:#25D366;padding:0.75rem 1.5rem;border-radius:8px;text-decoration:none;font-size:0.85rem;font-weight:500;">💬 Consultar vía WhatsApp</a>
     </div>
   </div>
 </section>
@@ -388,42 +416,6 @@
   </div>
 </section>
 
-<section id="bitacora">
-  <div class="container">
-    <div class="section-label reveal">// PRODUCTO DIGITAL</div>
-    <h2 class="section-title reveal" style="margin-bottom:0.5rem;">Bitácora de Tarjetas Inverter</h2>
-    <p class="section-sub reveal" style="margin-bottom:2rem;">El recurso técnico definitivo para técnicos y entusiastas de la electrónica.</p>
-    <div class="bitacora-card reveal-scale">
-      <div class="bitacora-left">
-        <div class="bitacora-left-inner">
-          <div class="bit-badge">📒 PRODUCTO DIGITAL</div>
-          <div class="bit-title">Bitácora <span>Mirage</span><br>Inverter</div>
-          <div class="bit-sub">Guía técnica especializada en tarjetas Mirage. Distribuida vía grupo privado de Telegram.</div>
-          <div class="bit-price-row"><span class="bit-currency">MXN</span><span class="bit-price">$500</span></div>
-          <div class="bit-price-note">Pago único · Acceso inmediato · Sin mensualidad</div>
-          <a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20la%20Bitácora%20Mirage%20Inverter" class="btn-tg" target="_blank">
-            <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.867l-2.965-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.963.692z"/></svg>
-            OBTENER EN TELEGRAM
-          </a>
-        </div>
-      </div>
-      <div class="bitacora-right">
-        <h3>¿Qué incluye?</h3>
-        <ul class="bit-features">
-          <li><div class="bit-icon">📋</div><div><strong>Bitácora Técnica Mirage</strong><span>Documentación detallada de fallas, componentes y soluciones en tarjetas inverter marca Mirage.</span></div></li>
-          <li><div class="bit-icon">💬</div><div><strong>Grupo Privado de Telegram</strong><span>Acceso al grupo donde resolvemos dudas técnicas en tiempo real. Comunidad activa de técnicos.</span></div></li>
-          <li><div class="bit-icon">🔧</div><div><strong>Apoyo en tu Primera Reparación</strong><span>Te guiamos en tu primera reparación paso a paso. Soporte personalizado para que salga perfecta.</span></div></li>
-          <li><div class="bit-icon">🔄</div><div><strong>Actualizaciones Incluidas</strong><span>Recibes todas las actualizaciones futuras de esta bitácora sin costo adicional.</span></div></li>
-          <li><div class="bit-icon">📚</div><div><strong>Acceso a Futuros Manuales</strong><span>Acceso anticipado y a precio especial a futuros manuales de otras marcas inverter.</span></div></li>
-        </ul>
-        <div class="bit-offer">
-          <h4>🔥 OFERTA — Te ayudamos en tu primera reparación</h4>
-          <p>Con la compra de la Bitácora entras al grupo privado, tienes la guía técnica completa, apoyo directo para tu primera reparación, y acceso a todos los futuros manuales de otras marcas. Una sola inversión, conocimiento para toda la vida.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section id="nosotros" style="background:var(--bg2);">
   <div class="container">
@@ -518,7 +510,7 @@
           </a>
           <a href="https://wa.me/526692711522?text=Hola,%20quiero%20info%20de%20la%20Bitácora%20Mirage" class="social-btn" target="_blank" style="border-color:rgba(0,136,204,0.25);">
             <div class="sb-icon" style="background:rgba(0,136,204,0.15);">📒</div>
-            <div><strong>Bitácora Mirage — Telegram</strong><span>Grupo privado · $500 MXN · Acceso inmediato</span></div>
+            <div><strong>Bitácora Mirage — Telegram</strong><span>Grupo privado · $600 MXN · Acceso inmediato</span></div>
           </a>
         </div>
       </div>
