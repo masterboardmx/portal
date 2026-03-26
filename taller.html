@@ -751,6 +751,8 @@ function doLogout(){
 }
 
 function showPage(name){
+  // Chitara siempre va a agenda
+  if(currentUser==='Chitara' && name==='dashboard') name='agenda';
   // proteger paginas de maestro
   const masterPages=['auditoria','usuarios','sesiones','backup'];
   const contPages=['contabilidad'];
@@ -898,7 +900,15 @@ async function loadActividad(){
 
 // ── DASHBOARD ────────────────────────────────────────────────
 function loadDashboard(){
-  if(currentUser==='Chitara'){showPage('agenda');return;}
+  if(currentUser==='Chitara'){
+    // Chitara no tiene dashboard, mostrar su agenda directamente
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-agenda').classList.add('active');
+    document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
+    const ba=document.getElementById('bnav-agenda');if(ba)ba.classList.add('active');
+    loadAgenda();
+    return;
+  }
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
@@ -1475,7 +1485,11 @@ function renderAgenda(list){
     completado:'<span class="badge" style="background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);">✅ Completado</span>',
     cancelado:'<span class="badge" style="background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.3);">❌ Cancelado</span>'
   };
-  const mL=v=>v.lat&&v.lng?`https://www.google.com/maps?q=${v.lat},${v.lng}`:`https://www.google.com/maps/search/${encodeURIComponent(v.cliente_direccion||'')}`;
+  const mL=v=>{
+    const addr=encodeURIComponent(v.cliente_direccion||'');
+    if(v.lat&&v.lng) return `https://maps.google.com/?q=${v.lat},${v.lng}`;
+    return `https://maps.google.com/?q=${addr}`;
+  };
   const tbody=document.getElementById('tabla-agenda');
   if(tbody) tbody.innerHTML=list.length?list.map(v=>`
     <tr>
@@ -1483,7 +1497,7 @@ function renderAgenda(list){
       <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'?'}</td>
       <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
       <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
-      <td><a href="${mL(v)}" target="_blank" style="color:var(--orange);text-decoration:none;font-size:0.82rem;">📍 ${v.cliente_direccion||'?'}</a></td>
+      <td><a href="${mL(v)}" target="_blank" style="color:var(--orange);text-decoration:none;font-size:0.82rem;">📍 ${v.cliente_direccion||'Sin dirección'}</a></td>
       <td>${eB[v.estado]||v.estado}</td>
       <td>${userPill(v.tecnico)}</td>
       <td><div style="display:flex;gap:0.4rem;">
@@ -1500,7 +1514,7 @@ function renderAgenda(list){
         ${eB[v.estado]||''}
       </div>
       <a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" class="m-card-phone" style="display:block;margin:0.3rem 0;">📱 ${v.cliente_telefono||'?'}</a>
-      <a href="${mL(v)}" target="_blank" style="display:block;color:var(--orange);font-size:0.82rem;text-decoration:none;margin-bottom:0.3rem;">📍 ${v.cliente_direccion||'?'}</a>
+      <a href="${mL(v)}" target="_blank" style="display:block;color:var(--orange);font-size:0.82rem;text-decoration:none;margin-bottom:0.3rem;">📍 ${v.cliente_direccion||'Sin dirección'}</a>
       ${v.descripcion?`<div style="font-size:0.8rem;color:var(--text-dim);">${v.descripcion}</div>`:''}
       <div class="m-card-bottom" style="margin-top:0.5rem;">${userPill(v.tecnico)}
         <div style="display:flex;gap:0.5rem;">
