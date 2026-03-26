@@ -696,6 +696,15 @@ async function doLogin(){
       document.getElementById('sidebar-agenda').style.display='block';
       document.getElementById('bnav-agenda').style.display='flex';
     }
+    // Chitara: solo ve Visitas, ocultar Ordenes y Clientes
+    if(u==='Chitara'){
+      document.querySelectorAll('.sidebar-item')[1].style.display='none'; // Ordenes
+      document.querySelectorAll('.sidebar-item')[2].style.display='none'; // Clientes
+      document.getElementById('bnav-ordenes').style.display='none';
+      document.getElementById('bnav-clientes').style.display='none';
+      // Ir directo a Agenda
+      setTimeout(()=>showPage('agenda'),100);
+    }
     if(CONTABILIDAD_USERS.includes(u)&&u!==MASTER){
       document.getElementById('bnav-contabilidad').style.display='flex';
       document.getElementById('sidebar-cont-alonso').style.display='block';
@@ -726,6 +735,10 @@ function doLogout(){
   document.getElementById('login-pass').value='';
   document.getElementById('sidebar-agenda').style.display='none';
   document.getElementById('bnav-agenda').style.display='none';
+  // Restaurar visibilidad de sidebar items
+  document.querySelectorAll('.sidebar-item').forEach(el=>el.style.display='');
+  document.getElementById('bnav-ordenes').style.display='flex';
+  document.getElementById('bnav-clientes').style.display='flex';
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
   document.getElementById('sidebar-cont-alonso').style.display='none';
@@ -741,10 +754,14 @@ function showPage(name){
   // proteger paginas de maestro
   const masterPages=['auditoria','usuarios','sesiones','backup'];
   const contPages=['contabilidad'];
+  const chitaraBlock=['ordenes','clientes','detalle'];
   if(masterPages.includes(name) && currentUser!==MASTER){
     notif('Acceso restringido','error');return;
   }
   if(contPages.includes(name) && !CONTABILIDAD_USERS.includes(currentUser)){
+    notif('Acceso restringido','error');return;
+  }
+  if(chitaraBlock.includes(name) && currentUser==='Chitara'){
     notif('Acceso restringido','error');return;
   }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -881,6 +898,7 @@ async function loadActividad(){
 
 // ── DASHBOARD ────────────────────────────────────────────────
 function loadDashboard(){
+  if(currentUser==='Chitara'){showPage('agenda');return;}
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
@@ -1759,14 +1777,15 @@ function poblarSelectOrdenes(){
     allOrdenes.map(o=>`<option value="${o.id}">#${o.folio} — ${o.clientes?.nombre||'?'} (${o.marca})</option>`).join('');
 }
 
-function actualizarStats(){
+async function actualizarStats(){
+  // Recargar ordenes frescas para tener estados actualizados
+  const{data:ordenesActuales}=await sb.from('ordenes').select('id,estado,costo_estimado,costo_final');
   const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
   const gastos=allMovimientos.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
   const balance=ingresos-gastos;
-  // Cuentas por cobrar: ordenes listas o entregadas sin ingreso registrado
   const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
-  const porCobrar=allOrdenes.filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
-    .reduce((a,o)=>a+Number(o.costo_estimado||0),0);
+  const porCobrar=(ordenesActuales||[]).filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
+    .reduce((a,o)=>a+Number(o.costo_final||o.costo_estimado||0),0);
   document.getElementById('c-ingresos').textContent='$'+ingresos.toLocaleString('es-MX',{minimumFractionDigits:2});
   document.getElementById('c-gastos').textContent='$'+gastos.toLocaleString('es-MX',{minimumFractionDigits:2});
   const balEl=document.getElementById('c-balance');
