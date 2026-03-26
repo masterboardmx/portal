@@ -194,6 +194,10 @@
       <div class="sidebar-item active" onclick="showPage('dashboard')"><span class="sidebar-icon">◈</span> Dashboard</div>
       <div class="sidebar-item" onclick="showPage('ordenes')"><span class="sidebar-icon">◉</span> Ordenes</div>
       <div class="sidebar-item" onclick="showPage('clientes')"><span class="sidebar-icon">◎</span> Clientes</div>
+      <div id="sidebar-agenda" style="display:none;">
+        <div class="sidebar-section">Agenda</div>
+        <div class="sidebar-item" style="color:var(--orange);" onclick="showPage('agenda')"><span class="sidebar-icon">📍</span> Visitas</div>
+      </div>
       <div id="sidebar-master" style="display:none;">
         <div class="sidebar-section">Maestro</div>
         <div class="sidebar-item master-item" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
@@ -391,6 +395,28 @@
         <div class="mobile-list" id="mobile-cont"></div>
       </div>
 
+      <!-- AGENDA / VISITAS -->
+      <div class="page" id="page-agenda">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+          <div>
+            <div class="table-title">Visitas a Domicilio</div>
+            <div style="font-size:0.78rem;color:var(--text-dim);margin-top:0.3rem;" id="agenda-subtitulo">Agenda de trabajos programados</div>
+          </div>
+          <button class="btn-blue" onclick="openNuevaVisita()">+ Nueva Visita</button>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+          <button class="btn-ghost btn-sm" id="agenda-btn-hoy" onclick="filtrarAgenda('hoy')">Hoy</button>
+          <button class="btn-ghost btn-sm" id="agenda-btn-semana" onclick="filtrarAgenda('semana')">Esta semana</button>
+          <button class="btn-blue btn-sm" id="agenda-btn-todos" onclick="filtrarAgenda('todos')">Todos</button>
+          <input type="date" id="agenda-fecha-filtro" onchange="filtrarAgenda('fecha')" style="width:160px;">
+        </div>
+        <div class="table-wrap desktop-table">
+          <table><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Estado</th><th>Técnico</th><th></th></tr></thead>
+          <tbody id="tabla-agenda"></tbody></table>
+        </div>
+        <div class="mobile-list" id="mobile-agenda"></div>
+      </div>
+
       <!-- BACKUP (solo Alan) -->
       <div class="page" id="page-backup">
         <div style="margin-bottom:2rem;">
@@ -447,6 +473,7 @@
     <button class="bottom-nav-item active" id="bnav-dashboard" onclick="showPage('dashboard')"><span class="bottom-nav-icon">◈</span>Dashboard</button>
     <button class="bottom-nav-item" id="bnav-ordenes" onclick="showPage('ordenes')"><span class="bottom-nav-icon">◉</span>Ordenes</button>
     <button class="bottom-nav-item" id="bnav-clientes" onclick="showPage('clientes')"><span class="bottom-nav-icon">◎</span>Clientes</button>
+    <button class="bottom-nav-item" id="bnav-agenda" style="display:none;color:var(--orange);" onclick="showPage('agenda')"><span class="bottom-nav-icon">📍</span>Visitas</button>
     <button class="bottom-nav-item master" id="bnav-backup" style="display:none;" onclick="showPage('backup')"><span class="bottom-nav-icon">💾</span>Backup</button>
     <button class="bottom-nav-item master" id="bnav-contabilidad" style="display:none;" onclick="showPage('contabilidad')"><span class="bottom-nav-icon">💰</span>Contab.</button>
     <button class="bottom-nav-item master" id="bnav-auditoria" style="display:none;" onclick="showPage('auditoria')"><span class="bottom-nav-icon">◑</span>Historial</button>
@@ -520,6 +547,42 @@
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-cont')">Cancelar</button>
       <button class="btn-blue" onclick="guardarMovimiento()" id="btn-guardar-cont">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-visita">
+  <div class="modal">
+    <div class="modal-title" id="modal-visita-title">Nueva Visita</div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Nombre del Cliente</label><input type="text" id="v-nombre" placeholder="Nombre completo"></div>
+      <div class="form-group"><label>Teléfono</label><input type="tel" id="v-telefono" placeholder="669 000 0000"></div>
+      <div class="form-group"><label>Técnico</label>
+        <select id="v-tecnico">
+          <option value="Chitara">Chitara</option>
+          <option value="Alan">Alan</option>
+          <option value="Azul">Azul</option>
+          <option value="Alonso">Alonso</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="v-fecha"></div>
+      <div class="form-group"><label>Hora</label><input type="time" id="v-hora"></div>
+      <div class="form-group full"><label>Dirección</label><input type="text" id="v-direccion" placeholder="Calle, número, colonia, ciudad" oninput="buscarCoordenadas()"></div>
+      <div class="form-group full"><label>Descripción del Trabajo</label><textarea id="v-descripcion" rows="2" placeholder="¿Qué se va a hacer?"></textarea></div>
+      <div class="form-group full"><label>Estado</label>
+        <select id="v-estado">
+          <option value="programado">📅 Programado</option>
+          <option value="en_camino">🚗 En Camino</option>
+          <option value="en_proceso">🔧 En Proceso</option>
+          <option value="completado">✅ Completado</option>
+          <option value="cancelado">❌ Cancelado</option>
+        </select>
+      </div>
+      <div class="form-group full"><label>Notas</label><textarea id="v-notas" rows="2"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-visita')">Cancelar</button>
+      <button class="btn-blue" onclick="guardarVisita()" id="btn-guardar-visita">Guardar</button>
     </div>
   </div>
 </div>
@@ -603,9 +666,10 @@
 const SUPABASE_URL='https://qsjscxnlbxwvhgzjjvuh.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzanNjeG5sYnh3dmhnempqdnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjY4NzksImV4cCI6MjA4OTQ0Mjg3OX0.okSdl7TOF1Tcntfcbv44QGJi4k0D4u85IHCNmdsnUg8';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const USERS={'Azul':'Corona1303','Alan':'Terry1303','Alonso':'Neo1303'};
+const USERS={'Azul':'Corona1303','Alan':'Terry1303','Alonso':'Neo1303','Chitara':'Masterboard1303'};
 const MASTER='Alan';
 const CONTABILIDAD_USERS=['Alan','Alonso'];
+const AGENDA_USERS=['Alan','Chitara'];
 let currentUser=null,allOrdenes=[],allClientes=[],allAuditoria=[],editingOrdenId=null,editingClienteId=null;
 
 async function doLogin(){
@@ -628,10 +692,12 @@ async function doLogin(){
       document.getElementById('bnav-sesiones').style.display='flex';
       document.getElementById('bnav-backup').style.display='flex';
     }
+    if(AGENDA_USERS.includes(u)){
+      document.getElementById('sidebar-agenda').style.display='block';
+      document.getElementById('bnav-agenda').style.display='flex';
+    }
     if(CONTABILIDAD_USERS.includes(u)&&u!==MASTER){
-      // Alonso: solo contabilidad del menú maestro
       document.getElementById('bnav-contabilidad').style.display='flex';
-      // Agregar contabilidad al sidebar sin mostrar todo el bloque maestro
       document.getElementById('sidebar-cont-alonso').style.display='block';
     }
     loadAll();
@@ -658,6 +724,8 @@ function doLogout(){
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('login-user').value='';
   document.getElementById('login-pass').value='';
+  document.getElementById('sidebar-agenda').style.display='none';
+  document.getElementById('bnav-agenda').style.display='none';
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
   document.getElementById('sidebar-cont-alonso').style.display='none';
@@ -685,12 +753,13 @@ function showPage(name){
   document.getElementById('page-'+name).classList.add('active');
   const map={dashboard:0,ordenes:1,clientes:2};
   if(map[name]!==undefined)document.querySelectorAll('.sidebar-item')[map[name]].classList.add('active');
-  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
+  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',agenda:'bnav-agenda',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
   if(bmap[name]){const b=document.getElementById(bmap[name]);if(b)b.classList.add('active');}
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
   if(name==='backup')loadBackupInfo();
+  if(name==='agenda')loadAgenda();
   if(name==='contabilidad')loadContabilidad();
   if(name==='backup')loadBackupPage();
   if(name==='auditoria')loadAuditoria();
@@ -1345,6 +1414,135 @@ async function eliminarCliente(id){
 
 function poblarSelectClientes(){
   document.getElementById('o-cliente').innerHTML='<option value="">Seleccionar cliente</option>'+allClientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
+}
+
+// ── AGENDA / VISITAS ─────────────────────────────────────────
+let allVisitas=[], editingVisitaId=null;
+
+async function loadAgenda(){
+  let q=sb.from('visitas').select('*').order('fecha').order('hora');
+  if(currentUser!==MASTER) q=q.eq('tecnico',currentUser);
+  const{data}=await q;
+  allVisitas=data||[];
+  filtrarAgenda('todos');
+}
+
+function filtrarAgenda(tipo){
+  ['hoy','semana','todos'].forEach(t=>{
+    const btn=document.getElementById('agenda-btn-'+t);
+    if(btn) btn.className=t===tipo?'btn-blue btn-sm':'btn-ghost btn-sm';
+  });
+  const hoy=new Date().toISOString().split('T')[0];
+  let list=allVisitas;
+  if(tipo==='hoy') list=allVisitas.filter(v=>v.fecha===hoy);
+  else if(tipo==='semana'){
+    const d=new Date();
+    const ini=new Date(d);ini.setDate(d.getDate()-d.getDay()+1);
+    const fin=new Date(d);fin.setDate(d.getDate()-d.getDay()+7);
+    const inis=ini.toISOString().split('T')[0];
+    const fins=fin.toISOString().split('T')[0];
+    list=allVisitas.filter(v=>v.fecha>=inis&&v.fecha<=fins);
+  } else if(tipo==='fecha'){
+    const f=document.getElementById('agenda-fecha-filtro').value;
+    if(f) list=allVisitas.filter(v=>v.fecha===f);
+  }
+  renderAgenda(list);
+}
+
+function renderAgenda(list){
+  const eB={
+    programado:'<span class="badge" style="background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);">📅 Programado</span>',
+    en_camino:'<span class="badge" style="background:rgba(255,107,0,0.12);color:var(--orange);border:1px solid rgba(255,107,0,0.3);">🚗 En Camino</span>',
+    en_proceso:'<span class="badge" style="background:rgba(255,214,10,0.12);color:var(--yellow);border:1px solid rgba(255,214,10,0.3);">🔧 En Proceso</span>',
+    completado:'<span class="badge" style="background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);">✅ Completado</span>',
+    cancelado:'<span class="badge" style="background:rgba(255,69,58,0.12);color:var(--red);border:1px solid rgba(255,69,58,0.3);">❌ Cancelado</span>'
+  };
+  const mL=v=>v.lat&&v.lng?`https://www.google.com/maps?q=${v.lat},${v.lng}`:`https://www.google.com/maps/search/${encodeURIComponent(v.cliente_direccion||'')}`;
+  const tbody=document.getElementById('tabla-agenda');
+  if(tbody) tbody.innerHTML=list.length?list.map(v=>`
+    <tr>
+      <td style="font-family:var(--mono);font-size:0.8rem;">${v.fecha}</td>
+      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'?'}</td>
+      <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
+      <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
+      <td><a href="${mL(v)}" target="_blank" style="color:var(--orange);text-decoration:none;font-size:0.82rem;">📍 ${v.cliente_direccion||'?'}</a></td>
+      <td>${eB[v.estado]||v.estado}</td>
+      <td>${userPill(v.tecnico)}</td>
+      <td><div style="display:flex;gap:0.4rem;">
+        <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">Editar</button>
+        <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
+      </div></td>
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="8">Sin visitas programadas</td></tr>`;
+  const mob=document.getElementById('mobile-agenda');
+  if(mob) mob.innerHTML=list.length?list.map(v=>`
+    <div class="m-card" style="border-left:3px solid ${v.estado==='completado'?'var(--green)':v.estado==='cancelado'?'var(--red)':v.estado==='en_camino'?'var(--orange)':'var(--blue)'};">
+      <div class="m-card-top">
+        <div><div style="font-family:var(--mono);color:var(--blue);font-size:0.85rem;font-weight:700;">${v.fecha} · ${v.hora?.substring(0,5)||'?'}</div>
+        <div class="m-card-name">${v.cliente_nombre}</div></div>
+        ${eB[v.estado]||''}
+      </div>
+      <a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" class="m-card-phone" style="display:block;margin:0.3rem 0;">📱 ${v.cliente_telefono||'?'}</a>
+      <a href="${mL(v)}" target="_blank" style="display:block;color:var(--orange);font-size:0.82rem;text-decoration:none;margin-bottom:0.3rem;">📍 ${v.cliente_direccion||'?'}</a>
+      ${v.descripcion?`<div style="font-size:0.8rem;color:var(--text-dim);">${v.descripcion}</div>`:''}
+      <div class="m-card-bottom" style="margin-top:0.5rem;">${userPill(v.tecnico)}
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">Editar</button>
+          <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
+        </div>
+      </div>
+    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;">Sin visitas programadas</div>';
+}
+
+function openNuevaVisita(){
+  editingVisitaId=null;
+  document.getElementById('modal-visita-title').textContent='Nueva Visita';
+  document.getElementById('btn-guardar-visita').textContent='Guardar';
+  ['v-nombre','v-telefono','v-direccion','v-descripcion','v-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('v-estado').value='programado';
+  document.getElementById('v-tecnico').value=currentUser==='Chitara'?'Chitara':'Chitara';
+  document.getElementById('v-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('v-hora').value='09:00';
+  document.getElementById('modal-visita').classList.add('open');
+}
+
+function editarVisita(id){
+  const v=allVisitas.find(x=>x.id===id);if(!v)return;
+  editingVisitaId=id;
+  document.getElementById('modal-visita-title').textContent='Editar Visita';
+  document.getElementById('btn-guardar-visita').textContent='Actualizar';
+  document.getElementById('v-nombre').value=v.cliente_nombre||'';
+  document.getElementById('v-telefono').value=v.cliente_telefono||'';
+  document.getElementById('v-direccion').value=v.cliente_direccion||'';
+  document.getElementById('v-descripcion').value=v.descripcion||'';
+  document.getElementById('v-notas').value=v.notas||'';
+  document.getElementById('v-estado').value=v.estado||'programado';
+  document.getElementById('v-tecnico').value=v.tecnico||'Chitara';
+  document.getElementById('v-fecha').value=v.fecha||'';
+  document.getElementById('v-hora').value=v.hora?.substring(0,5)||'';
+  document.getElementById('modal-visita').classList.add('open');
+}
+
+async function guardarVisita(){
+  const nombre=document.getElementById('v-nombre').value.trim();
+  const fecha=document.getElementById('v-fecha').value;
+  const hora=document.getElementById('v-hora').value;
+  if(!nombre||!fecha||!hora){notif('Nombre, fecha y hora requeridos','error');return;}
+  const data={cliente_nombre:nombre,cliente_telefono:document.getElementById('v-telefono').value.trim(),cliente_direccion:document.getElementById('v-direccion').value.trim(),descripcion:document.getElementById('v-descripcion').value.trim(),notas:document.getElementById('v-notas').value.trim(),estado:document.getElementById('v-estado').value,tecnico:document.getElementById('v-tecnico').value,fecha,hora,creado_por:currentUser,updated_at:new Date().toISOString()};
+  let err;
+  if(editingVisitaId){({error:err}=await sb.from('visitas').update(data).eq('id',editingVisitaId));}
+  else{({error:err}=await sb.from('visitas').insert([data]));}
+  if(err){notif('Error: '+err.message,'error');return;}
+  closeModal('modal-visita');
+  notif(editingVisitaId?'Visita actualizada':'Visita programada ✓','success');
+  loadAgenda();
+}
+
+async function eliminarVisita(id){
+  const v=allVisitas.find(x=>x.id===id);
+  if(!confirm('¿Eliminar visita de '+v?.cliente_nombre+'?'))return;
+  const{error}=await sb.from('visitas').delete().eq('id',id);
+  if(error){notif('Error','error');return;}
+  notif('Visita eliminada','success');loadAgenda();
 }
 
 // ── BACKUP ───────────────────────────────────────────────────
