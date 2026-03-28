@@ -751,36 +751,37 @@ function doLogout(){
 }
 
 function showPage(name){
-  // Chitara siempre va a agenda
-  if(currentUser==='Chitara' && name==='dashboard') name='agenda';
+  // Chitara siempre va a agenda en lugar de dashboard
+  if(currentUser==='Chitara' && (name==='dashboard'||name==='ordenes'||name==='clientes'||name==='detalle')) name='agenda';
   // proteger paginas de maestro
   const masterPages=['auditoria','usuarios','sesiones','backup'];
   const contPages=['contabilidad'];
-  const chitaraBlock=['ordenes','clientes','detalle'];
-  if(masterPages.includes(name) && currentUser!==MASTER){
-    notif('Acceso restringido','error');return;
-  }
-  if(contPages.includes(name) && !CONTABILIDAD_USERS.includes(currentUser)){
-    notif('Acceso restringido','error');return;
-  }
-  if(chitaraBlock.includes(name) && currentUser==='Chitara'){
-    notif('Acceso restringido','error');return;
-  }
+  if(masterPages.includes(name) && currentUser!==MASTER){notif('Acceso restringido','error');return;}
+  if(contPages.includes(name) && !CONTABILIDAD_USERS.includes(currentUser)){notif('Acceso restringido','error');return;}
+  // Activar página
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);
+  if(!pg){notif('Página no encontrada','error');return;}
+  pg.classList.add('active');
+  // Activar sidebar
   document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  const smap={dashboard:0,ordenes:1,clientes:2};
+  if(smap[name]!==undefined){
+    const si=document.querySelectorAll('.sidebar-item')[smap[name]];
+    if(si)si.classList.add('active');
+  }
+  // Activar bottom nav
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  const map={dashboard:0,ordenes:1,clientes:2};
-  if(map[name]!==undefined)document.querySelectorAll('.sidebar-item')[map[name]].classList.add('active');
   const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',agenda:'bnav-agenda',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
-  if(bmap[name]){const b=document.getElementById(bmap[name]);if(b)b.classList.add('active');}
+  const bkey=name==='agenda'?'bnav-agenda':(bmap[name]||null);
+  if(bkey){const b=document.getElementById(bkey);if(b)b.classList.add('active');}
+  // Cargar datos
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
-  if(name==='backup')loadBackupInfo();
   if(name==='agenda')loadAgenda();
   if(name==='contabilidad')loadContabilidad();
-  if(name==='backup')loadBackupPage();
+  if(name==='backup'){loadBackupInfo();loadBackupPage();}
   if(name==='auditoria')loadAuditoria();
   if(name==='usuarios')loadActividad();
   if(name==='sesiones')loadSesiones();
@@ -900,15 +901,7 @@ async function loadActividad(){
 
 // ── DASHBOARD ────────────────────────────────────────────────
 function loadDashboard(){
-  if(currentUser==='Chitara'){
-    // Chitara no tiene dashboard, mostrar su agenda directamente
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-agenda').classList.add('active');
-    document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
-    const ba=document.getElementById('bnav-agenda');if(ba)ba.classList.add('active');
-    loadAgenda();
-    return;
-  }
+  if(currentUser==='Chitara'){loadAgenda();return;}
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
