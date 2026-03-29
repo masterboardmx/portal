@@ -696,14 +696,17 @@ async function doLogin(){
       document.getElementById('sidebar-agenda').style.display='block';
       document.getElementById('bnav-agenda').style.display='flex';
     }
-    // Chitara: solo ve Visitas
+    // Chitara: ve Dashboard y Visitas, no Ordenes ni Clientes del taller
     if(u==='Chitara'){
-      // Ocultar todo el sidebar principal
-      document.querySelectorAll('.sidebar-item').forEach(el=>el.style.display='none');
-      // Ocultar bottom nav items excepto agenda
-      document.getElementById('bnav-dashboard').style.display='none';
+      document.querySelectorAll('.sidebar-item')[1].style.display='none'; // Ordenes
+      document.querySelectorAll('.sidebar-item')[2].style.display='none'; // Clientes
       document.getElementById('bnav-ordenes').style.display='none';
       document.getElementById('bnav-clientes').style.display='none';
+      // Mostrar agenda directamente al entrar
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('page-agenda').classList.add('active');
+      document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
+      const ba=document.getElementById('bnav-agenda');if(ba)ba.classList.add('active');
     }
     if(CONTABILIDAD_USERS.includes(u)&&u!==MASTER){
       document.getElementById('bnav-contabilidad').style.display='flex';
@@ -752,8 +755,8 @@ function doLogout(){
 }
 
 function showPage(name){
-  // Chitara siempre va a agenda en lugar de dashboard
-  if(currentUser==='Chitara' && (name==='dashboard'||name==='ordenes'||name==='clientes'||name==='detalle')) name='agenda';
+  // Chitara no puede ver ordenes, clientes ni detalle del taller
+  if(currentUser==='Chitara' && (name==='ordenes'||name==='clientes'||name==='detalle')) name='agenda';
   // proteger paginas de maestro
   const masterPages=['auditoria','usuarios','sesiones','backup'];
   const contPages=['contabilidad'];
@@ -790,8 +793,7 @@ function showPage(name){
 
 async function loadAll(){
   await Promise.all([loadClientes(),loadOrdenes()]);
-  if(currentUser==='Chitara') showPage('agenda');
-  else loadDashboard();
+  loadDashboard();
 }
 async function loadClientes(){const{data}=await sb.from('clientes').select('*').order('created_at',{ascending:false});allClientes=data||[];poblarSelectClientes();}
 async function loadOrdenes(){const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').order('fecha_ingreso',{ascending:false});allOrdenes=data||[];}
@@ -906,7 +908,50 @@ async function loadActividad(){
 
 // ── DASHBOARD ────────────────────────────────────────────────
 function loadDashboard(){
-  if(currentUser==='Chitara'){loadAgenda();return;}
+  if(currentUser==='Chitara'){
+    // Dashboard personalizado para Chitara
+    document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    const hoy=new Date().toISOString().split('T')[0];
+    sb.from('visitas').select('*').eq('tecnico','Chitara').order('fecha').then(({data})=>{
+      const v=data||[];
+      const pendientes=v.filter(x=>['programado','en_camino','en_proceso'].includes(x.estado));
+      const hoyV=v.filter(x=>x.fecha===hoy);
+      const completadas=v.filter(x=>x.estado==='completado');
+      document.getElementById('s-total').textContent=v.length;
+      document.getElementById('s-proceso').textContent=pendientes.length;
+      document.getElementById('s-listas').textContent=hoyV.length;
+      document.getElementById('s-clientes').textContent=completadas.length;
+      // Cambiar labels
+      const labels=['Total Visitas','Pendientes','Hoy','Completadas'];
+      document.querySelectorAll('#page-dashboard .stat-label').forEach((el,i)=>{if(labels[i])el.textContent=labels[i];});
+      // Tabla de próximas visitas
+      const eB={programado:'📅',en_camino:'🚗',en_proceso:'🔧',completado:'✅',cancelado:'❌'};
+      const proximas=v.filter(x=>x.fecha>=hoy&&x.estado!=='cancelado').slice(0,8);
+      // Cambiar headers de la tabla
+      const thead=document.querySelector('#dash-recent')?.closest('table')?.querySelector('thead tr');
+      if(thead) thead.innerHTML='<th>Fecha</th><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Estado</th><th>Hora</th>';
+      document.getElementById('dash-recent').innerHTML=proximas.length?proximas.map(x=>`
+        <tr onclick="showPage('agenda')" style="cursor:pointer;">
+          <td style="font-family:var(--mono);font-size:0.8rem;">${x.fecha}</td>
+          <td>${x.cliente_nombre}</td>
+          <td><a href="https://wa.me/52${(x.cliente_telefono||'').replace(/\D/g,'')}" onclick="event.stopPropagation()" target="_blank" style="color:var(--blue);text-decoration:none;">${x.cliente_telefono||'?'}</a></td>
+          <td><span style="font-size:0.82rem;color:var(--orange);">${x.cliente_direccion?.startsWith('http')?'📍 Ver mapa':'📍 '+x.cliente_direccion||'?'}</span></td>
+          <td><span style="font-family:var(--mono);font-size:0.82rem;">${eB[x.estado]||''} ${x.estado}</span></td>
+          <td style="font-family:var(--mono);color:var(--blue);">${x.hora?.substring(0,5)||'?'}</td>
+        </tr>`).join(''):`<tr class="empty-row"><td colspan="6">No hay visitas próximas</td></tr>`;
+      // Mobile
+      const mob=document.getElementById('dash-recent-mobile');
+      if(mob) mob.innerHTML=proximas.length?proximas.map(x=>`
+        <div class="m-card" onclick="showPage('agenda')">
+          <div class="m-card-top"><span class="m-card-folio">${x.fecha}</span><span style="font-family:var(--mono);color:var(--blue);">${x.hora?.substring(0,5)||'?'}</span></div>
+          <div class="m-card-name">${x.cliente_nombre}</div>
+          <a href="https://wa.me/52${(x.cliente_telefono||'').replace(/\D/g,'')}" onclick="event.stopPropagation()" target="_blank" class="m-card-phone">${x.cliente_telefono||'?'}</a>
+          <div style="font-size:0.8rem;color:var(--orange);margin-top:0.2rem;">📍 ${x.cliente_direccion?.startsWith('http')?'Ver mapa':x.cliente_direccion||''}</div>
+          <div class="m-card-bottom"><span style="font-family:var(--mono);font-size:0.82rem;">${eB[x.estado]||''} ${x.estado}</span></div>
+        </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">No hay visitas próximas</div>';
+    });
+    return;
+  }
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
