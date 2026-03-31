@@ -379,10 +379,12 @@
           <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Ingresos vs Gastos — Últimos 6 meses</div>
           <canvas id="grafica-cont" height="120"></canvas>
         </div>
-        <!-- Grafica por categorias -->
+        <!-- Gastos por categoria -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
           <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Gastos por Categoría</div>
-          <canvas id="grafica-categorias" height="160"></canvas>
+          <div style="position:relative;height:200px;">
+            <canvas id="grafica-categorias"></canvas>
+          </div>
         </div>
         <!-- Tabs -->
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
@@ -501,6 +503,7 @@
             <option value="Venta componente">Venta componente</option>
             <option value="Diagnóstico">Diagnóstico</option>
             <option value="Bitácora">Bitácora/Manual</option>
+            <option value="Pago/Sueldo">Pago/Sueldo</option>
             <option value="Otro ingreso">Otro ingreso</option>
           </optgroup>
           <optgroup label="Gastos" id="opt-gastos" style="display:none;">
@@ -576,6 +579,7 @@
       <div class="form-group full"><label>Descripción del Trabajo</label><textarea id="v-descripcion" rows="2" placeholder="¿Qué se va a hacer?"></textarea></div>
       <div class="form-group full"><label>Estado</label>
         <select id="v-estado">
+          <option value="por_programar">🕐 Por Programar</option>
           <option value="programado">📅 Programado</option>
           <option value="en_camino">🚗 En Camino</option>
           <option value="en_proceso">🔧 En Proceso</option>
@@ -1482,6 +1486,7 @@ function filtrarAgenda(tipo){
 
 function renderAgenda(list){
   const eB={
+    por_programar:'<span class="badge" style="background:rgba(122,130,144,0.15);color:var(--text-dim);border:1px solid rgba(122,130,144,0.3);">🕐 Por Programar</span>',
     programado:'<span class="badge" style="background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);">📅 Programado</span>',
     en_camino:'<span class="badge" style="background:rgba(255,107,0,0.12);color:var(--orange);border:1px solid rgba(255,107,0,0.3);">🚗 En Camino</span>',
     en_proceso:'<span class="badge" style="background:rgba(255,214,10,0.12);color:var(--yellow);border:1px solid rgba(255,214,10,0.3);">🔧 En Proceso</span>',
@@ -1540,7 +1545,7 @@ function openNuevaVisita(){
   document.getElementById('modal-visita-title').textContent='Nueva Visita';
   document.getElementById('btn-guardar-visita').textContent='Guardar';
   ['v-nombre','v-telefono','v-direccion','v-descripcion','v-notas'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('v-estado').value='programado';
+  document.getElementById('v-estado').value='por_programar';
   document.getElementById('v-tecnico').value=currentUser==='Chitara'?'Chitara':'Chitara';
   document.getElementById('v-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('v-hora').value='09:00';
@@ -1907,18 +1912,15 @@ async function registrarCobroOrden(ordenId){
 function renderGrafica(){
   const canvas=document.getElementById('grafica-cont');
   if(!canvas)return;
-  // Últimos 6 meses únicos con año para evitar duplicados
   const meses=[];
   const hoy=new Date();
   for(let i=5;i>=0;i--){
     const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
     meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
   }
-  // Labels con mes + año abreviado para evitar "mar mar"
   const labels=meses.map(m=>{
     const[y,mo]=m.split('-');
-    const d=new Date(y,mo-1);
-    return d.toLocaleDateString('es-MX',{month:'short'})+' '+String(y).substring(2);
+    return new Date(y,mo-1).toLocaleDateString('es-MX',{month:'short'})+' '+String(y).substring(2);
   });
   const dataIngresos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='ingreso'&&x.fecha&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
   const dataGastos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='gasto'&&x.fecha&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
@@ -1931,7 +1933,6 @@ function renderGrafica(){
     ]},
     options:{responsive:true,plugins:{legend:{labels:{color:'#7A8290',font:{size:11}}}},scales:{x:{ticks:{color:'#7A8290'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#7A8290',callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,0.05)'}}}}
   });
-  // Gráfica de gastos por categoría
   renderGraficaCategorias();
 }
 
@@ -1941,22 +1942,16 @@ function renderGraficaCategorias(){
   if(!canvas)return;
   const gastos=allMovimientos.filter(x=>x.tipo==='gasto');
   if(!gastos.length){if(graficaCategChart)graficaCategChart.destroy();return;}
-  // Agrupar por categoría
   const cats={};
-  gastos.forEach(g=>{
-    const c=g.categoria||'Otro';
-    cats[c]=(cats[c]||0)+Number(g.monto);
-  });
+  gastos.forEach(g=>{const c=g.categoria||'Otro';cats[c]=(cats[c]||0)+Number(g.monto);});
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  const labels=sorted.map(([k])=>k);
-  const data=sorted.map(([,v])=>v);
-  const colors=['rgba(255,69,58,0.8)','rgba(255,107,0,0.8)','rgba(255,214,10,0.8)','rgba(10,132,255,0.8)','rgba(191,90,242,0.8)','rgba(48,209,88,0.8)','rgba(255,159,10,0.8)','rgba(100,200,255,0.8)'];
+  const colors=['rgba(255,69,58,0.85)','rgba(255,107,0,0.85)','rgba(255,214,10,0.85)','rgba(10,132,255,0.85)','rgba(191,90,242,0.85)','rgba(48,209,88,0.85)','rgba(255,159,10,0.85)','rgba(100,200,255,0.85)'];
   if(graficaCategChart)graficaCategChart.destroy();
   graficaCategChart=new Chart(canvas,{
     type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0,hoverOffset:8}]},
-    options:{responsive:true,cutout:'65%',plugins:{
-      legend:{position:'right',labels:{color:'#7A8290',font:{size:11},padding:12}},
+    data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:colors,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{
+      legend:{position:'right',labels:{color:'#7A8290',font:{size:10},padding:8,boxWidth:10}},
       tooltip:{callbacks:{label:ctx=>' $'+Number(ctx.raw).toLocaleString('es-MX',{minimumFractionDigits:2})}}
     }}
   });
