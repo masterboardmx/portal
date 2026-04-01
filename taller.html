@@ -373,15 +373,19 @@
           <div class="stat-card"><div class="stat-label">Gastos</div><div class="stat-num red" id="c-gastos">$0</div></div>
           <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-num" id="c-balance">$0</div></div>
           <div class="stat-card"><div class="stat-label">Por Cobrar</div><div class="stat-num yellow" id="c-cobrar">$0</div></div>
+          <div class="stat-card"><div class="stat-label">💵 Efectivo</div><div class="stat-num blue" id="c-efectivo">$0</div></div>
+          <div class="stat-card"><div class="stat-label">💳 Banamex</div><div class="stat-num purple" id="c-banamex">$0</div></div>
+          <div class="stat-card"><div class="stat-label">💳 Banorte</div><div class="stat-num orange" id="c-banorte">$0</div></div>
         </div>
         <!-- Grafica simple -->
-        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;">
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
           <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Ingresos vs Gastos — Últimos 6 meses</div>
           <canvas id="grafica-cont" height="120"></canvas>
         </div>
-        <!-- Gastos por categoria -->
+        <!-- Gastos por categoria - clickeable -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
-          <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Gastos por Categoría</div>
+          <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.1em;">Gastos por Categoría</div>
+          <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem;">Haz clic en una categoría para ver sus gastos</div>
           <div style="position:relative;height:200px;">
             <canvas id="grafica-categorias"></canvas>
           </div>
@@ -503,7 +507,6 @@
             <option value="Venta componente">Venta componente</option>
             <option value="Diagnóstico">Diagnóstico</option>
             <option value="Bitácora">Bitácora/Manual</option>
-            <option value="Pago/Sueldo">Pago/Sueldo</option>
             <option value="Otro ingreso">Otro ingreso</option>
           </optgroup>
           <optgroup label="Gastos" id="opt-gastos" style="display:none;">
@@ -534,11 +537,13 @@
       <div class="form-group">
         <label>Método de Pago</label>
         <select id="cont-metodo">
-          <option value="efectivo">Efectivo</option>
-          <option value="transferencia">Transferencia</option>
-          <option value="mercadopago">MercadoPago</option>
-          <option value="paypal">PayPal</option>
-          <option value="otro">Otro</option>
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="tarjeta_banamex">💳 Tarjeta Banamex</option>
+          <option value="tarjeta_banorte">💳 Tarjeta Banorte</option>
+          <option value="transferencia">🏦 Transferencia</option>
+          <option value="mercadopago">📱 MercadoPago</option>
+          <option value="paypal">🅿️ PayPal</option>
+          <option value="otro">💱 Otro</option>
         </select>
       </div>
       <div class="form-group full">
@@ -573,13 +578,12 @@
           <option value="Alonso">Alonso</option>
         </select>
       </div>
-      <div class="form-group" id="wrap-v-fecha"><label for="v-fecha">Fecha</label><input type="date" id="v-fecha"></div>
-      <div class="form-group" id="wrap-v-hora"><label for="v-hora">Hora</label><input type="time" id="v-hora"></div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="v-fecha"></div>
+      <div class="form-group"><label>Hora</label><input type="time" id="v-hora"></div>
       <div class="form-group full"><label>Dirección</label><input type="text" id="v-direccion" placeholder="Calle, número, colonia, ciudad" oninput="buscarCoordenadas()"></div>
       <div class="form-group full"><label>Descripción del Trabajo</label><textarea id="v-descripcion" rows="2" placeholder="¿Qué se va a hacer?"></textarea></div>
       <div class="form-group full"><label>Estado</label>
-        <select id="v-estado" onchange="toggleFechaHoraVisita()">
-          <option value="por_programar">🕐 Por Programar</option>
+        <select id="v-estado">
           <option value="programado">📅 Programado</option>
           <option value="en_camino">🚗 En Camino</option>
           <option value="en_proceso">🔧 En Proceso</option>
@@ -1486,7 +1490,6 @@ function filtrarAgenda(tipo){
 
 function renderAgenda(list){
   const eB={
-    por_programar:'<span class="badge" style="background:rgba(122,130,144,0.15);color:var(--text-dim);border:1px solid rgba(122,130,144,0.3);">🕐 Por Programar</span>',
     programado:'<span class="badge" style="background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);">📅 Programado</span>',
     en_camino:'<span class="badge" style="background:rgba(255,107,0,0.12);color:var(--orange);border:1px solid rgba(255,107,0,0.3);">🚗 En Camino</span>',
     en_proceso:'<span class="badge" style="background:rgba(255,214,10,0.12);color:var(--yellow);border:1px solid rgba(255,214,10,0.3);">🔧 En Proceso</span>',
@@ -1505,10 +1508,17 @@ function renderAgenda(list){
     if(addr.startsWith('http')) return 'Ver en Maps';
     return addr||'Sin dirección';
   };
+  const fmtVisitaFecha=f=>{
+    if(!f)return'?';
+    const[y,m,d]=f.split('-');
+    const fecha=new Date(y,m-1,d);
+    const dia=fecha.toLocaleDateString('es-MX',{weekday:'long'});
+    return`<div style="font-family:var(--mono);font-size:0.78rem;">${dia.charAt(0).toUpperCase()+dia.slice(1)}</div><div style="font-size:0.75rem;color:var(--text-dim);">${d}/${m}/${y}</div>`;
+  };
   const tbody=document.getElementById('tabla-agenda');
   if(tbody) tbody.innerHTML=list.length?list.map(v=>`
     <tr>
-      <td style="font-family:var(--mono);font-size:0.8rem;">${v.fecha}</td>
+      <td>${fmtVisitaFecha(v.fecha)}</td>
       <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'?'}</td>
       <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
       <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
@@ -1521,11 +1531,17 @@ function renderAgenda(list){
       </div></td>
     </tr>`).join(''):`<tr class="empty-row"><td colspan="8">Sin visitas programadas</td></tr>`;
   const mob=document.getElementById('mobile-agenda');
-  if(mob) mob.innerHTML=list.length?list.map(v=>`
-    <div class="m-card" style="border-left:3px solid ${v.estado==='completado'?'var(--green)':v.estado==='cancelado'?'var(--red)':v.estado==='en_camino'?'var(--orange)':'var(--blue)'};">
+  if(mob) mob.innerHTML=list.length?list.map(v=>{
+    const[y,m,d]=v.fecha.split('-');
+    const fecha=new Date(y,m-1,d);
+    const dia=fecha.toLocaleDateString('es-MX',{weekday:'long'});
+    return`<div class="m-card" style="border-left:3px solid ${v.estado==='completado'?'var(--green)':v.estado==='cancelado'?'var(--red)':v.estado==='en_camino'?'var(--orange)':'var(--blue)'};">
       <div class="m-card-top">
-        <div><div style="font-family:var(--mono);color:var(--blue);font-size:0.85rem;font-weight:700;">${v.fecha} · ${v.hora?.substring(0,5)||'?'}</div>
-        <div class="m-card-name">${v.cliente_nombre}</div></div>
+        <div>
+          <div style="font-family:var(--mono);color:var(--blue);font-size:0.82rem;font-weight:700;">${dia.charAt(0).toUpperCase()+dia.slice(1)} ${d}/${m}/${y}</div>
+          <div style="font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);">${v.hora?.substring(0,5)||'?'}</div>
+          <div class="m-card-name">${v.cliente_nombre}</div>
+        </div>
         ${eB[v.estado]||''}
       </div>
       <a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" class="m-card-phone" style="display:block;margin:0.3rem 0;">📱 ${v.cliente_telefono||'?'}</a>
@@ -1537,20 +1553,8 @@ function renderAgenda(list){
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
       </div>
-    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;">Sin visitas programadas</div>';
-}
-
-function toggleFechaHoraVisita(){
-  const estado=document.getElementById('v-estado').value;
-  const esPorProgramar=estado==='por_programar';
-  const wrapFecha=document.getElementById('wrap-v-fecha');
-  const wrapHora=document.getElementById('wrap-v-hora');
-  if(wrapFecha) wrapFecha.style.opacity=esPorProgramar?'0.4':'1';
-  if(wrapHora) wrapHora.style.opacity=esPorProgramar?'0.4':'1';
-  const lFecha=document.querySelector('label[for="v-fecha"]');
-  const lHora=document.querySelector('label[for="v-hora"]');
-  if(lFecha) lFecha.textContent=esPorProgramar?'Fecha (opcional)':'Fecha';
-  if(lHora) lHora.textContent=esPorProgramar?'Hora (opcional)':'Hora';
+    </div>`;
+  }).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;">Sin visitas programadas</div>';
 }
 
 function openNuevaVisita(){
@@ -1558,11 +1562,10 @@ function openNuevaVisita(){
   document.getElementById('modal-visita-title').textContent='Nueva Visita';
   document.getElementById('btn-guardar-visita').textContent='Guardar';
   ['v-nombre','v-telefono','v-direccion','v-descripcion','v-notas'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('v-estado').value='por_programar';
-  document.getElementById('v-tecnico').value='Chitara';
-  document.getElementById('v-fecha').value='';
-  document.getElementById('v-hora').value='';
-  toggleFechaHoraVisita();
+  document.getElementById('v-estado').value='programado';
+  document.getElementById('v-tecnico').value=currentUser==='Chitara'?'Chitara':'Chitara';
+  document.getElementById('v-fecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('v-hora').value='09:00';
   document.getElementById('modal-visita').classList.add('open');
 }
 
@@ -1580,44 +1583,21 @@ function editarVisita(id){
   document.getElementById('v-tecnico').value=v.tecnico||'Chitara';
   document.getElementById('v-fecha').value=v.fecha||'';
   document.getElementById('v-hora').value=v.hora?.substring(0,5)||'';
-  toggleFechaHoraVisita();
   document.getElementById('modal-visita').classList.add('open');
 }
 
 async function guardarVisita(){
   const nombre=document.getElementById('v-nombre').value.trim();
-  const estado=document.getElementById('v-estado').value;
   const fecha=document.getElementById('v-fecha').value;
   const hora=document.getElementById('v-hora').value;
-  const esPorProgramar=estado==='por_programar';
-  if(!nombre){notif('El nombre es requerido','error');return;}
-  if(!esPorProgramar&&(!fecha||!hora)){notif('Nombre, fecha y hora requeridos','error');return;}
-  const data={cliente_nombre:nombre,cliente_telefono:document.getElementById('v-telefono').value.trim(),cliente_direccion:document.getElementById('v-direccion').value.trim(),descripcion:document.getElementById('v-descripcion').value.trim(),notas:document.getElementById('v-notas').value.trim(),estado,tecnico:document.getElementById('v-tecnico').value,fecha:fecha||null,hora:hora||null,creado_por:currentUser,updated_at:new Date().toISOString()};
+  if(!nombre||!fecha||!hora){notif('Nombre, fecha y hora requeridos','error');return;}
+  const data={cliente_nombre:nombre,cliente_telefono:document.getElementById('v-telefono').value.trim(),cliente_direccion:document.getElementById('v-direccion').value.trim(),descripcion:document.getElementById('v-descripcion').value.trim(),notas:document.getElementById('v-notas').value.trim(),estado:document.getElementById('v-estado').value,tecnico:document.getElementById('v-tecnico').value,fecha,hora,creado_por:currentUser,updated_at:new Date().toISOString()};
   let err;
-  if(editingVisitaId){
-    ({error:err}=await sb.from('visitas').update(data).eq('id',editingVisitaId));
-    if(err){notif('Error: '+err.message,'error');return;}
-    closeModal('modal-visita');
-    notif('Visita actualizada','success');
-  } else {
-    ({error:err}=await sb.from('visitas').insert([data]));
-    if(err){notif('Error: '+err.message,'error');return;}
-    // Auto-registrar cliente si tiene teléfono y no existe ya
-    if(data.cliente_telefono){
-      const{data:existe}=await sb.from('clientes').select('id').eq('telefono',data.cliente_telefono).maybeSingle();
-      if(!existe){
-        await sb.from('clientes').insert([{nombre:data.cliente_nombre,telefono:data.cliente_telefono,direccion:data.cliente_direccion||'',modificado_por:currentUser}]);
-        const{data:clis}=await sb.from('clientes').select('*').order('nombre');
-        allClientes=clis||[];
-        notif('Visita guardada y cliente registrado ✓','success');
-      } else {
-        notif('Visita programada ✓','success');
-      }
-    } else {
-      notif('Visita programada ✓','success');
-    }
-    closeModal('modal-visita');
-  }
+  if(editingVisitaId){({error:err}=await sb.from('visitas').update(data).eq('id',editingVisitaId));}
+  else{({error:err}=await sb.from('visitas').insert([data]));}
+  if(err){notif('Error: '+err.message,'error');return;}
+  closeModal('modal-visita');
+  notif(editingVisitaId?'Visita actualizada':'Visita programada ✓','success');
   loadAgenda();
 }
 
@@ -1844,7 +1824,6 @@ function poblarSelectOrdenes(){
 }
 
 async function actualizarStats(){
-  // Recargar ordenes frescas para tener estados actualizados
   const{data:ordenesActuales}=await sb.from('ordenes').select('id,estado,costo_estimado,costo_final');
   const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
   const gastos=allMovimientos.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
@@ -1852,12 +1831,21 @@ async function actualizarStats(){
   const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
   const porCobrar=(ordenesActuales||[]).filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
     .reduce((a,o)=>a+Number(o.costo_final||o.costo_estimado||0),0);
-  document.getElementById('c-ingresos').textContent='$'+ingresos.toLocaleString('es-MX',{minimumFractionDigits:2});
-  document.getElementById('c-gastos').textContent='$'+gastos.toLocaleString('es-MX',{minimumFractionDigits:2});
+  // Por método de pago — solo ingresos
+  const ingresosList=allMovimientos.filter(m=>m.tipo==='ingreso');
+  const efectivo=ingresosList.filter(m=>m.metodo_pago==='efectivo').reduce((a,m)=>a+Number(m.monto),0);
+  const banamex=ingresosList.filter(m=>m.metodo_pago==='tarjeta_banamex').reduce((a,m)=>a+Number(m.monto),0);
+  const banorte=ingresosList.filter(m=>m.metodo_pago==='tarjeta_banorte').reduce((a,m)=>a+Number(m.monto),0);
+  const fmt=n=>'$'+n.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('c-ingresos').textContent=fmt(ingresos);
+  document.getElementById('c-gastos').textContent=fmt(gastos);
   const balEl=document.getElementById('c-balance');
-  balEl.textContent='$'+Math.abs(balance).toLocaleString('es-MX',{minimumFractionDigits:2});
+  balEl.textContent=fmt(Math.abs(balance));
   balEl.className='stat-num '+(balance>=0?'green':'red');
-  document.getElementById('c-cobrar').textContent='$'+porCobrar.toLocaleString('es-MX',{minimumFractionDigits:2});
+  document.getElementById('c-cobrar').textContent=fmt(porCobrar);
+  document.getElementById('c-efectivo').textContent=fmt(efectivo);
+  document.getElementById('c-banamex').textContent=fmt(banamex);
+  document.getElementById('c-banorte').textContent=fmt(banorte);
 }
 
 function filtrarMovimientos(tipo){
@@ -1877,7 +1865,7 @@ function filtrarMovimientos(tipo){
 }
 
 function renderMovimientos(list){
-  const metodoIcon={efectivo:'💵',transferencia:'🏦',mercadopago:'💳',paypal:'🅿️',otro:'💱'};
+  const metodoIcon={efectivo:'💵',tarjeta_banamex:'💳 Banamex',tarjeta_banorte:'💳 Banorte',transferencia:'🏦',mercadopago:'📱',paypal:'🅿️',otro:'💱'};
   // desktop
   const tbody=document.getElementById('tabla-cont');
   if(tbody) tbody.innerHTML=list.length?list.map(m=>`
@@ -1987,10 +1975,33 @@ function renderGraficaCategorias(){
   graficaCategChart=new Chart(canvas,{
     type:'doughnut',
     data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:colors,borderWidth:0,hoverOffset:6}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{
-      legend:{position:'right',labels:{color:'#7A8290',font:{size:10},padding:8,boxWidth:10}},
-      tooltip:{callbacks:{label:ctx=>' $'+Number(ctx.raw).toLocaleString('es-MX',{minimumFractionDigits:2})}}
-    }}
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'62%',
+      onClick:(evt,elements)=>{
+        if(!elements.length)return;
+        const cat=sorted[elements[0].index][0];
+        // Filtrar tabla por categoría
+        filtrarMovimientos('gasto');
+        setTimeout(()=>{
+          const list=allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria===cat);
+          renderMovimientos(list);
+          notif(`Gastos: ${cat}`,'success');
+        },100);
+      },
+      plugins:{
+        legend:{position:'right',labels:{color:'#7A8290',font:{size:10},padding:8,boxWidth:10},
+          onClick:(e,legendItem,legend)=>{
+            const cat=legendItem.text;
+            filtrarMovimientos('gasto');
+            setTimeout(()=>{
+              renderMovimientos(allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria===cat));
+              notif(`Gastos: ${cat}`,'success');
+            },100);
+          }
+        },
+        tooltip:{callbacks:{label:ctx=>' $'+Number(ctx.raw).toLocaleString('es-MX',{minimumFractionDigits:2})+' ('+Math.round(ctx.raw/gastos.reduce((a,g)=>a+Number(g.monto),0)*100)+'%)'}}
+      }
+    }
   });
 }
 
