@@ -382,13 +382,10 @@
           <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Ingresos vs Gastos — Últimos 6 meses</div>
           <canvas id="grafica-cont" height="120"></canvas>
         </div>
-        <!-- Gastos por categoria - clickeable -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
           <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.1em;">Gastos por Categoría</div>
-          <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem;">Haz clic en una categoría para ver sus gastos</div>
-          <div style="position:relative;height:200px;">
-            <canvas id="grafica-categorias"></canvas>
-          </div>
+          <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem;">Haz clic para filtrar</div>
+          <div style="position:relative;height:200px;"><canvas id="grafica-categorias"></canvas></div>
         </div>
         <!-- Tabs -->
         <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
@@ -518,6 +515,10 @@
             <option value="Transporte">Transporte</option>
             <option value="Envío">Envío/Paquetería</option>
             <option value="Publicidad">Publicidad</option>
+            <option value="Pago Alan">💸 Pago — Alan</option>
+            <option value="Pago Azul">💸 Pago — Azul</option>
+            <option value="Pago Alonso">💸 Pago — Alonso</option>
+            <option value="Pago Chitara">💸 Pago — Chitara</option>
             <option value="Otro gasto">Otro gasto</option>
           </optgroup>
         </select>
@@ -1508,17 +1509,10 @@ function renderAgenda(list){
     if(addr.startsWith('http')) return 'Ver en Maps';
     return addr||'Sin dirección';
   };
-  const fmtVisitaFecha=f=>{
-    if(!f)return'?';
-    const[y,m,d]=f.split('-');
-    const fecha=new Date(y,m-1,d);
-    const dia=fecha.toLocaleDateString('es-MX',{weekday:'long'});
-    return`<div style="font-family:var(--mono);font-size:0.78rem;">${dia.charAt(0).toUpperCase()+dia.slice(1)}</div><div style="font-size:0.75rem;color:var(--text-dim);">${d}/${m}/${y}</div>`;
-  };
   const tbody=document.getElementById('tabla-agenda');
   if(tbody) tbody.innerHTML=list.length?list.map(v=>`
     <tr>
-      <td>${fmtVisitaFecha(v.fecha)}</td>
+      <td>${(()=>{const[y,m,d]=v.fecha.split('-');const dia=new Date(y,m-1,d).toLocaleDateString('es-MX',{weekday:'long'});return'<div style="font-family:var(--mono);font-size:0.78rem;">'+dia.charAt(0).toUpperCase()+dia.slice(1)+'</div><div style="font-size:0.75rem;color:var(--text-dim);">'+d+'/'+m+'/'+y+'</div>';})()}</td>
       <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'?'}</td>
       <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
       <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
@@ -1531,17 +1525,11 @@ function renderAgenda(list){
       </div></td>
     </tr>`).join(''):`<tr class="empty-row"><td colspan="8">Sin visitas programadas</td></tr>`;
   const mob=document.getElementById('mobile-agenda');
-  if(mob) mob.innerHTML=list.length?list.map(v=>{
-    const[y,m,d]=v.fecha.split('-');
-    const fecha=new Date(y,m-1,d);
-    const dia=fecha.toLocaleDateString('es-MX',{weekday:'long'});
-    return`<div class="m-card" style="border-left:3px solid ${v.estado==='completado'?'var(--green)':v.estado==='cancelado'?'var(--red)':v.estado==='en_camino'?'var(--orange)':'var(--blue)'};">
+  if(mob) mob.innerHTML=list.length?list.map(v=>`
+    <div class="m-card" style="border-left:3px solid ${v.estado==='completado'?'var(--green)':v.estado==='cancelado'?'var(--red)':v.estado==='en_camino'?'var(--orange)':'var(--blue)'};">
       <div class="m-card-top">
-        <div>
-          <div style="font-family:var(--mono);color:var(--blue);font-size:0.82rem;font-weight:700;">${dia.charAt(0).toUpperCase()+dia.slice(1)} ${d}/${m}/${y}</div>
-          <div style="font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);">${v.hora?.substring(0,5)||'?'}</div>
-          <div class="m-card-name">${v.cliente_nombre}</div>
-        </div>
+        <div><div style="font-family:var(--mono);color:var(--blue);font-size:0.82rem;font-weight:700;">${(()=>{const[y,m,d]=v.fecha.split('-');const dia=new Date(y,m-1,d).toLocaleDateString('es-MX',{weekday:'long'});return dia.charAt(0).toUpperCase()+dia.slice(1)+' '+d+'/'+m+'/'+y;})()}</div><div style="font-family:var(--mono);font-size:0.8rem;color:var(--text-dim);">${v.hora?.substring(0,5)||'?'}</div>
+        <div class="m-card-name">${v.cliente_nombre}</div></div>
         ${eB[v.estado]||''}
       </div>
       <a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" class="m-card-phone" style="display:block;margin:0.3rem 0;">📱 ${v.cliente_telefono||'?'}</a>
@@ -1553,8 +1541,7 @@ function renderAgenda(list){
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
       </div>
-    </div>`;
-  }).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;">Sin visitas programadas</div>';
+    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;">Sin visitas programadas</div>';
 }
 
 function openNuevaVisita(){
@@ -1831,7 +1818,6 @@ async function actualizarStats(){
   const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
   const porCobrar=(ordenesActuales||[]).filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
     .reduce((a,o)=>a+Number(o.costo_final||o.costo_estimado||0),0);
-  // Por método de pago — solo ingresos
   const ingresosList=allMovimientos.filter(m=>m.tipo==='ingreso');
   const efectivo=ingresosList.filter(m=>m.metodo_pago==='efectivo').reduce((a,m)=>a+Number(m.monto),0);
   const banamex=ingresosList.filter(m=>m.metodo_pago==='tarjeta_banamex').reduce((a,m)=>a+Number(m.monto),0);
@@ -1843,9 +1829,9 @@ async function actualizarStats(){
   balEl.textContent=fmt(Math.abs(balance));
   balEl.className='stat-num '+(balance>=0?'green':'red');
   document.getElementById('c-cobrar').textContent=fmt(porCobrar);
-  document.getElementById('c-efectivo').textContent=fmt(efectivo);
-  document.getElementById('c-banamex').textContent=fmt(banamex);
-  document.getElementById('c-banorte').textContent=fmt(banorte);
+  const ef=document.getElementById('c-efectivo');if(ef)ef.textContent=fmt(efectivo);
+  const bn=document.getElementById('c-banamex');if(bn)bn.textContent=fmt(banamex);
+  const bno=document.getElementById('c-banorte');if(bno)bno.textContent=fmt(banorte);
 }
 
 function filtrarMovimientos(tipo){
@@ -1941,23 +1927,13 @@ function renderGrafica(){
   const hoy=new Date();
   for(let i=5;i>=0;i--){
     const d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
-    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    meses.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
   }
-  const labels=meses.map(m=>{
-    const[y,mo]=m.split('-');
-    return new Date(y,mo-1).toLocaleDateString('es-MX',{month:'short'})+' '+String(y).substring(2);
-  });
+  const labels=meses.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleDateString('es-MX',{month:'short'})+' '+String(y).substring(2);});
   const dataIngresos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='ingreso'&&x.fecha&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
   const dataGastos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='gasto'&&x.fecha&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
   if(graficaChart)graficaChart.destroy();
-  graficaChart=new Chart(canvas,{
-    type:'bar',
-    data:{labels,datasets:[
-      {label:'Ingresos',data:dataIngresos,backgroundColor:'rgba(48,209,88,0.75)',borderRadius:6},
-      {label:'Gastos',data:dataGastos,backgroundColor:'rgba(255,69,58,0.75)',borderRadius:6}
-    ]},
-    options:{responsive:true,plugins:{legend:{labels:{color:'#7A8290',font:{size:11}}}},scales:{x:{ticks:{color:'#7A8290'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#7A8290',callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,0.05)'}}}}
-  });
+  graficaChart=new Chart(canvas,{type:'bar',data:{labels,datasets:[{label:'Ingresos',data:dataIngresos,backgroundColor:'rgba(48,209,88,0.75)',borderRadius:6},{label:'Gastos',data:dataGastos,backgroundColor:'rgba(255,69,58,0.75)',borderRadius:6}]},options:{responsive:true,plugins:{legend:{labels:{color:'#7A8290',font:{size:11}}}},scales:{x:{ticks:{color:'#7A8290'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#7A8290',callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,0.05)'}}}}});
   renderGraficaCategorias();
 }
 
@@ -1968,34 +1944,42 @@ function renderGraficaCategorias(){
   const gastos=allMovimientos.filter(x=>x.tipo==='gasto');
   if(!gastos.length){if(graficaCategChart)graficaCategChart.destroy();return;}
   const cats={};
-  gastos.forEach(g=>{const c=g.categoria||'Otro';cats[c]=(cats[c]||0)+Number(g.monto);});
+  gastos.forEach(g=>{
+    let c=g.categoria||'Otro';
+    // Agrupar todos los pagos bajo "Pagos"
+    if(c.startsWith('Pago '))c='Pagos';
+    cats[c]=(cats[c]||0)+Number(g.monto);
+  });
   const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  const colors=['rgba(255,69,58,0.85)','rgba(255,107,0,0.85)','rgba(255,214,10,0.85)','rgba(10,132,255,0.85)','rgba(191,90,242,0.85)','rgba(48,209,88,0.85)','rgba(255,159,10,0.85)','rgba(100,200,255,0.85)'];
+  const colors=['rgba(255,69,58,0.85)','rgba(255,107,0,0.85)','rgba(255,214,10,0.85)','rgba(10,132,255,0.85)','rgba(191,90,242,0.85)','rgba(48,209,88,0.85)','rgba(255,159,10,0.85)','rgba(100,200,255,0.85)','rgba(255,100,150,0.85)'];
   if(graficaCategChart)graficaCategChart.destroy();
   graficaCategChart=new Chart(canvas,{
     type:'doughnut',
     data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:colors,borderWidth:0,hoverOffset:6}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,cutout:'62%',
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
       onClick:(evt,elements)=>{
         if(!elements.length)return;
         const cat=sorted[elements[0].index][0];
-        // Filtrar tabla por categoría
         filtrarMovimientos('gasto');
         setTimeout(()=>{
-          const list=allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria===cat);
+          const list=cat==='Pagos'
+            ?allMovimientos.filter(m=>m.tipo==='gasto'&&(m.categoria||'').startsWith('Pago '))
+            :allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria===cat);
           renderMovimientos(list);
-          notif(`Gastos: ${cat}`,'success');
+          notif('Gastos: '+cat,'success');
         },100);
       },
       plugins:{
         legend:{position:'right',labels:{color:'#7A8290',font:{size:10},padding:8,boxWidth:10},
-          onClick:(e,legendItem,legend)=>{
+          onClick:(e,legendItem)=>{
             const cat=legendItem.text;
             filtrarMovimientos('gasto');
             setTimeout(()=>{
-              renderMovimientos(allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria===cat));
-              notif(`Gastos: ${cat}`,'success');
+              const list=cat==='Pagos'
+                ?allMovimientos.filter(m=>m.tipo==='gasto'&&(m.categoria||'').startsWith('Pago '))
+                :allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria===cat);
+              renderMovimientos(list);
+              notif('Gastos: '+cat,'success');
             },100);
           }
         },
