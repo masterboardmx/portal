@@ -537,6 +537,7 @@
             <option value="Venta componente">Venta componente</option>
             <option value="Diagnóstico">Diagnóstico</option>
             <option value="Bitácora">Bitácora/Manual</option>
+            <option value="Pago/Sueldo">Pago/Sueldo</option>
             <option value="Otro ingreso">Otro ingreso</option>
           </optgroup>
           <optgroup label="Gastos" id="opt-gastos" style="display:none;">
@@ -548,6 +549,10 @@
             <option value="Transporte">Transporte</option>
             <option value="Envío">Envío/Paquetería</option>
             <option value="Publicidad">Publicidad</option>
+            <option value="Pago Alan">💸 Pago — Alan</option>
+            <option value="Pago Azul">💸 Pago — Azul</option>
+            <option value="Pago Alonso">💸 Pago — Alonso</option>
+            <option value="Pago Chitara">💸 Pago — Chitara</option>
             <option value="Otro gasto">Otro gasto</option>
           </optgroup>
         </select>
@@ -612,6 +617,7 @@
       <div class="form-group full"><label>Descripción del Trabajo</label><textarea id="v-descripcion" rows="2" placeholder="¿Qué se va a hacer?"></textarea></div>
       <div class="form-group full"><label>Estado</label>
         <select id="v-estado">
+          <option value="por_programar">🕐 Por Programar</option>
           <option value="programado">📅 Programado</option>
           <option value="en_camino">🚗 En Camino</option>
           <option value="en_proceso">🔧 En Proceso</option>
@@ -1518,6 +1524,7 @@ function filtrarAgenda(tipo){
 
 function renderAgenda(list){
   const eB={
+    por_programar:'<span class="badge" style="background:rgba(122,130,144,0.15);color:var(--text-dim);border:1px solid rgba(122,130,144,0.3);">🕐 Por Programar</span>',
     programado:'<span class="badge" style="background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);">📅 Programado</span>',
     en_camino:'<span class="badge" style="background:rgba(255,107,0,0.12);color:var(--orange);border:1px solid rgba(255,107,0,0.3);">🚗 En Camino</span>',
     en_proceso:'<span class="badge" style="background:rgba(255,214,10,0.12);color:var(--yellow);border:1px solid rgba(255,214,10,0.3);">🔧 En Proceso</span>',
