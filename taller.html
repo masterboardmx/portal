@@ -368,11 +368,30 @@
           </div>
         </div>
         <!-- Stats -->
-        <div class="stats-grid" style="margin-bottom:1.5rem;">
+        <div class="stats-grid" style="margin-bottom:1rem;">
           <div class="stat-card"><div class="stat-label">Ingresos</div><div class="stat-num green" id="c-ingresos">$0</div></div>
           <div class="stat-card"><div class="stat-label">Gastos</div><div class="stat-num red" id="c-gastos">$0</div></div>
           <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-num" id="c-balance">$0</div></div>
           <div class="stat-card"><div class="stat-label">Por Cobrar</div><div class="stat-num yellow" id="c-cobrar">$0</div></div>
+        </div>
+        <!-- Saldos por método -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
+          <div class="stat-card" style="border-color:rgba(48,209,88,0.25);">
+            <div class="stat-label">💵 Efectivo</div>
+            <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--green);" id="c-efectivo">$0</div>
+          </div>
+          <div class="stat-card" style="border-color:rgba(10,132,255,0.25);">
+            <div class="stat-label">🏦 Transferencia</div>
+            <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--blue);" id="c-transferencia">$0</div>
+          </div>
+          <div class="stat-card" style="border-color:rgba(255,214,10,0.25);">
+            <div class="stat-label">💳 Banamex</div>
+            <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--yellow);" id="c-tarjeta_banamex">$0</div>
+          </div>
+          <div class="stat-card" style="border-color:rgba(255,107,0,0.25);">
+            <div class="stat-label">💳 Banorte</div>
+            <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--orange);" id="c-tarjeta_banorte">$0</div>
+          </div>
         </div>
         <!-- Grafica simple -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
@@ -572,11 +591,13 @@
       <div class="form-group">
         <label>Método de Pago</label>
         <select id="cont-metodo">
-          <option value="efectivo">Efectivo</option>
-          <option value="transferencia">Transferencia</option>
-          <option value="mercadopago">MercadoPago</option>
-          <option value="paypal">PayPal</option>
-          <option value="otro">Otro</option>
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="transferencia">🏦 Transferencia</option>
+          <option value="tarjeta_banamex">💳 Banamex</option>
+          <option value="tarjeta_banorte">💳 Banorte</option>
+          <option value="mercadopago">📲 MercadoPago</option>
+          <option value="paypal">🅿️ PayPal</option>
+          <option value="otro">💱 Otro</option>
         </select>
       </div>
       <div class="form-group full">
@@ -1609,16 +1630,37 @@ function editarVisita(id){
 
 async function guardarVisita(){
   const nombre=document.getElementById('v-nombre').value.trim();
+  const estado=document.getElementById('v-estado').value;
   const fecha=document.getElementById('v-fecha').value;
   const hora=document.getElementById('v-hora').value;
-  if(!nombre||!fecha||!hora){notif('Nombre, fecha y hora requeridos','error');return;}
-  const data={cliente_nombre:nombre,cliente_telefono:document.getElementById('v-telefono').value.trim(),cliente_direccion:document.getElementById('v-direccion').value.trim(),descripcion:document.getElementById('v-descripcion').value.trim(),notas:document.getElementById('v-notas').value.trim(),estado:document.getElementById('v-estado').value,tecnico:document.getElementById('v-tecnico').value,fecha,hora,creado_por:currentUser,updated_at:new Date().toISOString()};
+  const esPorProgramar=estado==='por_programar';
+  if(!nombre){notif('El nombre es requerido','error');return;}
+  if(!esPorProgramar&&(!fecha||!hora)){notif('Fecha y hora requeridas para este estado','error');return;}
+  const data={cliente_nombre:nombre,cliente_telefono:document.getElementById('v-telefono').value.trim(),cliente_direccion:document.getElementById('v-direccion').value.trim(),descripcion:document.getElementById('v-descripcion').value.trim(),notas:document.getElementById('v-notas').value.trim(),estado,tecnico:document.getElementById('v-tecnico').value,fecha:fecha||null,hora:hora||null,creado_por:currentUser,updated_at:new Date().toISOString()};
   let err;
-  if(editingVisitaId){({error:err}=await sb.from('visitas').update(data).eq('id',editingVisitaId));}
-  else{({error:err}=await sb.from('visitas').insert([data]));}
-  if(err){notif('Error: '+err.message,'error');return;}
-  closeModal('modal-visita');
-  notif(editingVisitaId?'Visita actualizada':'Visita programada ✓','success');
+  if(editingVisitaId){
+    ({error:err}=await sb.from('visitas').update(data).eq('id',editingVisitaId));
+    if(err){notif('Error: '+err.message,'error');return;}
+    closeModal('modal-visita');
+    notif('Visita actualizada','success');
+  } else {
+    ({error:err}=await sb.from('visitas').insert([data]));
+    if(err){notif('Error: '+err.message,'error');return;}
+    if(data.cliente_telefono){
+      const{data:existe}=await sb.from('clientes').select('id').eq('telefono',data.cliente_telefono).maybeSingle();
+      if(!existe){
+        await sb.from('clientes').insert([{nombre:data.cliente_nombre,telefono:data.cliente_telefono,direccion:data.cliente_direccion||'',modificado_por:currentUser}]);
+        const{data:clis}=await sb.from('clientes').select('*').order('nombre');
+        allClientes=clis||[];
+        notif('Visita guardada y cliente registrado ✓','success');
+      } else {
+        notif('Visita programada ✓','success');
+      }
+    } else {
+      notif('Visita programada ✓','success');
+    }
+    closeModal('modal-visita');
+  }
   loadAgenda();
 }
 
@@ -1845,7 +1887,6 @@ function poblarSelectOrdenes(){
 }
 
 async function actualizarStats(){
-  // Recargar ordenes frescas para tener estados actualizados
   const{data:ordenesActuales}=await sb.from('ordenes').select('id,estado,costo_estimado,costo_final');
   const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
   const gastos=allMovimientos.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
@@ -1859,6 +1900,19 @@ async function actualizarStats(){
   balEl.textContent='$'+Math.abs(balance).toLocaleString('es-MX',{minimumFractionDigits:2});
   balEl.className='stat-num '+(balance>=0?'green':'red');
   document.getElementById('c-cobrar').textContent='$'+porCobrar.toLocaleString('es-MX',{minimumFractionDigits:2});
+  // Saldo neto por método
+  const metodos=['efectivo','transferencia','tarjeta_banamex','tarjeta_banorte'];
+  const colores={efectivo:'var(--green)',transferencia:'var(--blue)',tarjeta_banamex:'var(--yellow)',tarjeta_banorte:'var(--orange)'};
+  metodos.forEach(met=>{
+    const ing=allMovimientos.filter(m=>m.tipo==='ingreso'&&m.metodo_pago===met).reduce((a,m)=>a+Number(m.monto),0);
+    const gas=allMovimientos.filter(m=>m.tipo==='gasto'&&m.metodo_pago===met).reduce((a,m)=>a+Number(m.monto),0);
+    const neto=ing-gas;
+    const el=document.getElementById('c-'+met);
+    if(el){
+      el.textContent=(neto<0?'-':'')+'$'+Math.abs(neto).toLocaleString('es-MX',{minimumFractionDigits:2});
+      el.style.color=neto<0?'var(--red)':colores[met];
+    }
+  });
 }
 
 function filtrarMovimientos(tipo){
@@ -1877,32 +1931,39 @@ function filtrarMovimientos(tipo){
   }
 }
 
+function fmtFechaContab(f){
+  if(!f)return'?';
+  const dias=['Dom','Lun','Mar','Mi\u00e9','Jue','Vie','S\u00e1b'];
+  const d=new Date(f+'T12:00:00');
+  return'<span style="color:var(--blue);font-size:0.7rem;">'+dias[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
+
 function renderMovimientos(list){
-  const metodoIcon={efectivo:'💵',transferencia:'🏦',mercadopago:'💳',paypal:'🅿️',otro:'💱'};
+  const metodoLabel={efectivo:'\U0001f4b5 Efectivo',transferencia:'\U0001f3e6 Transferencia',tarjeta_banamex:'\U0001f4b3 Banamex',tarjeta_banorte:'\U0001f4b3 Banorte',mercadopago:'\U0001f4f2 MercadoPago',paypal:'\U0001f17f\ufe0f PayPal',otro:'\U0001f4b1 Otro'};
   // desktop
   const tbody=document.getElementById('tabla-cont');
   if(tbody) tbody.innerHTML=list.length?list.map(m=>`
     <tr>
-      <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);">${m.fecha}</td>
-      <td><span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'↑ Ingreso':'↓ Gasto'}</span></td>
+      <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);white-space:nowrap;">${fmtFechaContab(m.fecha)}</td>
+      <td><span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'\u2191 Ingreso':'\u2193 Gasto'}</span></td>
       <td style="font-size:0.82rem;">${m.categoria}</td>
       <td><div style="font-size:0.85rem;">${m.descripcion}</div>${m.ordenes?`<div style="font-size:0.72rem;color:var(--blue);">#${m.ordenes.folio}</div>`:''}</td>
-      <td style="font-size:0.82rem;color:var(--text-dim);">${metodoIcon[m.metodo_pago]||''} ${m.metodo_pago}</td>
+      <td style="font-size:0.82rem;color:var(--text-dim);white-space:nowrap;">${metodoLabel[m.metodo_pago]||m.metodo_pago}</td>
       <td style="font-family:var(--mono);font-weight:700;color:${m.tipo==='ingreso'?'var(--green)':'var(--red)'};">${m.tipo==='ingreso'?'+':'-'}$${Number(m.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-      <td><button class="btn-red btn-sm" onclick="eliminarMovimiento('${m.id}')">✕</button></td>
+      <td><button class="btn-red btn-sm" onclick="eliminarMovimiento('${m.id}')">&#x2715;</button></td>
     </tr>`).join(''):`<tr class="empty-row"><td colspan="7">Sin movimientos</td></tr>`;
   // mobile
   const mob=document.getElementById('mobile-cont');
   if(mob) mob.innerHTML=list.length?list.map(m=>`
     <div class="m-card" style="cursor:default;">
       <div class="m-card-top">
-        <span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'↑ Ingreso':'↓ Gasto'}</span>
+        <span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'\u2191 Ingreso':'\u2193 Gasto'}</span>
         <span style="font-family:var(--mono);font-weight:700;color:${m.tipo==='ingreso'?'var(--green)':'var(--red)'};">${m.tipo==='ingreso'?'+':'-'}$${Number(m.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
       </div>
       <div style="font-weight:500;margin:0.4rem 0;">${m.descripcion}</div>
-      <div style="font-size:0.78rem;color:var(--text-dim);">${m.categoria} · ${m.metodo_pago} · ${m.fecha}</div>
+      <div style="font-size:0.78rem;color:var(--text-dim);">${m.categoria} \u00b7 ${metodoLabel[m.metodo_pago]||m.metodo_pago} \u00b7 ${fmtFechaContab(m.fecha)}</div>
       ${m.ordenes?`<div style="font-size:0.75rem;color:var(--blue);margin-top:0.2rem;">Orden #${m.ordenes.folio}</div>`:''}
-      <div class="m-card-actions"><button class="btn-red" onclick="eliminarMovimiento('${m.id}')">✕ Eliminar</button></div>
+      <div class="m-card-actions"><button class="btn-red" onclick="eliminarMovimiento('${m.id}')">&#x2715; Eliminar</button></div>
     </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Sin movimientos</div>';
 }
 
