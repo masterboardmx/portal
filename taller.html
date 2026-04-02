@@ -1617,16 +1617,10 @@ function renderAgenda(list){
     if(addr.startsWith('http')) return 'Ver en Maps';
     return addr||'Sin dirección';
   };
-  function fdAgenda(f){
-    if(!f)return'<span style="color:var(--text-dim);font-size:0.75rem;">Sin fecha</span>';
-    const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    const d=new Date(f+'T12:00:00');
-    return'<div style="font-family:var(--mono);font-size:0.72rem;"><span style="color:var(--blue);">'+ dias[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'</div><div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-dim);">'+d.getFullYear()+'</div>';
-  }
   const tbody=document.getElementById('tabla-agenda');
   if(tbody) tbody.innerHTML=list.length?list.map(v=>`
     <tr>
-      <td>${fdAgenda(v.fecha)}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${(()=>{if(!v.fecha)return'<span style=\"color:var(--text-dim)\">Sin fecha</span>';const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];const d=new Date(v.fecha+'T12:00:00');return'<span style=\"color:var(--blue);font-size:0.7rem;\">'+ dias[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();})()} </td>
       <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'—'}</td>
       <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
       <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
@@ -1685,25 +1679,27 @@ function renderCalendario(){
   const diasMes=new Date(anio,mes+1,0).getDate();
   const todayStr=hoy.toISOString().split('T')[0];
   const colores={por_programar:'rgba(122,130,144,0.35)',programado:'rgba(10,132,255,0.5)',en_camino:'rgba(255,107,0,0.5)',en_proceso:'rgba(255,214,10,0.5)',completado:'rgba(48,209,88,0.5)',cancelado:'rgba(255,69,58,0.4)'};
-  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  let html='<div class="cal-header">'+dias.map(d=>`<div class="cal-day-header">${d}</div>`).join('')+'</div>';
+  const dias=['Dom','Lun','Mar','Mi\u00e9','Jue','Vie','S\u00e1b'];
+  let html='<div class="cal-header">'+dias.map(function(d){return '<div class="cal-day-header">'+d+'</div>';}).join('')+'</div>';
   html+='<div class="cal-grid">';
   for(let i=0;i<primerDia;i++) html+='<div class="cal-cell vacio"></div>';
   for(let d=1;d<=diasMes;d++){
     const dateStr=anio+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     const esHoy=dateStr===todayStr;
-    const visitas=allVisitas.filter(v=>v.fecha===dateStr).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
-    html+=`<div class="cal-cell${esHoy?' hoy':''}">
-      <div class="cal-num">${d}</div>
-      ${visitas.map(v=>`<div class="cal-evento" style="background:${colores[v.estado]||'rgba(10,132,255,0.4)'};" onclick="editarVisita('${v.id}')" title="${v.cliente_nombre} · ${v.hora?.substring(0,5)||''}">
-        ${v.hora?.substring(0,5)||''} ${v.cliente_nombre}
-      </div>`).join('')}
-    </div>`;
+    const visitas=allVisitas.filter(function(v){return v.fecha===dateStr;}).sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});
+    let eventos='';
+    visitas.forEach(function(v){
+      const color=colores[v.estado]||'rgba(10,132,255,0.4)';
+      const hora=v.hora?v.hora.substring(0,5):'';
+      eventos+='<div class="cal-evento" style="background:'+color+';" onclick="editarVisita(\''+v.id+'\')" title="'+v.cliente_nombre+' \u00b7 '+hora+'">'+hora+' '+v.cliente_nombre+'</div>';
+    });
+    html+='<div class="cal-cell'+(esHoy?' hoy':'')+'"><div class="cal-num">'+d+'</div>'+eventos+'</div>';
   }
   html+='</div>';
   const cont=document.getElementById('agenda-calendario');
   if(cont)cont.innerHTML=html;
 }
+
 
 function openNuevaVisita(){
   editingVisitaId=null;
@@ -2219,23 +2215,22 @@ function renderGraficaCategorias(){
   // Lista lateral con barras
   const lista=document.getElementById('categ-lista');
   if(lista){
-    lista.innerHTML=sorted.map(([k,v],i)=>{
+    lista.innerHTML=sorted.map(function([k,v],i){
       const pct=(v/totalGastos*100).toFixed(1);
-      return `<div onclick="abrirDetalleCategoria('${k}')" style="cursor:pointer;padding:0.5rem 0.6rem;border-radius:8px;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
-          <div style="display:flex;align-items:center;gap:0.4rem;">
-            <div style="width:10px;height:10px;border-radius:50%;background:${colors[i%colors.length]};flex-shrink:0;"></div>
-            <span style="font-size:0.78rem;">${k}</span>
-          </div>
-          <span style="font-family:var(--mono);font-size:0.75rem;color:var(--red);">-$${Number(v).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
-        </div>
-        <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">
-          <div style="height:4px;border-radius:2px;background:${colors[i%colors.length]};width:${pct}%;transition:width 0.4s;"></div>
-        </div>
-        <div style="font-size:0.68rem;color:var(--text-dim);margin-top:0.15rem;">${pct}% del total</div>
-      </div>`;
+      const col=colors[i%colors.length];
+      return '<div onclick="abrirDetalleCategoria(\''+k+'\')" style="cursor:pointer;padding:0.5rem 0.6rem;border-radius:8px;transition:background 0.15s;" onmouseover="this.style.background=\'rgba(255,255,255,0.05)\'" onmouseout="this.style.background=\'transparent\'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">'
+        +'<div style="display:flex;align-items:center;gap:0.4rem;">'
+        +'<div style="width:10px;height:10px;border-radius:50%;background:'+col+';flex-shrink:0;"></div>'
+        +'<span style="font-size:0.78rem;">'+k+'</span></div>'
+        +'<span style="font-family:var(--mono);font-size:0.75rem;color:var(--red);">-$'+Number(v).toLocaleString('es-MX',{minimumFractionDigits:2})+'</span></div>'
+        +'<div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;">'
+        +'<div style="height:4px;border-radius:2px;background:'+col+';width:'+pct+'%;transition:width 0.4s;"></div></div>'
+        +'<div style="font-size:0.68rem;color:var(--text-dim);margin-top:0.15rem;">'+pct+'% del total</div>'
+        +'</div>';
     }).join('');
   }
+}
 }
 
 function abrirDetalleCategoria(cat){
@@ -2246,13 +2241,14 @@ function abrirDetalleCategoria(cat){
   const metL={efectivo:'💵 Efectivo',transferencia:'🏦 Transferencia',tarjeta_banamex:'💳 Banamex',tarjeta_banorte:'💳 Banorte',mercadopago:'📲 MercadoPago',paypal:'🅿️ PayPal',otro:'💱 Otro'};
   document.getElementById('modal-categ-title').textContent='📂 '+cat;
   document.getElementById('modal-categ-total').textContent='Total: $'+total.toLocaleString('es-MX',{minimumFractionDigits:2})+' · '+gastosCat.length+' movimiento'+(gastosCat.length!==1?'s':'');
-  document.getElementById('modal-categ-body').innerHTML=gastosCat.length?gastosCat.map(m=>`
-    <tr>
-      <td style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">${fd(m.fecha)}</td>
-      <td style="font-size:0.85rem;">${m.descripcion}</td>
-      <td style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;">${metL[m.metodo_pago]||m.metodo_pago}</td>
-      <td style="font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap;">-$${Number(m.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-    </tr>`).join(''):`<tr class="empty-row"><td colspan="4">Sin gastos</td></tr>`;
+  document.getElementById('modal-categ-body').innerHTML=gastosCat.length?gastosCat.map(function(m){
+    return '<tr>'
+      +'<td style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);white-space:nowrap;">'+fd(m.fecha)+'</td>'
+      +'<td style="font-size:0.85rem;">'+m.descripcion+'</td>'
+      +'<td style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;">'+(metL[m.metodo_pago]||m.metodo_pago)+'</td>'
+      +'<td style="font-family:var(--mono);font-weight:700;color:var(--red);white-space:nowrap;">-$'+Number(m.monto).toLocaleString('es-MX',{minimumFractionDigits:2})+'</td>'
+      +'</tr>';
+  }).join(''):'<tr class=\"empty-row\"><td colspan=\"4\">Sin gastos</td></tr>'
   document.getElementById('modal-categ').classList.add('open');
 }
 
