@@ -80,6 +80,16 @@
     .user-Alan{background:rgba(191,90,242,0.15);color:var(--purple);border:1px solid rgba(191,90,242,0.3);}
     .user-Azul{background:rgba(10,132,255,0.12);color:var(--blue);border:1px solid rgba(10,132,255,0.3);}
     .user-Alonso{background:rgba(48,209,88,0.12);color:var(--green);border:1px solid rgba(48,209,88,0.3);}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+    .cal-header-row{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+    .cal-day-hdr{text-align:center;font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);text-transform:uppercase;padding:0.35rem 0;}
+    .cal-cell{background:var(--bg2);border:1px solid var(--border);border-radius:8px;min-height:80px;padding:0.35rem;}
+    .cal-cell.cal-hoy{border-color:var(--blue);}
+    .cal-cell.cal-vacio{background:transparent;border-color:transparent;}
+    .cal-num{font-family:var(--mono);font-size:0.68rem;color:var(--text-dim);margin-bottom:0.25rem;}
+    .cal-cell.cal-hoy .cal-num{color:var(--blue);font-weight:700;}
+    .cal-ev{font-size:0.65rem;padding:0.15rem 0.35rem;border-radius:4px;margin-bottom:2px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+    .cal-ev:hover{opacity:0.8;}
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:center;justify-content:center;padding:1rem;}
     .modal-overlay.open{display:flex;}
     .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
@@ -365,6 +375,7 @@
             </select>
             <button class="btn-blue" onclick="openNuevoMovimiento('ingreso')">+ Ingreso</button>
             <button class="btn-ghost" onclick="openNuevoMovimiento('gasto')">+ Gasto</button>
+            <button id="btn-modo-edicion" class="btn-ghost btn-sm" onclick="toggleModoEdicion()" style="display:none;border-color:rgba(255,214,10,0.4);color:var(--yellow);">✏ Editar montos</button>
           </div>
         </div>
         <!-- Stats -->
@@ -434,17 +445,33 @@
           </div>
           <button class="btn-blue" onclick="openNuevaVisita()">+ Nueva Visita</button>
         </div>
-        <div style="display:flex;gap:0.5rem;margin-bottom:1.25rem;flex-wrap:wrap;">
-          <button class="btn-ghost btn-sm" id="agenda-btn-hoy" onclick="filtrarAgenda('hoy')">Hoy</button>
-          <button class="btn-ghost btn-sm" id="agenda-btn-semana" onclick="filtrarAgenda('semana')">Esta semana</button>
-          <button class="btn-blue btn-sm" id="agenda-btn-todos" onclick="filtrarAgenda('todos')">Todos</button>
-          <input type="date" id="agenda-fecha-filtro" onchange="filtrarAgenda('fecha')" style="width:160px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem;">
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn-ghost btn-sm" id="agenda-btn-hoy" onclick="filtrarAgenda('hoy')">Hoy</button>
+            <button class="btn-ghost btn-sm" id="agenda-btn-semana" onclick="filtrarAgenda('semana')">Esta semana</button>
+            <button class="btn-blue btn-sm" id="agenda-btn-todos" onclick="filtrarAgenda('todos')">Todos</button>
+            <input type="date" id="agenda-fecha-filtro" onchange="filtrarAgenda('fecha')" style="width:150px;">
+          </div>
+          <div style="display:flex;gap:0.4rem;">
+            <button class="btn-blue btn-sm" id="vista-lista-btn" onclick="setVistaAgenda('lista')">☰ Lista</button>
+            <button class="btn-ghost btn-sm" id="vista-cal-btn" onclick="setVistaAgenda('calendario')">📅 Calendario</button>
+          </div>
         </div>
-        <div class="table-wrap desktop-table">
-          <table><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Estado</th><th>Técnico</th><th></th></tr></thead>
-          <tbody id="tabla-agenda"></tbody></table>
+        <div id="agenda-vista-lista">
+          <div class="table-wrap desktop-table">
+            <table><thead><tr><th>Fecha</th><th>Hora</th><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Estado</th><th>Técnico</th><th></th></tr></thead>
+            <tbody id="tabla-agenda"></tbody></table>
+          </div>
+          <div class="mobile-list" id="mobile-agenda"></div>
         </div>
-        <div class="mobile-list" id="mobile-agenda"></div>
+        <div id="agenda-vista-calendario" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:1rem;">
+            <button class="btn-ghost btn-sm" onclick="cambiarMes(-1)">&#9664;</button>
+            <div style="font-family:var(--mono);font-size:0.9rem;font-weight:700;" id="cal-mes-label"></div>
+            <button class="btn-ghost btn-sm" onclick="cambiarMes(1)">&#9654;</button>
+          </div>
+          <div id="agenda-calendario"></div>
+        </div>
       </div>
 
       <!-- BACKUP (solo Alan) -->
@@ -1595,8 +1622,8 @@ function renderAgenda(list){
   const tbody=document.getElementById('tabla-agenda');
   if(tbody) tbody.innerHTML=list.length?list.map(v=>`
     <tr>
-      <td style="font-family:var(--mono);font-size:0.8rem;">${v.fecha}</td>
-      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'?'}</td>
+      <td style="font-family:var(--mono);font-size:0.75rem;">${(()=>{if(!v.fecha)return'<span style=\"color:var(--text-dim)\">Sin fecha</span>';const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],d=new Date(v.fecha+'T12:00:00');return'<span style=\"color:var(--blue)\">'+D[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();})()} </td>
+      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'—'}</td>
       <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
       <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
       <td><a href="${mL(v)}" target="_blank" style="color:var(--orange);text-decoration:none;font-size:0.82rem;">📍 ${mTxt(v)}</a></td>
@@ -1625,6 +1652,64 @@ function renderAgenda(list){
         </div>
       </div>
     </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;">Sin visitas programadas</div>';
+}
+
+let calMesOffset=0;
+
+function setVistaAgenda(vista){
+  document.getElementById('agenda-vista-lista').style.display=vista==='lista'?'':'none';
+  document.getElementById('agenda-vista-calendario').style.display=vista==='calendario'?'':'none';
+  document.getElementById('vista-lista-btn').className=vista==='lista'?'btn-blue btn-sm':'btn-ghost btn-sm';
+  document.getElementById('vista-cal-btn').className=vista==='calendario'?'btn-blue btn-sm':'btn-ghost btn-sm';
+  if(vista==='calendario')renderCalendario();
+}
+
+function cambiarMes(delta){
+  calMesOffset+=delta;
+  renderCalendario();
+}
+
+function renderCalendario(){
+  const hoy=new Date();
+  const base=new Date(hoy.getFullYear(),hoy.getMonth()+calMesOffset,1);
+  const anio=base.getFullYear(), mes=base.getMonth();
+  const label=base.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+  const el=document.getElementById('cal-mes-label');
+  if(el) el.textContent=label.charAt(0).toUpperCase()+label.slice(1);
+  const colores={
+    por_programar:'rgba(122,130,144,0.4)',
+    programado:'rgba(10,132,255,0.55)',
+    en_camino:'rgba(255,107,0,0.55)',
+    en_proceso:'rgba(255,214,10,0.55)',
+    completado:'rgba(48,209,88,0.55)',
+    cancelado:'rgba(255,69,58,0.45)'
+  };
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const primerDia=new Date(anio,mes,1).getDay();
+  const diasMes=new Date(anio,mes+1,0).getDate();
+  const todayStr=hoy.toISOString().split('T')[0];
+  let html='<div class="cal-header-row">'
+    +dias.map(function(d){return '<div class="cal-day-hdr">'+d+'</div>';}).join('')
+    +'</div><div class="cal-grid">';
+  for(let i=0;i<primerDia;i++) html+='<div class="cal-cell cal-vacio"></div>';
+  for(let d=1;d<=diasMes;d++){
+    const ds=anio+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const esHoy=ds===todayStr;
+    const vis=allVisitas.filter(function(v){return v.fecha===ds;})
+      .sort(function(a,b){return (a.hora||'').localeCompare(b.hora||'');});
+    let evs='';
+    vis.forEach(function(v){
+      const col=colores[v.estado]||'rgba(10,132,255,0.45)';
+      const h=v.hora?v.hora.substring(0,5):'';
+      evs+='<div class="cal-ev" style="background:'+col+';" '
+        +'onclick="editarVisita(''+v.id+'')" '
+        +'title="'+v.cliente_nombre+(h?' · '+h:'')+'">'+h+(h?' ':'')+v.cliente_nombre+'</div>';
+    });
+    html+='<div class="cal-cell'+(esHoy?' cal-hoy':'')+'"><div class="cal-num">'+d+'</div>'+evs+'</div>';
+  }
+  html+='</div>';
+  const cont=document.getElementById('agenda-calendario');
+  if(cont) cont.innerHTML=html;
 }
 
 function openNuevaVisita(){
@@ -1877,6 +1962,8 @@ async function restaurarBackup(input){
 let allMovimientos=[], graficaChart=null, contTipo='todos';
 
 async function loadContabilidad(){
+  const btnE=document.getElementById('btn-modo-edicion');
+  if(btnE) btnE.style.display=(currentUser==='Alan')?'':'none';
   const mes=document.getElementById('cont-mes')?.value;
   let q=sb.from('contabilidad').select('*,ordenes(folio,marca),clientes(nombre)').order('fecha',{ascending:false});
   if(mes){const[y,m]=mes.split('-');const ini=`${y}-${m}-01`;const fin=new Date(y,m,0).toISOString().split('T')[0];q=q.gte('fecha',ini).lte('fecha',fin);}
@@ -2213,6 +2300,18 @@ async function guardarMovimiento(){
   notif(editingContId?'Movimiento actualizado':''+contTipoActual==='ingreso'?'Ingreso registrado':'Gasto registrado','success');
   editingContId=null;
   loadContabilidad();
+}
+
+let modoEdicion=false;
+function toggleModoEdicion(){
+  modoEdicion=!modoEdicion;
+  const btn=document.getElementById('btn-modo-edicion');
+  if(btn){
+    btn.textContent=modoEdicion?'✅ Edición ON':'✏ Editar montos';
+    btn.style.borderColor=modoEdicion?'rgba(48,209,88,0.5)':'rgba(255,214,10,0.4)';
+    btn.style.color=modoEdicion?'var(--green)':'var(--yellow)';
+  }
+  filtrarMovimientos(contTipo||'todos');
 }
 
 function editarMovimiento(id){
