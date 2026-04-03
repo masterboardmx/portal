@@ -114,6 +114,12 @@
     .notif.show{display:block;}
     .notif.success{border-color:rgba(48,209,88,0.4);color:var(--green);}
     .notif.error{border-color:rgba(255,69,58,0.4);color:var(--red);}
+    /* Tarjetas ajustables Maestro */
+    .ajuste-card{cursor:default;transition:border-color 0.2s,box-shadow 0.2s;}
+    .ajuste-card.maestro-editable{cursor:pointer;}
+    .ajuste-card.maestro-editable:hover{border-color:rgba(191,90,242,0.4)!important;box-shadow:0 0 0 2px rgba(191,90,242,0.12);}
+    .ajuste-hint{font-size:0.6rem;color:rgba(191,90,242,0.7);font-family:var(--mono);margin-left:0.3rem;display:none;}
+    .maestro-editable .ajuste-hint{display:inline;}
 
     /* MOBILE CARD LIST — hidden on desktop */
     .mobile-list{display:none !important;}
@@ -369,27 +375,27 @@
         </div>
         <!-- Stats -->
         <div class="stats-grid" style="margin-bottom:1rem;">
-          <div class="stat-card"><div class="stat-label">Ingresos</div><div class="stat-num green" id="c-ingresos">$0</div></div>
-          <div class="stat-card"><div class="stat-label">Gastos</div><div class="stat-num red" id="c-gastos">$0</div></div>
+          <div class="stat-card ajuste-card" id="ajuste-card-ingresos" onclick="abrirAjuste('ingresos')" title="Clic para ajustar"><div class="stat-label">Ingresos <span class="ajuste-hint" id="ajuste-hint-ingresos"></span></div><div class="stat-num green" id="c-ingresos">$0</div></div>
+          <div class="stat-card ajuste-card" id="ajuste-card-gastos" onclick="abrirAjuste('gastos')" title="Clic para ajustar"><div class="stat-label">Gastos <span class="ajuste-hint" id="ajuste-hint-gastos"></span></div><div class="stat-num red" id="c-gastos">$0</div></div>
           <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-num" id="c-balance">$0</div></div>
           <div class="stat-card"><div class="stat-label">Por Cobrar</div><div class="stat-num yellow" id="c-cobrar">$0</div></div>
         </div>
         <!-- Saldos por método -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
-          <div class="stat-card" style="border-color:rgba(48,209,88,0.25);">
-            <div class="stat-label">💵 Efectivo</div>
+          <div class="stat-card ajuste-card" id="ajuste-card-efectivo" onclick="abrirAjuste('efectivo')" title="Clic para ajustar" style="border-color:rgba(48,209,88,0.25);">
+            <div class="stat-label">💵 Efectivo <span class="ajuste-hint" id="ajuste-hint-efectivo"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--green);" id="c-efectivo">$0</div>
           </div>
-          <div class="stat-card" style="border-color:rgba(10,132,255,0.25);">
-            <div class="stat-label">🏦 Transferencia</div>
+          <div class="stat-card ajuste-card" id="ajuste-card-transferencia" onclick="abrirAjuste('transferencia')" title="Clic para ajustar" style="border-color:rgba(10,132,255,0.25);">
+            <div class="stat-label">🏦 Transferencia <span class="ajuste-hint" id="ajuste-hint-transferencia"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--blue);" id="c-transferencia">$0</div>
           </div>
-          <div class="stat-card" style="border-color:rgba(255,214,10,0.25);">
-            <div class="stat-label">💳 Banamex</div>
+          <div class="stat-card ajuste-card" id="ajuste-card-banamex" onclick="abrirAjuste('banamex')" title="Clic para ajustar" style="border-color:rgba(255,214,10,0.25);">
+            <div class="stat-label">💳 Banamex <span class="ajuste-hint" id="ajuste-hint-banamex"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--yellow);" id="c-tarjeta_banamex">$0</div>
           </div>
-          <div class="stat-card" style="border-color:rgba(255,107,0,0.25);">
-            <div class="stat-label">💳 Banorte</div>
+          <div class="stat-card ajuste-card" id="ajuste-card-banorte" onclick="abrirAjuste('banorte')" title="Clic para ajustar" style="border-color:rgba(255,107,0,0.25);">
+            <div class="stat-label">💳 Banorte <span class="ajuste-hint" id="ajuste-hint-banorte"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--orange);" id="c-tarjeta_banorte">$0</div>
           </div>
         </div>
@@ -510,6 +516,59 @@
     <button class="bottom-nav-item master" id="bnav-usuarios" style="display:none;" onclick="showPage('usuarios')"><span class="bottom-nav-icon">◐</span>Actividad</button>
     <button class="bottom-nav-item master" id="bnav-sesiones" style="display:none;" onclick="showPage('sesiones')"><span class="bottom-nav-icon">◍</span>Sesiones</button>
     <button class="bottom-nav-item master" id="bnav-backup" style="display:none;" onclick="showPage('backup')"><span class="bottom-nav-icon">💾</span>Backup</button>
+  </div>
+</div>
+
+<!-- Modal de Ajuste Manual (solo Maestro) -->
+<div class="modal-overlay" id="modal-ajuste">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-title" id="ajuste-modal-title">⚙️ Ajuste Manual</div>
+    <div style="background:rgba(191,90,242,0.08);border:1px solid rgba(191,90,242,0.25);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:var(--purple);">
+      Este ajuste se registra como un movimiento especial en contabilidad con la etiqueta <strong>Ajuste Maestro</strong>.
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Tipo de ajuste</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;" id="ajuste-tipo-btns">
+          <button onclick="selAjusteTipo('sumar')" id="ajuste-btn-sumar" style="background:rgba(48,209,88,0.12);border:2px solid rgba(48,209,88,0.4);border-radius:10px;padding:0.8rem;color:var(--green);font-weight:600;font-size:0.88rem;cursor:pointer;transition:all 0.2s;">
+            ＋ Sumar
+          </button>
+          <button onclick="selAjusteTipo('restar')" id="ajuste-btn-restar" style="background:transparent;border:2px solid var(--border);border-radius:10px;padding:0.8rem;color:var(--text-dim);font-weight:600;font-size:0.88rem;cursor:pointer;transition:all 0.2s;">
+            － Restar
+          </button>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Monto a ajustar (MXN)</label>
+        <input type="number" id="ajuste-monto" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group full">
+        <label>Razón del ajuste</label>
+        <input type="text" id="ajuste-razon" placeholder="Ej: Corrección de caja, diferencia de cierre...">
+      </div>
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="ajuste-fecha">
+      </div>
+      <div class="form-group">
+        <label>Método de pago</label>
+        <select id="ajuste-metodo">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="transferencia">🏦 Transferencia</option>
+          <option value="tarjeta_banamex">💳 Banamex</option>
+          <option value="tarjeta_banorte">💳 Banorte</option>
+          <option value="otro">💱 Otro</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;margin-top:1rem;font-size:0.82rem;">
+      <div style="color:var(--text-dim);font-size:0.72rem;margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);">Resultado estimado</div>
+      <div id="ajuste-preview" style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--text);">—</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-ajuste')">Cancelar</button>
+      <button class="btn-purple" onclick="aplicarAjuste()">✓ Aplicar Ajuste</button>
+    </div>
   </div>
 </div>
 
@@ -787,6 +846,7 @@ async function doLogin(){
       document.getElementById('bnav-usuarios').style.display='flex';
       document.getElementById('bnav-sesiones').style.display='flex';
       document.getElementById('bnav-backup').style.display='flex';
+      activarAjusteMaestro();
     }
     if(AGENDA_USERS.includes(u)){
       document.getElementById('sidebar-agenda').style.display='block';
@@ -2259,6 +2319,105 @@ window.addEventListener('resize',()=>{
 });
 // Keepalive — evita que Supabase se pause por inactividad
 setInterval(()=>{ sb.from('clientes').select('id').limit(1).then(()=>{}); }, 4 * 60 * 1000);
+
+// ── AJUSTE MANUAL MAESTRO ─────────────────────────────────────
+let ajusteTipo='sumar', ajusteTarget=null;
+
+const ajusteConfig={
+  ingresos:{label:'Ingresos',metodoDefault:'efectivo',tipo_mov:'ingreso'},
+  gastos:{label:'Gastos',metodoDefault:'efectivo',tipo_mov:'gasto'},
+  efectivo:{label:'Efectivo',metodoDefault:'efectivo'},
+  transferencia:{label:'Transferencia',metodoDefault:'transferencia'},
+  banamex:{label:'Banamex',metodoDefault:'tarjeta_banamex'},
+  banorte:{label:'Banorte',metodoDefault:'tarjeta_banorte'}
+};
+
+function activarAjusteMaestro(){
+  if(currentUser!=='Alan')return;
+  document.querySelectorAll('.ajuste-card').forEach(c=>c.classList.add('maestro-editable'));
+  document.querySelectorAll('.ajuste-hint').forEach(h=>h.textContent='✎');
+}
+
+function abrirAjuste(target){
+  if(currentUser!=='Alan')return;
+  ajusteTarget=target;
+  const cfg=ajusteConfig[target];
+  document.getElementById('ajuste-modal-title').textContent='⚙️ Ajuste — '+cfg.label;
+  document.getElementById('ajuste-monto').value='';
+  document.getElementById('ajuste-razon').value='';
+  document.getElementById('ajuste-fecha').value=new Date().toISOString().split('T')[0];
+  // Preset método según target
+  const metSel=document.getElementById('ajuste-metodo');
+  metSel.value=cfg.metodoDefault||'efectivo';
+  selAjusteTipo('sumar');
+  actualizarPreviewAjuste();
+  document.getElementById('ajuste-monto').addEventListener('input',actualizarPreviewAjuste);
+  document.getElementById('modal-ajuste').classList.add('open');
+}
+
+function selAjusteTipo(t){
+  ajusteTipo=t;
+  const bs=document.getElementById('ajuste-btn-sumar');
+  const br=document.getElementById('ajuste-btn-restar');
+  if(t==='sumar'){
+    bs.style.background='rgba(48,209,88,0.12)';bs.style.borderColor='rgba(48,209,88,0.4)';bs.style.color='var(--green)';
+    br.style.background='transparent';br.style.borderColor='var(--border)';br.style.color='var(--text-dim)';
+  } else {
+    br.style.background='rgba(255,69,58,0.12)';br.style.borderColor='rgba(255,69,58,0.4)';br.style.color='var(--red)';
+    bs.style.background='transparent';bs.style.borderColor='var(--border)';bs.style.color='var(--text-dim)';
+  }
+  actualizarPreviewAjuste();
+}
+
+function actualizarPreviewAjuste(){
+  const monto=parseFloat(document.getElementById('ajuste-monto').value)||0;
+  const cfg=ajusteConfig[ajusteTarget]||{};
+  const prev=document.getElementById('ajuste-preview');
+  if(!monto){prev.textContent='—';prev.style.color='var(--text)';return;}
+  const signo=ajusteTipo==='sumar'?'+':'-';
+  const color=ajusteTipo==='sumar'?'var(--green)':'var(--red)';
+  prev.textContent=`${signo}$${monto.toLocaleString('es-MX',{minimumFractionDigits:2})} en ${cfg.label||ajusteTarget}`;
+  prev.style.color=color;
+}
+
+async function aplicarAjuste(){
+  const monto=parseFloat(document.getElementById('ajuste-monto').value);
+  const razon=document.getElementById('ajuste-razon').value.trim();
+  if(!monto||monto<=0){notif('Ingresa un monto válido','error');return;}
+  if(!razon){notif('Escribe la razón del ajuste','error');return;}
+
+  const cfg=ajusteConfig[ajusteTarget];
+  const metodo=document.getElementById('ajuste-metodo').value;
+  const fecha=document.getElementById('ajuste-fecha').value;
+
+  // Para ingresos/gastos directos, usar tipo_mov del config
+  // Para métodos de pago, el tipo determina si suma o resta el saldo de ese método
+  let tipo_mov;
+  if(ajusteTarget==='ingresos'){
+    tipo_mov=ajusteTipo==='sumar'?'ingreso':'gasto';
+  } else if(ajusteTarget==='gastos'){
+    tipo_mov=ajusteTipo==='sumar'?'gasto':'ingreso';
+  } else {
+    // Para método específico: sumar = ingreso en ese método, restar = gasto en ese método
+    tipo_mov=ajusteTipo==='sumar'?'ingreso':'gasto';
+  }
+
+  const data={
+    tipo:tipo_mov,
+    categoria:'Ajuste Maestro',
+    descripcion:`[AJUSTE] ${cfg.label} — ${razon}`,
+    monto,fecha,
+    metodo_pago:metodo,
+    notas:`Ajuste manual aplicado por Alan (Maestro) — ${ajusteTipo==='sumar'?'suma':'resta'} en ${cfg.label}`,
+    registrado_por:'Alan'
+  };
+
+  const{error}=await sb.from('contabilidad').insert([data]);
+  if(error){notif('Error al aplicar ajuste: '+error.message,'error');return;}
+  closeModal('modal-ajuste');
+  notif(`✓ Ajuste aplicado: ${ajusteTipo==='sumar'?'+':'-'}$${monto.toLocaleString('es-MX')} en ${cfg.label}`,'success');
+  loadContabilidad();
+}
 // Registrar Service Worker para PWA
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
