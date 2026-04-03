@@ -130,7 +130,7 @@
     .cal-dots{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:center;max-width:28px;}
     .cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
     /* Visita card */
-    .visita-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.7rem;display:grid;grid-template-columns:auto 1fr auto;gap:0.9rem;align-items:center;transition:border-color 0.2s;}
+    .visita-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.7rem;display:grid;grid-template-columns:auto 1fr auto;gap:0.9rem;align-items:centerart;transition:border-color 0.2s;}
     .visita-card:hover{border-color:rgba(255,255,255,0.15);}
     .visita-card.completado{border-left:3px solid var(--green);}
     .visita-card.cancelado{border-left:3px solid var(--red);opacity:0.65;}
@@ -1796,6 +1796,39 @@ function filtrarAgenda(tipo){
   renderAgendaCards(list);
 }
 
+async function sfd(input,vid){
+  var files=Array.from(input.files);
+  if(!files.length)return;
+  notif("Subiendo "+files.length+" foto(s)...","");
+  var ok=0;
+  for(var i=0;i<files.length;i++){
+    try{
+      var comp=await comprimirImagen(files[i]);
+      var nom="visitas/"+vid+"/f_"+Date.now()+".jpg";
+      var res=await sb.storage.from("reparaciones").upload(nom,comp,{contentType:"image/jpeg",upsert:false});
+      if(!res.error)ok++;
+    }catch(e){}
+  }
+  input.value="";
+  notif(ok+" foto(s) subida(s)","success");
+  cfc(vid);
+}
+
+async function cfc(vid){
+  var el=document.getElementById("vf-"+vid);
+  if(!el)return;
+  var res=await sb.storage.from("reparaciones").list("visitas/"+vid,{sortBy:{column:"created_at",order:"desc"}});
+  if(res.error||!res.data||!res.data.length){el.innerHTML="";return;}
+  var html="";
+  var max=Math.min(res.data.length,3);
+  for(var i=0;i<max;i++){
+    var url="https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/"+vid+"/"+res.data[i].name;
+    html+='<img src="'+url+'" style="width:36px;height:36px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--border);" onclick="window.open(this.src,\'_blank\')" loading="lazy">';
+  }
+  if(res.data.length>3)html+='<span style="font-size:0.7rem;color:var(--text-dim);">+'+(res.data.length-3)+'</span>';
+  el.innerHTML=html;
+}
+
 function renderAgendaCards(list){
   const container=document.getElementById('agenda-cards');
   if(!container)return;
@@ -1854,6 +1887,9 @@ function renderAgendaCards(list){
           <div style="margin-top:0.5rem;">${estadoBadge[v.estado]||v.estado}</div>
         </div>
         <div style="display:flex;flex-direction:row;gap:0.4rem;align-items:center;">
+          <input type="file" id="fi-${v.id}" accept="image/*" multiple capture="environment" style="display:none;" onchange="sfd(this,'${v.id}')">
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('fi-'+'${v.id}').click()">📷</button>
+          <div id="vf-${v.id}" style="display:flex;gap:2px;"></div>
           <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
@@ -1861,6 +1897,7 @@ function renderAgendaCards(list){
     });
   });
   container.innerHTML=html;
+  setTimeout(function(){ list.forEach(function(v){ cfc(v.id); }); }, 30);
 }
 
 function renderAgenda(list){ renderAgendaCards(list); }
