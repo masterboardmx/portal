@@ -1856,27 +1856,37 @@ function renderAgendaCards(list){
     html+=`<div class="dia-grupo-label">${labelGrupo} <span style="color:var(--blue);margin-left:0.5rem;">${grupos[f].length}</span></div>`;
     grupos[f].forEach(v=>{
       const d=v.fecha?new Date(v.fecha+'T12:00:00'):null;
-      html+=`<div class="visita-card ${v.estado||''}">
-        <div class="visita-fecha-col">
-          ${d?`<div class="visita-dia-num">${d.getDate()}</div><div class="visita-dia-nombre">${DIAS_ES[d.getDay()]}</div><div class="visita-mes">${MESES_ES[d.getMonth()].substring(0,3)}</div>`:'<div style="font-size:0.7rem;color:var(--text-dim);">—</div>'}
-          ${v.hora?`<div class="visita-hora-pill">${v.hora.substring(0,5)}</div>`:''}
-        </div>
-        <div>
-          <div class="visita-nombre">${v.cliente_nombre}</div>
-          ${v.descripcion?`<div class="visita-desc">${v.descripcion}</div>`:''}
-          <div class="visita-info-row">
-            ${v.cliente_telefono?`<a href="https://wa.me/52${v.cliente_telefono.replace(/\D/g,'')}" target="_blank" class="visita-tag" style="color:var(--green);text-decoration:none;">📱 ${v.cliente_telefono}</a>`:''}
-            ${v.cliente_direccion?`<a href="${mL(v)}" target="_blank" class="visita-tag" style="color:var(--orange);text-decoration:none;">📍 ${mTxt(v)}</a>`:''}
-            <span class="visita-tag">${userPill(v.tecnico)}</span>
+      const fotoInputId='finput-'+v.id;
+      html+=`<div class="visita-card ${v.estado||\'\'}" style="flex-direction:column;gap:0;padding:0;overflow:hidden;">
+        <div style="display:flex;gap:0;padding:0.85rem 1rem;">
+          <div class="visita-fecha-col">
+            ${d?`<div class="visita-dia-num">${d.getDate()}</div><div class="visita-dia-nombre">${DIAS_ES[d.getDay()]}</div><div class="visita-mes">${MESES_ES[d.getMonth()].substring(0,3)}</div>`:'<div style="font-size:0.7rem;color:var(--text-dim);">—</div>'}
+            ${v.hora?`<div class="visita-hora-pill">${v.hora.substring(0,5)}</div>`:''}
           </div>
-          <div style="margin-top:0.5rem;">${estadoBadge[v.estado]||v.estado}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="visita-nombre">${v.cliente_nombre}</div>
+            ${v.descripcion?`<div class="visita-desc">${v.descripcion}</div>`:''}
+            <div class="visita-info-row">
+              ${v.cliente_telefono?`<a href="https://wa.me/52${v.cliente_telefono.replace(/\\D/g,\'\')}"
+               target="_blank" class="visita-tag" style="color:var(--green);text-decoration:none;">📱 ${v.cliente_telefono}</a>`:''}
+              ${v.cliente_direccion?`<a href="${mL(v)}" target="_blank" class="visita-tag" style="color:var(--orange);text-decoration:none;">📍 ${mTxt(v)}</a>`:''}
+              <span class="visita-tag">${userPill(v.tecnico)}</span>
+            </div>
+            <div style="margin-top:0.5rem;">${estadoBadge[v.estado]||v.estado}</div>
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;">
-          <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
-          <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 1rem;border-top:1px solid var(--border);background:rgba(255,255,255,0.02);gap:0.5rem;">
+          <div style="display:flex;gap:0.4rem;align-items:center;">
+            <input type="file" id="${fotoInputId}" accept="image/*" multiple capture="environment" style="display:none;" onchange="subirFotoDirecta(this,'${v.id}')">
+            <button class="btn-ghost btn-sm" onclick="document.getElementById('${fotoInputId}').click()" title="Subir foto">📷</button>
+            <div id="vfotos-${v.id}" style="display:flex;gap:3px;align-items:center;"></div>
+          </div>
+          <div style="display:flex;gap:0.4rem;">
+            <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
+            <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
+          </div>
         </div>
-      </div>
-      <div id="vfotos-${v.id}" style="margin-top:0.5rem;"></div>`;
+      </div>`;
     cargarFotosVisitaCard(v.id);
     });
   });
@@ -1952,6 +1962,24 @@ async function guardarVisita(){
     closeModal('modal-visita');
   }
   loadAgenda();
+}
+
+async function subirFotoDirecta(input, visitaId){
+  const files=Array.from(input.files);
+  if(!files.length)return;
+  notif('Subiendo '+files.length+' foto(s)...','');
+  let ok=0;
+  for(const file of files){
+    try{
+      const compressed=await comprimirImagen(file);
+      const nombre='visitas/'+visitaId+'/tarjeta_'+Date.now()+'.jpg';
+      const{error}=await sb.storage.from('reparaciones').upload(nombre,compressed,{contentType:'image/jpeg',upsert:false});
+      if(!error)ok++;
+    }catch(e){console.error(e);}
+  }
+  input.value='';
+  notif(ok+' foto(s) subida(s)','success');
+  cargarFotosVisitaCard(visitaId);
 }
 
 async function subirFotosVisita(input){
