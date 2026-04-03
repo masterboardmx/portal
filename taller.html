@@ -787,6 +787,24 @@
       </div>
       <div class="form-group full"><label>Notas</label><textarea id="v-notas" rows="2"></textarea></div>
     </div>
+    <!-- Fotos de visita (solo al editar) -->
+    <div id="visita-fotos-section" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+        <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);">Fotos de la visita</div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <select id="visita-foto-tipo" style="width:150px;font-size:0.78rem;">
+            <option value="antes">📥 Al llegar</option>
+            <option value="despues">📤 Al terminar</option>
+            <option value="tarjeta">🔧 Tarjeta/Componente</option>
+          </select>
+          <input type="file" id="visita-foto-input" accept="image/*" multiple capture="environment" style="display:none;" onchange="subirFotosVisita(this)">
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('visita-foto-input').click()">📷 Subir</button>
+        </div>
+      </div>
+      <div id="visita-fotos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;min-height:60px;">
+        <div style="text-align:center;color:var(--text-dim);font-size:0.78rem;padding:1rem;grid-column:1/-1;">Sin fotos</div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-visita')">Cancelar</button>
       <button class="btn-blue" onclick="guardarVisita()" id="btn-guardar-visita">Guardar</button>
@@ -1857,7 +1875,9 @@ function renderAgendaCards(list){
           <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
-      </div>`;
+      </div>
+      <div id="vfotos-${v.id}" style="margin-top:0.5rem;"></div>`;
+    cargarFotosVisitaCard(v.id);
     });
   });
   container.innerHTML=html;
@@ -1874,6 +1894,8 @@ function openNuevaVisita(){
   document.getElementById('v-tecnico').value=currentUser==='Chitara'?'Chitara':'Chitara';
   document.getElementById('v-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('v-hora').value='09:00';
+  document.getElementById('visita-fotos-section').style.display='none';
+  document.getElementById('visita-fotos-grid').innerHTML='<div style="text-align:center;color:var(--text-dim);font-size:0.78rem;padding:1rem;grid-column:1/-1;">Guarda primero para subir fotos</div>';
   document.getElementById('modal-visita').classList.add('open');
 }
 
@@ -1891,6 +1913,8 @@ function editarVisita(id){
   document.getElementById('v-tecnico').value=v.tecnico||'Chitara';
   document.getElementById('v-fecha').value=v.fecha||'';
   document.getElementById('v-hora').value=v.hora?.substring(0,5)||'';
+  document.getElementById('visita-fotos-section').style.display='block';
+  cargarFotosVisitaModal(id);
   document.getElementById('modal-visita').classList.add('open');
 }
 
@@ -1928,6 +1952,77 @@ async function guardarVisita(){
     closeModal('modal-visita');
   }
   loadAgenda();
+}
+
+async function subirFotosVisita(input){
+  if(!editingVisitaId){notif('Guarda la visita primero','error');return;}
+  const files=Array.from(input.files);
+  if(!files.length)return;
+  const tipo=document.getElementById('visita-foto-tipo')?.value||'antes';
+  notif('Subiendo '+files.length+' foto(s)...','');
+  let ok=0;
+  for(const file of files){
+    try{
+      const compressed=await comprimirImagen(file);
+      const nombre='visitas/'+editingVisitaId+'/'+tipo+'_'+Date.now()+'.jpg';
+      const{error}=await sb.storage.from('reparaciones').upload(nombre,compressed,{contentType:'image/jpeg',upsert:false});
+      if(!error)ok++;
+    }catch(e){console.error(e);}
+  }
+  input.value='';
+  notif(ok+' foto(s) subida(s)','success');
+  cargarFotosVisitaModal(editingVisitaId);
+  cargarFotosVisitaCard(editingVisitaId);
+}
+
+async function cargarFotosVisitaModal(visitaId){
+  const grid=document.getElementById('visita-fotos-grid');
+  if(!grid)return;
+  grid.innerHTML='<div style="color:var(--text-dim);font-size:0.78rem;padding:0.5rem;grid-column:1/-1;">Cargando...</div>';
+  const{data,error}=await sb.storage.from('reparaciones').list('visitas/'+visitaId,{sortBy:{column:'created_at',order:'desc'}});
+  if(error||!data||!data.length){
+    grid.innerHTML='<div style="text-align:center;color:var(--text-dim);font-size:0.78rem;padding:1rem;grid-column:1/-1;">Sin fotos a\u00fan</div>';
+    return;
+  }
+  const tipoIcon={antes:'\u{1F4E5}',despues:'\u{1F4E4}',tarjeta:'\u{1F527}'};
+  grid.innerHTML=data.map(function(f){
+    const url='https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/'+visitaId+'/'+f.name;
+    const tipo=f.name.split('_')[0];
+    const icon=tipoIcon[tipo]||'\u{1F4F7}';
+    return '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;">'
+      +'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" '
+      +'onclick="window.open(\x27'+url+'\x27,\x27_blank\x27)" loading="lazy">'
+      +'<div style="position:absolute;top:3px;left:3px;font-size:0.65rem;background:rgba(0,0,0,0.6);padding:0.1rem 0.3rem;border-radius:4px;">'+icon+'</div>'
+      +'<button onclick="eliminarFotoVisita(\x27'+visitaId+'\x27,\x27'+f.name+'\x27)" '
+      +'style="position:absolute;top:3px;right:3px;background:rgba(255,69,58,0.85);border:none;border-radius:4px;color:white;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">\u2715</button>'
+      +'</div>';
+  }).join('');
+}
+
+async function cargarFotosVisitaCard(visitaId){
+  const grid=document.getElementById('vfotos-'+visitaId);
+  if(!grid)return;
+  const{data,error}=await sb.storage.from('reparaciones').list('visitas/'+visitaId,{sortBy:{column:'created_at',order:'desc'}});
+  if(error||!data||!data.length){grid.innerHTML='';return;}
+  const max=Math.min(data.length,4);
+  let html='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">';
+  for(let i=0;i<max;i++){
+    const url='https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/'+visitaId+'/'+data[i].name;
+    html+='<img src="'+url+'" style="width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);" '
+         +'onclick="window.open(\x27'+url+'\x27,\x27_blank\x27)" loading="lazy">';
+  }
+  if(data.length>4) html+='<div style="width:52px;height:52px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-dim);">+'+(data.length-4)+'</div>';
+  html+='</div>';
+  grid.innerHTML=html;
+}
+
+async function eliminarFotoVisita(visitaId,nombre){
+  if(!confirm('\u00bfEliminar esta foto?'))return;
+  const{error}=await sb.storage.from('reparaciones').remove(['visitas/'+visitaId+'/'+nombre]);
+  if(error){notif('Error al eliminar','error');return;}
+  notif('Foto eliminada','success');
+  cargarFotosVisitaModal(visitaId);
+  cargarFotosVisitaCard(visitaId);
 }
 
 async function eliminarVisita(id){
