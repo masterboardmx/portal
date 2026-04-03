@@ -285,7 +285,7 @@
             <button class="btn-blue" onclick="openNuevaOrden()">+ Nueva Orden</button>
           </div>
         </div>
-        <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th>Estado</th><th>Tecnico</th><th>Editado por</th><th>Fecha</th><th></th></tr></thead><tbody id="tabla-ordenes"></tbody></table></div>
+        <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Equipo</th><th>Falla</th><th>Estado</th><th>Tecnico</th><th>Editado por</th><th>Fecha</th><th>Fotos</th><th></th></tr></thead><tbody id="tabla-ordenes"></tbody></table></div>
         <div class="mobile-list" id="mobile-ordenes"></div>
       </div>
 
@@ -1180,8 +1180,18 @@ function renderOrdenes(data){
       <td style="color:var(--text-dim);font-size:0.82rem;">${o.tecnico||'?'}</td>
       <td>${o.modificado_por?userPill(o.modificado_por):'<span style="color:var(--text-dim);font-size:0.75rem;">?</span>'}</td>
       <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:3px;">
+          <input type="file" id="oc-${o.id}" accept="image/*" capture="environment" style="display:none;" onchange="sfo(this,'${o.id}')">
+          <input type="file" id="og-${o.id}" accept="image/*" multiple style="display:none;" onchange="sfo(this,'${o.id}')">
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('oc-'+'${o.id}').click()" title="Cámara" style="padding:0.3rem 0.5rem;">📷</button>
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('og-'+'${o.id}').click()" title="Galería" style="padding:0.3rem 0.5rem;">🖼</button>
+          <div id="of-${o.id}" style="display:flex;gap:2px;overflow-x:auto;max-width:90px;-webkit-overflow-scrolling:touch;"></div>
+        </div>
+      </td>
       <td><div style="display:flex;gap:0.4rem;"><button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button><button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">X</button></div></td>
-    </tr>`).join(''):`<tr class="empty-row"><td colspan="9">No hay ordenes</td></tr>`;
+    </tr>`).join(''):`<tr class="empty-row"><td colspan="10">No hay ordenes</td></tr>`;
+  setTimeout(function(){ list.forEach(function(o){ cfo(o.id); }); }, 30);
   // Mobile cards
   const mob=document.getElementById('mobile-ordenes');
   mob.innerHTML=list.length?list.map(o=>`
@@ -1375,6 +1385,60 @@ async function comprimirImagen(file, maxW=1200, quality=0.75){
 
 function tomarFoto(ordenId){
   document.getElementById('camara-input').click();
+}
+
+async function sfo(input,oid){
+  var files=Array.from(input.files);
+  if(!files.length)return;
+  notif("Subiendo "+files.length+" foto(s)...","");
+  var ok=0;
+  for(var i=0;i<files.length;i++){
+    try{
+      var comp=await comprimirImagen(files[i]);
+      var nom=oid+"/foto_"+Date.now()+".jpg";
+      var res=await sb.storage.from("reparaciones").upload(nom,comp,{contentType:"image/jpeg",upsert:false});
+      if(!res.error)ok++;
+    }catch(e){}
+  }
+  input.value="";
+  notif(ok+" foto(s) subida(s)","success");
+  cfo(oid);
+}
+
+async function cfo(oid){
+  var el=document.getElementById("of-"+oid);
+  if(!el)return;
+  var res=await sb.storage.from("reparaciones").list(oid,{sortBy:{column:"created_at",order:"desc"}});
+  if(res.error||!res.data||!res.data.length){el.innerHTML="";return;}
+  var html="";
+  for(var i=0;i<res.data.length;i++){
+    var url="https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/"+oid+"/"+res.data[i].name;
+    var nom=res.data[i].name;
+    html+='<img src="'+url+'" style="width:32px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid var(--border);flex-shrink:0;scroll-snap-align:start;" onclick="verFotoOrden(\''+url+'\',\''+oid+'\',\''+nom+'\')" loading="lazy">';
+  }
+  el.innerHTML=html;
+}
+
+function verFotoOrden(url,oid,nom){
+  var ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;";
+  ov.innerHTML='<img src="'+url+'" style="max-width:100%;max-height:80vh;border-radius:10px;object-fit:contain;">'
+    +'<div style="display:flex;gap:1rem;margin-top:1.25rem;">'
+    +'<button onclick="window.open(\''+url+'\',\'_blank\')" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:0.6rem 1.2rem;cursor:pointer;font-size:0.9rem;">🔍 Ver completa</button>'
+    +'<button onclick="bfo(\''+oid+'\',\''+nom+'\',this.closest(\'div\').parentNode)" style="background:rgba(255,69,58,0.2);color:#FF453A;border:1px solid rgba(255,69,58,0.3);border-radius:8px;padding:0.6rem 1.2rem;cursor:pointer;font-size:0.9rem;">🗑 Borrar</button>'
+    +'<button onclick="this.closest(\'[style*=position]\').remove()" style="background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:0.6rem 1.2rem;cursor:pointer;font-size:0.9rem;">✕ Cerrar</button>'
+    +'</div>';
+  ov.addEventListener("click",function(e){if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+}
+
+async function bfo(oid,nom,ov){
+  if(!confirm("¿Borrar esta foto?"))return;
+  var r=await sb.storage.from("reparaciones").remove([oid+"/"+nom]);
+  if(r.error){notif("Error al borrar","error");return;}
+  notif("Foto borrada","success");
+  if(ov)ov.remove();
+  cfo(oid);
 }
 
 async function subirFotos(ordenId, input){
@@ -1912,7 +1976,7 @@ function renderAgendaCards(list){
           <input type="file" id="fg-${v.id}" accept="image/*" multiple style="display:none;" onchange="sfd(this,'${v.id}')">
           <button class="btn-ghost btn-sm" onclick="document.getElementById('fc-'+'${v.id}').click()" title="Cámara">📷</button>
           <button class="btn-ghost btn-sm" onclick="document.getElementById('fg-'+'${v.id}').click()" title="Galería">🖼</button>
-          <div id="vf-${v.id}" style="display:flex;gap:3px;overflow-x:auto;max-width:160px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-shrink:0;"></div>
+          <div id="vf-${v.id}" style="display:flex;gap:3px;overflow-x:auto;max-width:140px;padding-bottom:2px;-webkit-overflow-scrolling:touch;flex-shrink:0;scroll-snap-type:x mandatory;"></div>
           <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
