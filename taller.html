@@ -1820,13 +1820,34 @@ async function cfc(vid){
   var res=await sb.storage.from("reparaciones").list("visitas/"+vid,{sortBy:{column:"created_at",order:"desc"}});
   if(res.error||!res.data||!res.data.length){el.innerHTML="";return;}
   var html="";
-  var max=Math.min(res.data.length,3);
-  for(var i=0;i<max;i++){
+  for(var i=0;i<res.data.length;i++){
     var url="https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/"+vid+"/"+res.data[i].name;
-    html+='<img src="'+url+'" style="width:36px;height:36px;object-fit:cover;border-radius:5px;cursor:pointer;border:1px solid var(--border);" onclick="window.open(this.src,\'_blank\')" loading="lazy">';
+    var nom=res.data[i].name;
+    html+='<img src="'+url+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);flex-shrink:0;" onclick="verFotoVisita(\''+url+'\',\''+vid+'\',\''+nom+'\')" loading="lazy">';
   }
-  if(res.data.length>3)html+='<span style="font-size:0.7rem;color:var(--text-dim);">+'+(res.data.length-3)+'</span>';
   el.innerHTML=html;
+}
+
+function verFotoVisita(url,vid,nom){
+  var ov=document.createElement("div");
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;";
+  ov.innerHTML='<img src="'+url+'" style="max-width:100%;max-height:80vh;border-radius:10px;object-fit:contain;">'
+    +'<div style="display:flex;gap:1rem;margin-top:1.25rem;">'
+    +'<button onclick="window.open(\''+url+'\',\'_blank\')" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:0.6rem 1.2rem;cursor:pointer;font-size:0.9rem;">🔍 Ver completa</button>'
+    +'<button onclick="bfv(\''+vid+'\',\''+nom+'\',this.closest(\'div\').parentNode)" style="background:rgba(255,69,58,0.2);color:#FF453A;border:1px solid rgba(255,69,58,0.3);border-radius:8px;padding:0.6rem 1.2rem;cursor:pointer;font-size:0.9rem;">🗑 Borrar</button>'
+    +'<button onclick="this.closest(\'[style*=position]\').remove()" style="background:rgba(255,255,255,0.08);color:white;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:0.6rem 1.2rem;cursor:pointer;font-size:0.9rem;">✕ Cerrar</button>'
+    +'</div>';
+  ov.addEventListener("click",function(e){if(e.target===ov)ov.remove();});
+  document.body.appendChild(ov);
+}
+
+async function bfv(vid,nom,ov){
+  if(!confirm("¿Borrar esta foto?"))return;
+  var r=await sb.storage.from("reparaciones").remove(["visitas/"+vid+"/"+nom]);
+  if(r.error){notif("Error al borrar","error");return;}
+  notif("Foto borrada","success");
+  if(ov)ov.remove();
+  cfc(vid);
 }
 
 function renderAgendaCards(list){
@@ -1887,9 +1908,11 @@ function renderAgendaCards(list){
           <div style="margin-top:0.5rem;">${estadoBadge[v.estado]||v.estado}</div>
         </div>
         <div style="display:flex;flex-direction:row;gap:0.4rem;align-items:center;">
-          <input type="file" id="fi-${v.id}" accept="image/*" multiple capture="environment" style="display:none;" onchange="sfd(this,'${v.id}')">
-          <button class="btn-ghost btn-sm" onclick="document.getElementById('fi-'+'${v.id}').click()">📷</button>
-          <div id="vf-${v.id}" style="display:flex;gap:2px;"></div>
+          <input type="file" id="fc-${v.id}" accept="image/*" multiple capture="environment" style="display:none;" onchange="sfd(this,'${v.id}')">
+          <input type="file" id="fg-${v.id}" accept="image/*" multiple style="display:none;" onchange="sfd(this,'${v.id}')">
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('fc-'+'${v.id}').click()" title="Cámara">📷</button>
+          <button class="btn-ghost btn-sm" onclick="document.getElementById('fg-'+'${v.id}').click()" title="Galería">🖼</button>
+          <div id="vf-${v.id}" style="display:flex;gap:3px;overflow-x:auto;max-width:160px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-shrink:0;"></div>
           <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
