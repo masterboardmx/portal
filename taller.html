@@ -406,10 +406,10 @@
         </div>
         <!-- Stats -->
         <div class="stats-grid" style="margin-bottom:1rem;">
-          <div class="stat-card ajuste-card" id="ajuste-card-ingresos" onclick="abrirAjuste('ingresos')" title="Clic para ajustar"><div class="stat-label">Ingresos <span class="ajuste-hint" id="ajuste-hint-ingresos"></span></div><div class="stat-num green" id="c-ingresos">$0</div></div>
-          <div class="stat-card ajuste-card" id="ajuste-card-gastos" onclick="abrirAjuste('gastos')" title="Clic para ajustar"><div class="stat-label">Gastos <span class="ajuste-hint" id="ajuste-hint-gastos"></span></div><div class="stat-num red" id="c-gastos">$0</div></div>
-          <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-num" id="c-balance">$0</div></div>
-          <div class="stat-card"><div class="stat-label">Por Cobrar</div><div class="stat-num yellow" id="c-cobrar">$0</div></div>
+          <div class="stat-card ajuste-card" id="ajuste-card-ingresos" onclick="abrirAjuste('ingresos')" title="Clic para ajustar" style="border-top:2px solid rgba(48,209,88,0.5);"><div class="stat-label">💰 Ingresos <span class="ajuste-hint" id="ajuste-hint-ingresos"></span></div><div class="stat-num green" id="c-ingresos">$0</div></div>
+          <div class="stat-card ajuste-card" id="ajuste-card-gastos" onclick="abrirAjuste('gastos')" title="Clic para ajustar" style="border-top:2px solid rgba(255,69,58,0.5);"><div class="stat-label">💸 Gastos <span class="ajuste-hint" id="ajuste-hint-gastos"></span></div><div class="stat-num red" id="c-gastos">$0</div></div>
+          <div class="stat-card" id="card-balance" style="border-top:2px solid rgba(255,255,255,0.15);"><div class="stat-label">⚖️ Balance</div><div class="stat-num" id="c-balance">$0</div></div>
+          <div class="stat-card" style="border-top:2px solid rgba(255,214,10,0.5);"><div class="stat-label">📋 Por Cobrar</div><div class="stat-num yellow" id="c-cobrar">$0</div></div>
         </div>
         <!-- Saldos por método -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
@@ -417,7 +417,7 @@
             <div class="stat-label">💵 Efectivo <span class="ajuste-hint" id="ajuste-hint-efectivo"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--green);" id="c-efectivo">$0</div>
           </div>
-          <div class="stat-card ajuste-card" id="ajuste-card-transferencia" onclick="abrirAjuste('transferencia')" title="Clic para ajustar" style="border-color:rgba(10,132,255,0.25);">
+          <div class="stat-card ajuste-card" id="ajuste-card-transferencia" onclick="abrirAjuste('transferencia')" title="Clic para ajustar" style="border-color:rgba(10,132,255,0.25);display:none;">
             <div class="stat-label">🏦 Transferencia <span class="ajuste-hint" id="ajuste-hint-transferencia"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--blue);" id="c-transferencia">$0</div>
           </div>
@@ -432,8 +432,14 @@
         </div>
         <!-- Grafica simple -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;">
-          <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.1em;">Últimos 6 meses</div>
-          <canvas id="grafica-cont" height="100"></canvas>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+            <div style="font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;">Últimos 6 meses</div>
+            <div style="display:flex;gap:1.25rem;">
+              <span style="font-size:0.78rem;color:var(--green);">↑ <strong id="lbl-total-ing">$0</strong></span>
+              <span style="font-size:0.78rem;color:var(--red);">↓ <strong id="lbl-total-gas">$0</strong></span>
+            </div>
+          </div>
+          <canvas id="grafica-cont" height="130"></canvas>
         </div>
         <!-- Gastos por categoría clickeable -->
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
@@ -2280,6 +2286,10 @@ async function actualizarStats(){
   const{data:ordenesActuales}=await sb.from('ordenes').select('id,estado,costo_estimado,costo_final');
   const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
   const gastos=allMovimientos.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
+  const ingSinAjuste=allMovimientos.filter(m=>m.tipo==='ingreso'&&m.categoria!=='Ajuste Maestro').reduce((a,m)=>a+Number(m.monto),0);
+  const gasSinAjuste=allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria!=='Ajuste Maestro').reduce((a,m)=>a+Number(m.monto),0);
+  const lblIng=document.getElementById('lbl-total-ing');if(lblIng)lblIng.textContent='$'+ingSinAjuste.toLocaleString('es-MX',{minimumFractionDigits:2});
+  const lblGas=document.getElementById('lbl-total-gas');if(lblGas)lblGas.textContent='$'+gasSinAjuste.toLocaleString('es-MX',{minimumFractionDigits:2});
   const balance=ingresos-gastos;
   const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
   const porCobrar=(ordenesActuales||[]).filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
@@ -2289,6 +2299,8 @@ async function actualizarStats(){
   const balEl=document.getElementById('c-balance');
   balEl.textContent='$'+Math.abs(balance).toLocaleString('es-MX',{minimumFractionDigits:2});
   balEl.className='stat-num '+(balance>=0?'green':'red');
+  const cardBal=document.getElementById('card-balance');
+  if(cardBal)cardBal.style.borderTop=balance>=0?'2px solid rgba(48,209,88,0.5)':'2px solid rgba(255,69,58,0.5)';
   document.getElementById('c-cobrar').textContent='$'+porCobrar.toLocaleString('es-MX',{minimumFractionDigits:2});
   // Saldo neto por método
   const metodos=['efectivo','transferencia','tarjeta_banamex','tarjeta_banorte'];
@@ -2333,7 +2345,7 @@ function renderMovimientos(list){
   // desktop
   const tbody=document.getElementById('tabla-cont');
   if(tbody) tbody.innerHTML=list.length?list.map(m=>`
-    <tr>
+    <tr style="box-shadow:inset 3px 0 0 ${m.tipo==='ingreso'?'var(--green)':'var(--red)'};">
       <td style="font-family:var(--mono);font-size:0.78rem;color:var(--text-dim);white-space:nowrap;">${fmtFechaContab(m.fecha)}</td>
       <td><span class="badge badge-${m.tipo}">${m.tipo==='ingreso'?'\u2191 Ingreso':'\u2193 Gasto'}</span></td>
       <td style="font-size:0.82rem;">${m.categoria}</td>
@@ -2451,8 +2463,8 @@ function renderGrafica(){
     meses.push(d.toISOString().substring(0,7));
   }
   const labels=meses.map(m=>{const[y,mo]=m.split('-');return new Date(y,mo-1).toLocaleDateString('es-MX',{month:'short'});});
-  const dataIngresos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='ingreso'&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
-  const dataGastos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='gasto'&&x.fecha.startsWith(m)).reduce((a,x)=>a+Number(x.monto),0));
+  const dataIngresos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='ingreso'&&x.fecha.startsWith(m)&&x.categoria!=='Ajuste Maestro').reduce((a,x)=>a+Number(x.monto),0));
+  const dataGastos=meses.map(m=>allMovimientos.filter(x=>x.tipo==='gasto'&&x.fecha.startsWith(m)&&x.categoria!=='Ajuste Maestro').reduce((a,x)=>a+Number(x.monto),0));
   if(graficaChart)graficaChart.destroy();
   graficaChart=new Chart(canvas,{
     type:'bar',
@@ -2469,7 +2481,7 @@ let graficaCategChart=null;
 function renderGraficaCategorias(){
   const canvas=document.getElementById('grafica-categorias');
   if(!canvas)return;
-  const gastos=allMovimientos.filter(x=>x.tipo==='gasto');
+  const gastos=allMovimientos.filter(x=>x.tipo==='gasto'&&x.categoria!=='Ajuste Maestro');
   if(!gastos.length){if(graficaCategChart)graficaCategChart.destroy();document.getElementById('categ-lista').innerHTML='';return;}
   const cats={};
   gastos.forEach(g=>{const cc=g.categoria||'Otro';cats[cc]=(cats[cc]||0)+Number(g.monto);});
@@ -2537,6 +2549,7 @@ function openNuevoMovimiento(tipo){
   editingContId=null;
   contTipoActual=tipo;
   document.getElementById('modal-cont-title').textContent=tipo==='ingreso'?'Nuevo Ingreso':'Nuevo Gasto';
+  const tit=document.getElementById('modal-cont-title');tit.style.borderBottom=tipo==='ingreso'?'2px solid rgba(48,209,88,0.5)':'2px solid rgba(255,69,58,0.5)';tit.style.paddingBottom='0.75rem';
   document.getElementById('btn-guardar-cont').textContent='Guardar';
   document.getElementById('cont-categoria').value='';
   document.getElementById('cont-monto').value='';
@@ -2583,6 +2596,7 @@ function editarMovimiento(id){
   editingContId=id;
   contTipoActual=m.tipo;
   document.getElementById('modal-cont-title').textContent=m.tipo==='ingreso'?'Editar Ingreso':'Editar Gasto';
+  const titE=document.getElementById('modal-cont-title');titE.style.borderBottom=m.tipo==='ingreso'?'2px solid rgba(48,209,88,0.5)':'2px solid rgba(255,69,58,0.5)';titE.style.paddingBottom='0.75rem';
   document.getElementById('btn-guardar-cont').textContent='Actualizar';
   document.getElementById('cont-monto').value=m.monto;
   document.getElementById('cont-descripcion').value=m.descripcion||'';
