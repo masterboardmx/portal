@@ -414,20 +414,32 @@
         <!-- Saldos por método -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin-bottom:1.5rem;">
           <div class="stat-card ajuste-card" id="ajuste-card-efectivo" onclick="abrirAjuste('efectivo')" title="Clic para ajustar" style="border-color:rgba(48,209,88,0.25);">
-            <div class="stat-label">💵 Efectivo <span class="ajuste-hint" id="ajuste-hint-efectivo"></span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="stat-label">💵 Efectivo <span class="ajuste-hint" id="ajuste-hint-efectivo"></span></div>
+              <button id="btn-res-efectivo" onclick="event.stopPropagation();abrirGestionReservas('efectivo')" style="display:none;font-size:0.7rem;" class="btn-ghost btn-sm">＋ Apartar</button>
+            </div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--green);" id="c-efectivo">$0</div>
+            <div id="reservas-efectivo" style="margin-top:0.4rem;font-size:0.72rem;"></div>
           </div>
           <div class="stat-card ajuste-card" id="ajuste-card-transferencia" onclick="abrirAjuste('transferencia')" title="Clic para ajustar" style="border-color:rgba(10,132,255,0.25);display:none;">
             <div class="stat-label">🏦 Transferencia <span class="ajuste-hint" id="ajuste-hint-transferencia"></span></div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--blue);" id="c-transferencia">$0</div>
           </div>
           <div class="stat-card ajuste-card" id="ajuste-card-banamex" onclick="abrirAjuste('banamex')" title="Clic para ajustar" style="border-color:rgba(255,214,10,0.25);">
-            <div class="stat-label">💳 Banamex <span class="ajuste-hint" id="ajuste-hint-banamex"></span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="stat-label">💳 Banamex <span class="ajuste-hint" id="ajuste-hint-banamex"></span></div>
+              <button id="btn-res-banamex" onclick="event.stopPropagation();abrirGestionReservas('tarjeta_banamex')" style="display:none;font-size:0.7rem;" class="btn-ghost btn-sm">＋ Apartar</button>
+            </div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--yellow);" id="c-tarjeta_banamex">$0</div>
+            <div id="reservas-banamex" style="margin-top:0.4rem;font-size:0.72rem;"></div>
           </div>
           <div class="stat-card ajuste-card" id="ajuste-card-banorte" onclick="abrirAjuste('banorte')" title="Clic para ajustar" style="border-color:rgba(255,107,0,0.25);">
-            <div class="stat-label">💳 Banorte <span class="ajuste-hint" id="ajuste-hint-banorte"></span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="stat-label">💳 Banorte <span class="ajuste-hint" id="ajuste-hint-banorte"></span></div>
+              <button id="btn-res-banorte" onclick="event.stopPropagation();abrirGestionReservas('tarjeta_banorte')" style="display:none;font-size:0.7rem;" class="btn-ghost btn-sm">＋ Apartar</button>
+            </div>
             <div style="font-family:var(--mono);font-size:1.3rem;font-weight:700;color:var(--orange);" id="c-tarjeta_banorte">$0</div>
+            <div id="reservas-banorte" style="margin-top:0.4rem;font-size:0.72rem;"></div>
           </div>
         </div>
         <!-- Grafica simple -->
@@ -595,6 +607,25 @@
 </div>
 
 <!-- Modal de Ajuste Manual (solo Maestro) -->
+<!-- Modal Reservas -->
+<div class="modal-overlay" id="modal-reservas">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title" id="modal-reservas-title">Reservas</div>
+    <div id="lista-reservas" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.5rem;min-height:60px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:1rem;">
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);">Nueva reserva</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+        <input id="res-nombre" type="text" placeholder="Nombre (ej: Renta)">
+        <input id="res-monto" type="number" placeholder="Monto" step="0.01" min="0">
+      </div>
+      <button class="btn-blue" style="width:100%;" onclick="guardarReserva()">Agregar Reserva</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-reservas')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-ajuste">
   <div class="modal" style="max-width:440px;">
     <div class="modal-title" id="ajuste-modal-title">⚙️ Ajuste Manual</div>
@@ -2242,7 +2273,7 @@ async function restaurarBackup(input){
 }
 
 // ── CONTABILIDAD ─────────────────────────────────────────────
-let allMovimientos=[], graficaChart=null, contTipo='todos';
+let allMovimientos=[], graficaChart=null, contTipo='todos', allReservas=[];
 
 async function loadContabilidad(){
   const mes=document.getElementById('cont-mes')?.value;
@@ -2250,6 +2281,8 @@ async function loadContabilidad(){
   if(mes){const[y,m]=mes.split('-');const ini=`${y}-${m}-01`;const fin=new Date(y,m,0).toISOString().split('T')[0];q=q.gte('fecha',ini).lte('fecha',fin);}
   const{data}=await q;
   allMovimientos=data||[];
+  const{data:resData}=await sb.from('reservas').select('*').eq('activo',true).order('created_at');
+  allReservas=resData||[];
   poblarSelectMeses();
   poblarSelectOrdenes();
   actualizarStats();
@@ -2315,6 +2348,7 @@ async function actualizarStats(){
       el.style.color=neto<0?'var(--red)':colores[met];
     }
   });
+  actualizarReservasUI();
 }
 
 function filtrarMovimientos(tipo){
@@ -2652,6 +2686,90 @@ function activarAjusteMaestro(){
   if(currentUser!=='Alan')return;
   document.querySelectorAll('.ajuste-card').forEach(c=>c.classList.add('maestro-editable'));
   document.querySelectorAll('.ajuste-hint').forEach(h=>h.textContent='✎');
+  ['btn-res-efectivo','btn-res-banamex','btn-res-banorte'].forEach(id=>{
+    const btn=document.getElementById(id);if(btn)btn.style.display='inline-flex';
+  });
+}
+
+// ── RESERVAS ──────────────────────────────────────────────────
+let reservaMetodoActual=null;
+
+function abrirGestionReservas(metodo){
+  if(currentUser!=='Alan')return;
+  reservaMetodoActual=metodo;
+  const labels={efectivo:'Efectivo',tarjeta_banamex:'Banamex',tarjeta_banorte:'Banorte'};
+  document.getElementById('modal-reservas-title').textContent='Reservas — '+labels[metodo];
+  document.getElementById('res-nombre').value='';
+  document.getElementById('res-monto').value='';
+  renderListaReservas();
+  document.getElementById('modal-reservas').classList.add('open');
+}
+
+function renderListaReservas(){
+  const lista=document.getElementById('lista-reservas');
+  const items=allReservas.filter(r=>r.metodo===reservaMetodoActual);
+  lista.innerHTML=items.length
+    ?items.map(r=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;background:var(--bg3);border-radius:8px;">
+        <div>
+          <div style="font-size:0.85rem;font-weight:500;">${r.nombre}</div>
+          <div style="font-family:var(--mono);font-size:0.78rem;color:var(--red);">-$${Number(r.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        </div>
+        <button class="btn-red btn-sm" onclick="eliminarReserva('${r.id}')">✕</button>
+      </div>`).join('')
+    :'<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Sin reservas</div>';
+}
+
+async function guardarReserva(){
+  const nombre=document.getElementById('res-nombre').value.trim();
+  const monto=parseFloat(document.getElementById('res-monto').value);
+  if(!nombre||!monto||monto<=0){notif('Completa nombre y monto','error');return;}
+  const{error}=await sb.from('reservas').insert([{metodo:reservaMetodoActual,nombre,monto}]);
+  if(error){notif('Error: '+error.message,'error');return;}
+  document.getElementById('res-nombre').value='';
+  document.getElementById('res-monto').value='';
+  notif('Reserva agregada','success');
+  const{data}=await sb.from('reservas').select('*').eq('activo',true).order('created_at');
+  allReservas=data||[];
+  renderListaReservas();
+  actualizarReservasUI();
+}
+
+async function eliminarReserva(id){
+  const{error}=await sb.from('reservas').update({activo:false}).eq('id',id);
+  if(error){notif('Error: '+error.message,'error');return;}
+  allReservas=allReservas.filter(r=>r.id!==id);
+  renderListaReservas();
+  actualizarReservasUI();
+}
+
+function actualizarReservasUI(){
+  const mapa=[
+    {met:'efectivo',elId:'reservas-efectivo',cId:'c-efectivo'},
+    {met:'tarjeta_banamex',elId:'reservas-banamex',cId:'c-tarjeta_banamex'},
+    {met:'tarjeta_banorte',elId:'reservas-banorte',cId:'c-tarjeta_banorte'}
+  ];
+  mapa.forEach(({met,elId,cId})=>{
+    const el=document.getElementById(elId);
+    if(!el)return;
+    const items=allReservas.filter(r=>r.metodo===met);
+    if(!items.length){el.innerHTML='';return;}
+    const totalReservado=items.reduce((a,r)=>a+Number(r.monto),0);
+    const saldoEl=document.getElementById(cId);
+    const raw=saldoEl?saldoEl.textContent.replace(/[$,\s]/g,''):'0';
+    const saldoNeto=(saldoEl&&saldoEl.textContent.startsWith('-')?-1:1)*(parseFloat(raw)||0);
+    const disponible=saldoNeto-totalReservado;
+    el.innerHTML=`<div style="border-top:1px solid var(--border);margin-top:0.4rem;padding-top:0.4rem;">
+      ${items.map(r=>`<div style="display:flex;justify-content:space-between;padding:0.1rem 0;">
+        <span style="color:var(--text-dim);">📌 ${r.nombre}</span>
+        <span style="font-family:var(--mono);color:var(--red);">-$${Number(r.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;margin-top:0.35rem;padding-top:0.35rem;border-top:1px dashed rgba(255,255,255,0.08);">
+        <span style="color:var(--text-dim);">Disponible</span>
+        <span style="font-family:var(--mono);font-weight:700;color:${disponible>=0?'inherit':'var(--red)'};">${disponible<0?'-':''}$${Math.abs(disponible).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+      </div>
+    </div>`;
+  });
 }
 
 function abrirAjuste(target){
