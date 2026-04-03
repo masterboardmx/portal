@@ -130,7 +130,7 @@
     .cal-dots{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:center;max-width:28px;}
     .cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
     /* Visita card */
-    .visita-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.7rem;display:grid;grid-template-columns:auto 1fr auto;gap:0.9rem;align-items:centerart;transition:border-color 0.2s;}
+    .visita-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:0.7rem;display:grid;grid-template-columns:auto 1fr auto;gap:0.9rem;align-items:center;transition:border-color 0.2s;}
     .visita-card:hover{border-color:rgba(255,255,255,0.15);}
     .visita-card.completado{border-left:3px solid var(--green);}
     .visita-card.cancelado{border-left:3px solid var(--red);opacity:0.65;}
@@ -1853,8 +1853,8 @@ function renderAgendaCards(list){
           </div>
           <div style="margin-top:0.5rem;">${estadoBadge[v.estado]||v.estado}</div>
         </div>
-        <div style="display:flex;flex-direction:row;gap:0.4rem;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end;">
-          <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')" style="white-space:nowrap;">✏ Editar</button>
+        <div style="display:flex;flex-direction:row;gap:0.4rem;align-items:center;">
+          <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
       </div>`;
