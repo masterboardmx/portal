@@ -1598,6 +1598,13 @@ function filtrarAgenda(tipo){
   renderAgenda(list);
 }
 
+function fmtDiaAgenda(f){
+  if(!f)return'Sin fecha';
+  var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var d=new Date(f+'T12:00:00');
+  return'<span style="color:var(--blue)">'+dias[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
+
 function renderAgenda(list){
   const eB={
     por_programar:'<span class="badge" style="background:rgba(122,130,144,0.15);color:var(--text-dim);border:1px solid rgba(122,130,144,0.3);">🕐 Por Programar</span>',
@@ -1622,8 +1629,8 @@ function renderAgenda(list){
   const tbody=document.getElementById('tabla-agenda');
   if(tbody) tbody.innerHTML=list.length?list.map(v=>`
     <tr>
-      <td style="font-family:var(--mono);font-size:0.75rem;">${(()=>{if(!v.fecha)return'<span style=\"color:var(--text-dim)\">Sin fecha</span>';const D=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],d=new Date(v.fecha+'T12:00:00');return'<span style=\"color:var(--blue)\">'+D[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();})()} </td>
-      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?.substring(0,5)||'—'}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${fmtDiaAgenda(v.fecha)}</td>
+      <td style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">${v.hora?v.hora.substring(0,5):'—'}</td>
       <td><div style="font-weight:500;">${v.cliente_nombre}</div><div style="font-size:0.75rem;color:var(--text-dim);">${v.descripcion||''}</div></td>
       <td><a href="https://wa.me/52${(v.cliente_telefono||'').replace(/\D/g,'')}" target="_blank" style="color:var(--blue);text-decoration:none;">${v.cliente_telefono||'?'}</a></td>
       <td><a href="${mL(v)}" target="_blank" style="color:var(--orange);text-decoration:none;font-size:0.82rem;">📍 ${mTxt(v)}</a></td>
