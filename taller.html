@@ -787,24 +787,6 @@
       </div>
       <div class="form-group full"><label>Notas</label><textarea id="v-notas" rows="2"></textarea></div>
     </div>
-    <!-- Fotos de visita (solo al editar) -->
-    <div id="visita-fotos-section" style="display:none;margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
-        <div style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);">Fotos de la visita</div>
-        <div style="display:flex;gap:0.5rem;align-items:center;">
-          <select id="visita-foto-tipo" style="width:150px;font-size:0.78rem;">
-            <option value="antes">📥 Al llegar</option>
-            <option value="despues">📤 Al terminar</option>
-            <option value="tarjeta">🔧 Tarjeta/Componente</option>
-          </select>
-          <input type="file" id="visita-foto-input" accept="image/*" multiple capture="environment" style="display:none;" onchange="subirFotosVisita(this)">
-          <button class="btn-ghost btn-sm" onclick="document.getElementById('visita-foto-input').click()">📷 Subir</button>
-        </div>
-      </div>
-      <div id="visita-fotos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:0.5rem;min-height:60px;">
-        <div style="text-align:center;color:var(--text-dim);font-size:0.78rem;padding:1rem;grid-column:1/-1;">Sin fotos</div>
-      </div>
-    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-visita')">Cancelar</button>
       <button class="btn-blue" onclick="guardarVisita()" id="btn-guardar-visita">Guardar</button>
@@ -1814,6 +1796,87 @@ function filtrarAgenda(tipo){
   renderAgendaCards(list);
 }
 
+function buildVisitaCard(v, estadoBadge, mL, mTxt){
+  const d = v.fecha ? new Date(v.fecha+'T12:00:00') : null;
+  const fid = 'finput-'+v.id;
+  let fechaCol = '<div style="font-size:0.7rem;color:var(--text-dim);">—</div>';
+  if(d){
+    fechaCol = '<div class="visita-dia-num">'+d.getDate()+'</div>'
+      +'<div class="visita-dia-nombre">'+DIAS_ES[d.getDay()]+'</div>'
+      +'<div class="visita-mes">'+MESES_ES[d.getMonth()].substring(0,3)+'</div>';
+  }
+  const horaPill = v.hora ? '<div class="visita-hora-pill">'+v.hora.substring(0,5)+'</div>' : '';
+  const desc = v.descripcion ? '<div class="visita-desc">'+v.descripcion+'</div>' : '';
+  const tel = v.cliente_telefono
+    ? '<a href="https://wa.me/52'+v.cliente_telefono.replace(/\D/g,'')+'" target="_blank" class="visita-tag" style="color:var(--green);text-decoration:none;">📱 '+v.cliente_telefono+'</a>'
+    : '';
+  const dir = v.cliente_direccion
+    ? '<a href="'+mL(v)+'" target="_blank" class="visita-tag" style="color:var(--orange);text-decoration:none;">📍 '+mTxt(v)+'</a>'
+    : '';
+  const badge = estadoBadge[v.estado] || v.estado;
+  const pill = userPill(v.tecnico);
+
+  return '<div class="visita-card '+( v.estado||'')+'" style="flex-direction:column;padding:0;overflow:hidden;">'
+    +'<div style="display:flex;padding:0.85rem 1rem;gap:0;">'
+      +'<div class="visita-fecha-col">'+fechaCol+horaPill+'</div>'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div class="visita-nombre">'+v.cliente_nombre+'</div>'
+        +desc
+        +'<div class="visita-info-row">'+tel+dir+'<span class="visita-tag">'+pill+'</span></div>'
+        +'<div style="margin-top:0.5rem;">'+badge+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 1rem;border-top:1px solid var(--border);background:rgba(255,255,255,0.02);">'
+      +'<div style="display:flex;align-items:center;gap:0.4rem;">'
+        +'<input type="file" id="'+fid+'" accept="image/*" multiple capture="environment" style="display:none;" onchange="subirFotoDirecta(this,\''+v.id+'\')">'
+        +'<button class="btn-ghost btn-sm" onclick="document.getElementById(\''+fid+'\').click()" title="Subir foto">📷 Foto</button>'
+        +'<div id="vfotos-'+v.id+'" style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;"></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:0.4rem;">'
+        +'<button class="btn-ghost btn-sm" onclick="editarVisita(\''+v.id+'\')" >✏ Editar</button>'
+        +'<button class="btn-red btn-sm" onclick="eliminarVisita(\''+v.id+'\')">✕</button>'
+      +'</div>'
+    +'</div>'
+  +'</div>';
+}
+
+async function subirFotoDirecta(input, visitaId){
+  const files = Array.from(input.files);
+  if(!files.length) return;
+  notif('Subiendo '+files.length+' foto(s)...','');
+  let ok = 0;
+  for(const file of files){
+    try{
+      const compressed = await comprimirImagen(file);
+      const nombre = 'visitas/'+visitaId+'/foto_'+Date.now()+'.jpg';
+      const{error} = await sb.storage.from('reparaciones').upload(nombre, compressed, {contentType:'image/jpeg', upsert:false});
+      if(!error) ok++;
+    } catch(e){ console.error(e); }
+  }
+  input.value = '';
+  notif(ok+' foto(s) subida(s)','success');
+  cargarFotosVisitaCard(visitaId);
+}
+
+async function cargarFotosVisitaCard(visitaId){
+  const grid = document.getElementById('vfotos-'+visitaId);
+  if(!grid) return;
+  const{data, error} = await sb.storage.from('reparaciones').list('visitas/'+visitaId, {sortBy:{column:'created_at',order:'desc'}});
+  if(error || !data || !data.length){ grid.innerHTML=''; return; }
+  const max = Math.min(data.length, 4);
+  let html = '';
+  for(let i=0; i<max; i++){
+    const url = 'https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/'+visitaId+'/'+data[i].name;
+    html += '<img src="'+url+'" '
+      +'style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);" '
+      +'onclick="window.open(\x27'+url+'\x27,\x27_blank\x27)" loading="lazy">';
+  }
+  if(data.length > 4){
+    html += '<div style="width:44px;height:44px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-dim);">+'+(data.length-4)+'</div>';
+  }
+  grid.innerHTML = html;
+}
+
 function renderAgendaCards(list){
   const container=document.getElementById('agenda-cards');
   if(!container)return;
@@ -1855,40 +1918,10 @@ function renderAgendaCards(list){
     }
     html+=`<div class="dia-grupo-label">${labelGrupo} <span style="color:var(--blue);margin-left:0.5rem;">${grupos[f].length}</span></div>`;
     grupos[f].forEach(v=>{
-      const d=v.fecha?new Date(v.fecha+'T12:00:00'):null;
-      const fotoInputId='finput-'+v.id;
-      html+=`<div class="visita-card ${v.estado||\'\'}" style="flex-direction:column;gap:0;padding:0;overflow:hidden;">
-        <div style="display:flex;gap:0;padding:0.85rem 1rem;">
-          <div class="visita-fecha-col">
-            ${d?`<div class="visita-dia-num">${d.getDate()}</div><div class="visita-dia-nombre">${DIAS_ES[d.getDay()]}</div><div class="visita-mes">${MESES_ES[d.getMonth()].substring(0,3)}</div>`:'<div style="font-size:0.7rem;color:var(--text-dim);">—</div>'}
-            ${v.hora?`<div class="visita-hora-pill">${v.hora.substring(0,5)}</div>`:''}
-          </div>
-          <div style="flex:1;min-width:0;">
-            <div class="visita-nombre">${v.cliente_nombre}</div>
-            ${v.descripcion?`<div class="visita-desc">${v.descripcion}</div>`:''}
-            <div class="visita-info-row">
-              ${v.cliente_telefono?`<a href="https://wa.me/52${v.cliente_telefono.replace(/\\D/g,\'\')}"
-               target="_blank" class="visita-tag" style="color:var(--green);text-decoration:none;">📱 ${v.cliente_telefono}</a>`:''}
-              ${v.cliente_direccion?`<a href="${mL(v)}" target="_blank" class="visita-tag" style="color:var(--orange);text-decoration:none;">📍 ${mTxt(v)}</a>`:''}
-              <span class="visita-tag">${userPill(v.tecnico)}</span>
-            </div>
-            <div style="margin-top:0.5rem;">${estadoBadge[v.estado]||v.estado}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 1rem;border-top:1px solid var(--border);background:rgba(255,255,255,0.02);gap:0.5rem;">
-          <div style="display:flex;gap:0.4rem;align-items:center;">
-            <input type="file" id="${fotoInputId}" accept="image/*" multiple capture="environment" style="display:none;" onchange="subirFotoDirecta(this,'${v.id}')">
-            <button class="btn-ghost btn-sm" onclick="document.getElementById('${fotoInputId}').click()" title="Subir foto">📷</button>
-            <div id="vfotos-${v.id}" style="display:flex;gap:3px;align-items:center;"></div>
-          </div>
-          <div style="display:flex;gap:0.4rem;">
-            <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
-            <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
-          </div>
-        </div>
-      </div>`;
-    cargarFotosVisitaCard(v.id);
+      html+=buildVisitaCard(v,estadoBadge,mL,mTxt);
     });
+    // Cargar fotos después de insertar el HTML
+    setTimeout(()=>{ grupos[f].forEach(v=>cargarFotosVisitaCard(v.id)); },50);
   });
   container.innerHTML=html;
 }
@@ -1904,8 +1937,6 @@ function openNuevaVisita(){
   document.getElementById('v-tecnico').value=currentUser==='Chitara'?'Chitara':'Chitara';
   document.getElementById('v-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('v-hora').value='09:00';
-  document.getElementById('visita-fotos-section').style.display='none';
-  document.getElementById('visita-fotos-grid').innerHTML='<div style="text-align:center;color:var(--text-dim);font-size:0.78rem;padding:1rem;grid-column:1/-1;">Guarda primero para subir fotos</div>';
   document.getElementById('modal-visita').classList.add('open');
 }
 
@@ -1923,8 +1954,6 @@ function editarVisita(id){
   document.getElementById('v-tecnico').value=v.tecnico||'Chitara';
   document.getElementById('v-fecha').value=v.fecha||'';
   document.getElementById('v-hora').value=v.hora?.substring(0,5)||'';
-  document.getElementById('visita-fotos-section').style.display='block';
-  cargarFotosVisitaModal(id);
   document.getElementById('modal-visita').classList.add('open');
 }
 
@@ -1962,95 +1991,6 @@ async function guardarVisita(){
     closeModal('modal-visita');
   }
   loadAgenda();
-}
-
-async function subirFotoDirecta(input, visitaId){
-  const files=Array.from(input.files);
-  if(!files.length)return;
-  notif('Subiendo '+files.length+' foto(s)...','');
-  let ok=0;
-  for(const file of files){
-    try{
-      const compressed=await comprimirImagen(file);
-      const nombre='visitas/'+visitaId+'/tarjeta_'+Date.now()+'.jpg';
-      const{error}=await sb.storage.from('reparaciones').upload(nombre,compressed,{contentType:'image/jpeg',upsert:false});
-      if(!error)ok++;
-    }catch(e){console.error(e);}
-  }
-  input.value='';
-  notif(ok+' foto(s) subida(s)','success');
-  cargarFotosVisitaCard(visitaId);
-}
-
-async function subirFotosVisita(input){
-  if(!editingVisitaId){notif('Guarda la visita primero','error');return;}
-  const files=Array.from(input.files);
-  if(!files.length)return;
-  const tipo=document.getElementById('visita-foto-tipo')?.value||'antes';
-  notif('Subiendo '+files.length+' foto(s)...','');
-  let ok=0;
-  for(const file of files){
-    try{
-      const compressed=await comprimirImagen(file);
-      const nombre='visitas/'+editingVisitaId+'/'+tipo+'_'+Date.now()+'.jpg';
-      const{error}=await sb.storage.from('reparaciones').upload(nombre,compressed,{contentType:'image/jpeg',upsert:false});
-      if(!error)ok++;
-    }catch(e){console.error(e);}
-  }
-  input.value='';
-  notif(ok+' foto(s) subida(s)','success');
-  cargarFotosVisitaModal(editingVisitaId);
-  cargarFotosVisitaCard(editingVisitaId);
-}
-
-async function cargarFotosVisitaModal(visitaId){
-  const grid=document.getElementById('visita-fotos-grid');
-  if(!grid)return;
-  grid.innerHTML='<div style="color:var(--text-dim);font-size:0.78rem;padding:0.5rem;grid-column:1/-1;">Cargando...</div>';
-  const{data,error}=await sb.storage.from('reparaciones').list('visitas/'+visitaId,{sortBy:{column:'created_at',order:'desc'}});
-  if(error||!data||!data.length){
-    grid.innerHTML='<div style="text-align:center;color:var(--text-dim);font-size:0.78rem;padding:1rem;grid-column:1/-1;">Sin fotos a\u00fan</div>';
-    return;
-  }
-  const tipoIcon={antes:'\u{1F4E5}',despues:'\u{1F4E4}',tarjeta:'\u{1F527}'};
-  grid.innerHTML=data.map(function(f){
-    const url='https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/'+visitaId+'/'+f.name;
-    const tipo=f.name.split('_')[0];
-    const icon=tipoIcon[tipo]||'\u{1F4F7}';
-    return '<div style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;">'
-      +'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" '
-      +'onclick="window.open(\x27'+url+'\x27,\x27_blank\x27)" loading="lazy">'
-      +'<div style="position:absolute;top:3px;left:3px;font-size:0.65rem;background:rgba(0,0,0,0.6);padding:0.1rem 0.3rem;border-radius:4px;">'+icon+'</div>'
-      +'<button onclick="eliminarFotoVisita(\x27'+visitaId+'\x27,\x27'+f.name+'\x27)" '
-      +'style="position:absolute;top:3px;right:3px;background:rgba(255,69,58,0.85);border:none;border-radius:4px;color:white;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">\u2715</button>'
-      +'</div>';
-  }).join('');
-}
-
-async function cargarFotosVisitaCard(visitaId){
-  const grid=document.getElementById('vfotos-'+visitaId);
-  if(!grid)return;
-  const{data,error}=await sb.storage.from('reparaciones').list('visitas/'+visitaId,{sortBy:{column:'created_at',order:'desc'}});
-  if(error||!data||!data.length){grid.innerHTML='';return;}
-  const max=Math.min(data.length,4);
-  let html='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">';
-  for(let i=0;i<max;i++){
-    const url='https://qsjscxnlbxwvhgzjjvuh.supabase.co/storage/v1/object/public/reparaciones/visitas/'+visitaId+'/'+data[i].name;
-    html+='<img src="'+url+'" style="width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--border);" '
-         +'onclick="window.open(\x27'+url+'\x27,\x27_blank\x27)" loading="lazy">';
-  }
-  if(data.length>4) html+='<div style="width:52px;height:52px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-dim);">+'+(data.length-4)+'</div>';
-  html+='</div>';
-  grid.innerHTML=html;
-}
-
-async function eliminarFotoVisita(visitaId,nombre){
-  if(!confirm('\u00bfEliminar esta foto?'))return;
-  const{error}=await sb.storage.from('reparaciones').remove(['visitas/'+visitaId+'/'+nombre]);
-  if(error){notif('Error al eliminar','error');return;}
-  notif('Foto eliminada','success');
-  cargarFotosVisitaModal(visitaId);
-  cargarFotosVisitaCard(visitaId);
 }
 
 async function eliminarVisita(id){
