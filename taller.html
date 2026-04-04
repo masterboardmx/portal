@@ -927,7 +927,8 @@
 const SUPABASE_URL='https://qsjscxnlbxwvhgzjjvuh.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzanNjeG5sYnh3dmhnempqdnVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjY4NzksImV4cCI6MjA4OTQ0Mjg3OX0.okSdl7TOF1Tcntfcbv44QGJi4k0D4u85IHCNmdsnUg8';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const USERS={'Azul':'Corona1303','Alan':'Terry1303','Alonso':'Neo1303','Chitara':'Masterboard1303'};
+// Contraseñas eliminadas del cliente — autenticación vía Supabase Auth
+const USER_EMAILS={'Alan':'alan@masterboard.mx','Azul':'azul@masterboard.mx','Alonso':'alonso@masterboard.mx','Chitara':'chitara@masterboard.mx'};
 const MASTER='Alan';
 const CONTABILIDAD_USERS=['Alan','Alonso'];
 const AGENDA_USERS=['Alan','Chitara'];
@@ -936,59 +937,60 @@ let currentUser=null,allOrdenes=[],allClientes=[],allAuditoria=[],editingOrdenId
 async function doLogin(){
   const u=document.getElementById('login-user').value.trim();
   const p=document.getElementById('login-pass').value;
-  if(USERS[u]&&USERS[u]===p){
-    currentUser=u;
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'flex':'none';
-    document.getElementById('topbar-user').textContent=u;
-    document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-    if(u===MASTER){
-      document.getElementById('master-badge').style.display='inline-flex';
-      document.getElementById('sidebar-master').style.display='block';
-      document.getElementById('bnav-backup').style.display='flex';
-      document.getElementById('bnav-contabilidad').style.display='flex';
-      document.getElementById('bnav-auditoria').style.display='flex';
-      document.getElementById('bnav-usuarios').style.display='flex';
-      document.getElementById('bnav-sesiones').style.display='flex';
-      document.getElementById('bnav-backup').style.display='flex';
-      activarAjusteMaestro();
-    }
-    if(AGENDA_USERS.includes(u)){
-      document.getElementById('sidebar-agenda').style.display='block';
-      document.getElementById('bnav-agenda').style.display='flex';
-    }
-    // Chitara: solo ve Visitas
-    if(u==='Chitara'){
-      // Ocultar todo el sidebar principal
-      document.querySelectorAll('.sidebar-item').forEach(el=>el.style.display='none');
-      // Ocultar bottom nav items excepto agenda
-      document.getElementById('bnav-dashboard').style.display='none';
-      document.getElementById('bnav-ordenes').style.display='none';
-      document.getElementById('bnav-clientes').style.display='none';
-    }
-    if(CONTABILIDAD_USERS.includes(u)&&u!==MASTER){
-      document.getElementById('bnav-contabilidad').style.display='flex';
-      document.getElementById('sidebar-cont-alonso').style.display='block';
-    }
-    loadAll();
-    // registrar inicio de sesion con detalles del dispositivo
-    const ua=navigator.userAgent;
-    const browser=ua.includes('Chrome')&&!ua.includes('Edg')?'Chrome':ua.includes('Safari')&&!ua.includes('Chrome')?'Safari':ua.includes('Firefox')?'Firefox':ua.includes('Edg')?'Edge':'Otro';
-    const os=ua.includes('iPhone')?'iPhone':ua.includes('iPad')?'iPad':ua.includes('Android')?'Android':ua.includes('Windows')?'Windows':ua.includes('Mac')?'Mac':'Otro';
-    const tipo=ua.includes('Mobile')||ua.includes('iPhone')||ua.includes('Android')?'Celular':'Computadora';
-    await sb.from('auditoria').insert([{
-      tabla:'sesiones',registro_id:null,accion:'login',usuario:u,
-      detalle:`Inicio sesion desde ${tipo} · ${os} · ${browser}`,
-      cambios:{tipo,os,browser,hora:new Date().toISOString()}
-    }]);
-  }else{document.getElementById('login-err').style.display='block';}
+  const email=USER_EMAILS[u];
+  if(!email){document.getElementById('login-err').style.display='block';return;}
+  const{data,error}=await sb.auth.signInWithPassword({email,password:p});
+  if(error||!data.user){document.getElementById('login-err').style.display='block';return;}
+  const nombre=data.user.raw_user_meta_data?.nombre||u;
+  currentUser=nombre;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'flex':'none';
+  document.getElementById('topbar-user').textContent=nombre;
+  document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(nombre===MASTER){
+    document.getElementById('master-badge').style.display='inline-flex';
+    document.getElementById('sidebar-master').style.display='block';
+    document.getElementById('bnav-backup').style.display='flex';
+    document.getElementById('bnav-contabilidad').style.display='flex';
+    document.getElementById('bnav-auditoria').style.display='flex';
+    document.getElementById('bnav-usuarios').style.display='flex';
+    document.getElementById('bnav-sesiones').style.display='flex';
+    document.getElementById('bnav-backup').style.display='flex';
+    activarAjusteMaestro();
+  }
+  if(AGENDA_USERS.includes(nombre)){
+    document.getElementById('sidebar-agenda').style.display='block';
+    document.getElementById('bnav-agenda').style.display='flex';
+  }
+  // Chitara: solo ve Visitas
+  if(nombre==='Chitara'){
+    document.querySelectorAll('.sidebar-item').forEach(el=>el.style.display='none');
+    document.getElementById('bnav-dashboard').style.display='none';
+    document.getElementById('bnav-ordenes').style.display='none';
+    document.getElementById('bnav-clientes').style.display='none';
+  }
+  if(CONTABILIDAD_USERS.includes(nombre)&&nombre!==MASTER){
+    document.getElementById('bnav-contabilidad').style.display='flex';
+    document.getElementById('sidebar-cont-alonso').style.display='block';
+  }
+  loadAll();
+  const ua=navigator.userAgent;
+  const browser=ua.includes('Chrome')&&!ua.includes('Edg')?'Chrome':ua.includes('Safari')&&!ua.includes('Chrome')?'Safari':ua.includes('Firefox')?'Firefox':ua.includes('Edg')?'Edge':'Otro';
+  const os=ua.includes('iPhone')?'iPhone':ua.includes('iPad')?'iPad':ua.includes('Android')?'Android':ua.includes('Windows')?'Windows':ua.includes('Mac')?'Mac':'Otro';
+  const tipo=ua.includes('Mobile')||ua.includes('iPhone')||ua.includes('Android')?'Celular':'Computadora';
+  await sb.from('auditoria').insert([{
+    tabla:'sesiones',registro_id:null,accion:'login',usuario:nombre,
+    detalle:`Inicio sesion desde ${tipo} · ${os} · ${browser}`,
+    cambios:{tipo,os,browser,hora:new Date().toISOString()}
+  }]);
 }
 
-function doLogout(){
+async function doLogout(){
   if(currentUser){
-    sb.from('auditoria').insert([{tabla:'sesiones',registro_id:null,accion:'logout',usuario:currentUser,detalle:`Cerro sesion`,cambios:{hora:new Date().toISOString()}}]);
+    await sb.from('auditoria').insert([{tabla:'sesiones',registro_id:null,accion:'logout',usuario:currentUser,detalle:`Cerro sesion`,cambios:{hora:new Date().toISOString()}}]);
   }
+  await sb.auth.signOut();
   currentUser=null;
   document.getElementById('app').style.display='none';
   document.getElementById('bottom-nav').style.display='none';
