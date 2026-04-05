@@ -611,6 +611,22 @@
 <!-- Modal de Ajuste Manual (solo Maestro) -->
 <!-- Modal Reservas -->
 <div class="modal-overlay" id="modal-reservas">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title" id="modal-reservas-title">Reservas</div>
+    <div id="lista-reservas" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.5rem;min-height:60px;"></div>
+    <div style="border-top:1px solid var(--border);padding-top:1rem;">
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);">Nueva reserva</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+        <input id="res-nombre" type="text" placeholder="Nombre (ej: Renta)">
+        <input id="res-monto" type="number" placeholder="Monto" step="0.01" min="0">
+      </div>
+      <button class="btn-blue" style="width:100%;" onclick="guardarReserva()">Agregar Reserva</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-reservas')">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Comisión Técnico -->
 <div class="modal-overlay" id="modal-comision">
@@ -660,22 +676,6 @@
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-anticipo')">Cancelar</button>
       <button class="btn-blue" onclick="confirmarAnticipo()">Registrar Anticipo</button>
-    </div>
-  </div>
-</div>
-  <div class="modal" style="max-width:420px;">
-    <div class="modal-title" id="modal-reservas-title">Reservas</div>
-    <div id="lista-reservas" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.5rem;min-height:60px;"></div>
-    <div style="border-top:1px solid var(--border);padding-top:1rem;">
-      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);">Nueva reserva</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
-        <input id="res-nombre" type="text" placeholder="Nombre (ej: Renta)">
-        <input id="res-monto" type="number" placeholder="Monto" step="0.01" min="0">
-      </div>
-      <button class="btn-blue" style="width:100%;" onclick="guardarReserva()">Agregar Reserva</button>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal('modal-reservas')">Cerrar</button>
     </div>
   </div>
 </div>
