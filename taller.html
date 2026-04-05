@@ -2105,8 +2105,9 @@ function renderAgenda(list){ renderAgendaCards(list); }
 async function crearOrdenDesdeVisita(visitaId){
   const v=allVisitas.find(x=>x.id===visitaId);
   if(!v)return;
-  // Cambiar a sección ordenes
-  cambiarSeccion('ordenes');
+  // Cambiar a sección ordenes y esperar que cargue
+  await showPage('ordenes');
+  await new Promise(r=>setTimeout(r,200));
   // Buscar cliente por teléfono o nombre
   let cliente_id='';
   if(v.cliente_telefono){
