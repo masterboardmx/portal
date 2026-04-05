@@ -836,7 +836,7 @@
     <div class="modal-title" id="modal-orden-title">Nueva Orden</div>
     <div class="form-grid">
       <div class="form-group full"><label>Cliente</label><select id="o-cliente"><option value="">Seleccionar cliente</option></select></div>
-      <div class="form-group"><label>Folio (dejar vacío = automático)</label><input type="number" id="o-folio" placeholder="Ej: 150"></div>
+      <div class="form-group"><label>Folio <span style="color:var(--text-dim);font-size:0.7rem;">auto</span></label><input type="number" id="o-folio" placeholder="Auto"></div>
       <div class="form-group"><label>Marca</label><input type="text" id="o-marca" placeholder="Mirage, LG, Samsung..."></div>
       <div class="form-group"><label>Modelo</label><input type="text" id="o-modelo"></div>
       <div class="form-group"><label>No. Serie</label><input type="text" id="o-serie"></div>
@@ -1263,13 +1263,12 @@ function filterOrdenes(){
   renderOrdenes(list);
 }
 
-function openNuevaOrden(){
+async function openNuevaOrden(prefill){
   editingOrdenId=null;
   document.getElementById('modal-orden-title').textContent='Nueva Orden';
   document.getElementById('btn-guardar-orden').textContent='Guardar';
   ['o-marca','o-modelo','o-serie','o-tecnico','o-falla','o-diagnostico','o-notas'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('o-costo-est').value='';
-  document.getElementById('o-folio').value='';
   document.getElementById('o-estado').value='recibido';
   document.getElementById('o-iva').checked=false;
   document.getElementById('o-isr').checked=false;
@@ -1277,6 +1276,21 @@ function openNuevaOrden(){
   document.getElementById('items-container').innerHTML='';
   agregarItem();
   document.getElementById('o-cliente').value='';
+  // Auto-folio: max actual + 1
+  const maxLocal=allOrdenes.length?Math.max(...allOrdenes.map(o=>Number(o.folio)||0)):0;
+  if(maxLocal>0){
+    document.getElementById('o-folio').value=maxLocal+1;
+  } else {
+    const{data:fd}=await sb.from('ordenes').select('folio').order('folio',{ascending:false}).limit(1);
+    document.getElementById('o-folio').value=fd&&fd[0]?.folio?fd[0].folio+1:254;
+  }
+  // Pre-llenado opcional (desde visita)
+  if(prefill){
+    if(prefill.cliente_id) document.getElementById('o-cliente').value=prefill.cliente_id;
+    if(prefill.tecnico) document.getElementById('o-tecnico').value=prefill.tecnico;
+    if(prefill.falla) document.getElementById('o-falla').value=prefill.falla;
+    if(prefill.notas) document.getElementById('o-notas').value=prefill.notas;
+  }
   document.getElementById('modal-orden').classList.add('open');
 }
 
@@ -2016,6 +2030,7 @@ function renderAgendaCards(list){
           <button class="btn-ghost btn-sm" onclick="document.getElementById('fc-'+'${v.id}').click()" title="Cámara">📷</button>
           <button class="btn-ghost btn-sm" onclick="document.getElementById('fg-'+'${v.id}').click()" title="Galería">🖼</button>
           <div id="vf-${v.id}" style="display:flex;gap:3px;overflow-x:auto;max-width:140px;padding-bottom:2px;-webkit-overflow-scrolling:touch;flex-shrink:0;scroll-snap-type:x mandatory;"></div>
+          <button class="btn-ghost btn-sm" onclick="crearOrdenDesdeVisita('${v.id}')" title="Crear orden de trabajo">🔧 OT</button>
           <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
@@ -2027,6 +2042,29 @@ function renderAgendaCards(list){
 }
 
 function renderAgenda(list){ renderAgendaCards(list); }
+
+async function crearOrdenDesdeVisita(visitaId){
+  const v=allVisitas.find(x=>x.id===visitaId);
+  if(!v)return;
+  // Cambiar a sección ordenes
+  cambiarSeccion('ordenes');
+  // Buscar cliente por teléfono o nombre
+  let cliente_id='';
+  if(v.cliente_telefono){
+    const match=allClientes.find(c=>c.telefono===v.cliente_telefono);
+    if(match) cliente_id=match.id;
+  }
+  if(!cliente_id&&v.cliente_nombre){
+    const match=allClientes.find(c=>c.nombre.toLowerCase()===v.cliente_nombre.toLowerCase());
+    if(match) cliente_id=match.id;
+  }
+  await openNuevaOrden({
+    cliente_id,
+    tecnico:v.tecnico||'',
+    falla:v.descripcion||'',
+    notas:v.notas||''
+  });
+}
 
 function openNuevaVisita(){
   editingVisitaId=null;
