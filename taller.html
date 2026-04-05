@@ -14,15 +14,16 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root{--blue:#0A84FF;--blue-dim:#0066CC;--orange:#FF6B00;--green:#30D158;--red:#FF453A;--yellow:#FFD60A;--purple:#BF5AF2;--bg:#0A0C10;--bg2:#111318;--bg3:#181C24;--border:rgba(255,255,255,0.08);--text:#E8EAF0;--text-dim:#7A8290;--mono:'Space Mono',monospace;--sans:'Inter',sans-serif;}
+    :root{--blue:#0A84FF;--blue-dim:#0066CC;--orange:#FF6B00;--green:#30D158;--red:#FF453A;--yellow:#FFD60A;--purple:#BF5AF2;--bg:#0A0C10;--bg2:#111318;--bg3:#181C24;--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.2);--text:#E8EAF0;--text-dim:#7A8290;--topbar-bg:rgba(10,12,16,0.95);--nav-bg:rgba(10,12,16,0.97);--mono:'Space Mono',monospace;--sans:'Inter',sans-serif;}
+    [data-theme="light"]{--bg:#F2F2F7;--bg2:#FFFFFF;--bg3:#EFEFF4;--border:rgba(0,0,0,0.1);--border-hover:rgba(0,0,0,0.2);--text:#1C1C1E;--text-dim:#6E6E73;--topbar-bg:rgba(242,242,247,0.95);--nav-bg:rgba(242,242,247,0.97);}
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.25s,color 0.25s;}
     input,select,textarea{font-family:var(--sans);font-size:0.875rem;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.65rem 0.9rem;outline:none;transition:border 0.2s;}
     input:focus,select:focus,textarea:focus{border-color:var(--blue);}
     select option{background:var(--bg3);}
     button{cursor:pointer;font-family:var(--sans);font-size:0.85rem;font-weight:500;border:none;border-radius:8px;padding:0.65rem 1.25rem;transition:all 0.2s;}
     .btn-blue{background:var(--blue);color:white;}.btn-blue:hover{background:#2296FF;transform:translateY(-1px);}
-    .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}.btn-ghost:hover{border-color:rgba(255,255,255,0.2);color:var(--text);}
+    .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--border-hover);color:var(--text);}
     .btn-red{background:rgba(255,69,58,0.15);color:var(--red);border:1px solid rgba(255,69,58,0.25);}.btn-red:hover{background:rgba(255,69,58,0.25);}
     .btn-purple{background:rgba(191,90,242,0.15);color:var(--purple);border:1px solid rgba(191,90,242,0.25);}.btn-purple:hover{background:rgba(191,90,242,0.25);}
     .btn-sm{padding:0.4rem 0.8rem;font-size:0.78rem;}
@@ -33,7 +34,7 @@
     .login-box label{font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:0.4rem;margin-top:1rem;}
     .login-err{color:var(--red);font-size:0.8rem;margin-top:0.75rem;display:none;}
     #app{display:none;min-height:100vh;}
-    .topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,12,16,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;padding:0 1.5rem 0.75rem;padding-top:max(0.75rem, env(safe-area-inset-top));height:calc(56px + env(safe-area-inset-top));}
+    .topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--topbar-bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;padding:0 1.5rem 0.75rem;padding-top:max(0.75rem, env(safe-area-inset-top));height:calc(56px + env(safe-area-inset-top));}
     .topbar-logo{font-family:var(--mono);font-size:0.95rem;font-weight:700;color:var(--text);letter-spacing:0.08em;}
     .topbar-logo span{color:var(--blue);}
     .topbar-right{display:flex;align-items:center;gap:0.75rem;}
@@ -189,7 +190,7 @@
       td,th{padding:0.7rem 0.5rem;font-size:0.78rem;}
     }
     /* BOTTOM NAV MÓVIL */
-    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,12,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;padding-bottom:max(0.5rem, env(safe-area-inset-bottom));}
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--nav-bg);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:0.5rem 0;padding-bottom:max(0.5rem, env(safe-area-inset-bottom));}
     .bottom-nav-items{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0;scrollbar-width:none;}
     .bottom-nav-items::-webkit-scrollbar{display:none;}
     .bottom-nav-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding:0.5rem 0;cursor:pointer;color:var(--text-dim);transition:color 0.15s;font-size:0.65rem;font-family:var(--mono);letter-spacing:0.04em;border:none;background:none;flex:0 0 33.333vw;min-width:33.333vw;}
@@ -222,6 +223,7 @@
     <div class="topbar-right">
       <span class="topbar-user" id="topbar-user"></span>
       <span class="master-badge" id="master-badge" style="display:none;">MAESTRO</span>
+      <button class="btn-ghost btn-sm" id="btn-theme" onclick="toggleTheme()" title="Cambiar tema" style="font-size:1rem;padding:0.35rem 0.6rem;">🌙</button>
       <button class="btn-ghost btn-sm" onclick="doLogout()">Salir</button>
     </div>
   </div>
@@ -2607,7 +2609,7 @@ function renderGrafica(){
       {label:'Ingresos',data:dataIngresos,backgroundColor:'rgba(48,209,88,0.7)',borderRadius:6},
       {label:'Gastos',data:dataGastos,backgroundColor:'rgba(255,69,58,0.7)',borderRadius:6}
     ]},
-    options:{responsive:true,plugins:{legend:{labels:{color:'#7A8290',font:{size:11}}}},scales:{x:{ticks:{color:'#7A8290'},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#7A8290',callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:'rgba(255,255,255,0.05)'}}}}
+    options:{responsive:true,plugins:{legend:{labels:{color:getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim(),font:{size:11}}}},scales:{x:{ticks:{color:getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim()},grid:{color:document.documentElement.getAttribute('data-theme')==='light'?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.05)'}},y:{ticks:{color:getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim(),callback:v=>'$'+v.toLocaleString('es-MX')},grid:{color:document.documentElement.getAttribute('data-theme')==='light'?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.05)'}}}}
   });
   renderGraficaCategorias();
 }
@@ -2628,7 +2630,7 @@ function renderGraficaCategorias(){
     type:'doughnut',
     data:{
       labels:sorted.map(([k])=>k),
-      datasets:[{data:sorted.map(([,v])=>v),backgroundColor:colors.slice(0,sorted.length),borderWidth:2,borderColor:'#111318',hoverOffset:8}]
+      datasets:[{data:sorted.map(([,v])=>v),backgroundColor:colors.slice(0,sorted.length),borderWidth:2,borderColor:getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim(),hoverOffset:8}]
     },
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
       plugins:{
@@ -2957,6 +2959,41 @@ async function aplicarAjuste(){
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
+
+// ── TEMA CLARO / OSCURO ───────────────────────────────────────
+function initTheme(){
+  const saved=localStorage.getItem('mb-theme');
+  const prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme=saved||(prefersDark?'dark':'light');
+  applyTheme(theme);
+  // Seguir cambios del OS si no hay preferencia manual
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{
+    if(!localStorage.getItem('mb-theme')) applyTheme(e.matches?'dark':'light');
+  });
+}
+
+function applyTheme(theme){
+  const root=document.documentElement;
+  if(theme==='light'){
+    root.setAttribute('data-theme','light');
+  } else {
+    root.removeAttribute('data-theme');
+  }
+  const btn=document.getElementById('btn-theme');
+  if(btn) btn.textContent=theme==='light'?'🌙':'☀️';
+}
+
+function toggleTheme(){
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  const next=isLight?'dark':'light';
+  localStorage.setItem('mb-theme',next);
+  applyTheme(next);
+  // Redibujar gráficas si están visibles
+  if(graficaChart){graficaChart.destroy();graficaChart=null;}
+  if(document.getElementById('page-contabilidad')?.classList.contains('active')) renderGrafica();
+}
+
+initTheme();
 </script>
 </body>
 </html>
