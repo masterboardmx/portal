@@ -837,6 +837,15 @@
     <div class="form-grid">
       <div class="form-group full"><label>Cliente</label><select id="o-cliente"><option value="">Seleccionar cliente</option></select></div>
       <div class="form-group"><label>Folio <span style="color:var(--text-dim);font-size:0.7rem;">auto</span></label><input type="number" id="o-folio" placeholder="Auto"></div>
+      <div class="form-group"><label>Tipo de Equipo</label>
+        <select id="o-tipo-equipo">
+          <option value="">— N/A —</option>
+          <option value="convencional">🌀 Convencional ($400)</option>
+          <option value="inverter">❄️ Inverter ($650)</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <input type="hidden" id="o-visita-id">
       <div class="form-group"><label>Marca</label><input type="text" id="o-marca" placeholder="Mirage, LG, Samsung..."></div>
       <div class="form-group"><label>Modelo</label><input type="text" id="o-modelo"></div>
       <div class="form-group"><label>No. Serie</label><input type="text" id="o-serie"></div>
@@ -1209,9 +1218,15 @@ function loadDashboard(){
 function renderOrdenes(data){
   const list=data||allOrdenes;
   // Desktop table
-  document.getElementById('tabla-ordenes').innerHTML=list.length?list.map(o=>`
-    <tr>
-      <td><span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span></td>
+  document.getElementById('tabla-ordenes').innerHTML=list.length?list.map(o=>{
+    const tipoLabel={convencional:'🌀 Conv.',inverter:'❄️ Inv.'};
+    const comisionPendiente=o.tipo_equipo&&(o.tipo_equipo==='convencional'||o.tipo_equipo==='inverter')&&!o.comision_pagada;
+    return`<tr>
+      <td>
+        <span style="font-family:var(--mono);color:var(--blue);font-size:0.8rem;">#${o.folio}</span>
+        ${o.visita_id?'<span style="display:block;font-size:0.62rem;background:rgba(10,132,255,0.15);color:var(--blue);border-radius:4px;padding:0.05rem 0.3rem;margin-top:0.2rem;">📅 visita</span>':''}
+        ${o.tipo_equipo?`<span style="display:block;font-size:0.62rem;background:rgba(255,255,255,0.07);color:var(--text-dim);border-radius:4px;padding:0.05rem 0.3rem;margin-top:0.1rem;">${tipoLabel[o.tipo_equipo]||o.tipo_equipo}</span>`:''}
+      </td>
       <td><div style="font-weight:500;">${o.clientes?.nombre||'?'}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.clientes?.telefono||''}</div></td>
       <td><div>${o.marca}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.modelo||''}</div></td>
       <td style="max-width:140px;"><div style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.falla_reportada}</div></td>
@@ -1228,30 +1243,40 @@ function renderOrdenes(data){
           <div id="of-${o.id}" style="display:flex;gap:2px;overflow-x:auto;max-width:90px;-webkit-overflow-scrolling:touch;"></div>
         </div>
       </td>
-      <td><div style="display:flex;gap:0.4rem;"><button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button><button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">X</button></div></td>
-    </tr>`).join(''):`<tr class="empty-row"><td colspan="10">No hay ordenes</td></tr>`;
+      <td><div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+        <button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button>
+        <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button>
+        ${comisionPendiente?`<button class="btn-green btn-sm" onclick="registrarComision('${o.id}')" title="Registrar pago a Chitara">💰 Comisión</button>`:''}
+        ${o.comision_pagada?'<span style="font-size:0.65rem;color:var(--green);padding:0.2rem 0.3rem;">✓ com.</span>':''}
+        <button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">X</button>
+      </div></td>
+    </tr>`;}).join(''):`<tr class="empty-row"><td colspan="10">No hay ordenes</td></tr>`;
   setTimeout(function(){ list.forEach(function(o){ cfo(o.id); }); }, 30);
   // Mobile cards
   const mob=document.getElementById('mobile-ordenes');
-  mob.innerHTML=list.length?list.map(o=>`
-    <div class="m-card" onclick="verDetalle('${o.id}')">
+  const tipoLabelM={convencional:'🌀 Convencional',inverter:'❄️ Inverter'};
+  mob.innerHTML=list.length?list.map(o=>{
+    const comisionPendienteM=o.tipo_equipo&&(o.tipo_equipo==='convencional'||o.tipo_equipo==='inverter')&&!o.comision_pagada;
+    return`<div class="m-card" onclick="verDetalle('${o.id}')">
       <div class="m-card-top">
-        <span class="m-card-folio">#${o.folio}</span>
+        <span class="m-card-folio">#${o.folio}${o.visita_id?' <span style="font-size:0.62rem;background:rgba(10,132,255,0.15);color:var(--blue);border-radius:4px;padding:0.05rem 0.3rem;">📅 visita</span>':''}</span>
         ${badgeEstado(o.estado)}
       </div>
       <div class="m-card-name">${o.clientes?.nombre||'?'}</div>
       <a href="https://wa.me/52${(o.clientes?.telefono||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" class="m-card-phone">${o.clientes?.telefono||''}</a>
-      <div class="m-card-equipo">${o.marca} ${o.modelo||''} ${o.tecnico?'· '+o.tecnico:''}</div>
+      <div class="m-card-equipo">${o.marca} ${o.modelo||''} ${o.tecnico?'· '+o.tecnico:''}${o.tipo_equipo?` · <span style="color:var(--text-dim);">${tipoLabelM[o.tipo_equipo]||o.tipo_equipo}</span>`:''}</div>
       <div class="m-card-bottom">
         <span style="font-size:0.75rem;color:var(--text-dim);">${fmtFecha(o.fecha_ingreso)}</span>
         ${o.modificado_por?userPill(o.modificado_por):''}
+        ${o.comision_pagada?'<span style="font-size:0.65rem;color:var(--green);">✓ comisión</span>':''}
       </div>
       <div class="m-card-actions" onclick="event.stopPropagation()">
         <button class="btn-ghost" onclick="verDetalle('${o.id}')">Ver detalle</button>
         <button class="btn-ghost" onclick="editarOrden('${o.id}')">Editar</button>
+        ${comisionPendienteM?`<button class="btn-green" onclick="registrarComision('${o.id}')">💰 Comisión</button>`:''}
         <button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">✕</button>
       </div>
-    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;font-size:0.85rem;">No hay ordenes</div>';
+    </div>`;}).join(''):'<div style="text-align:center;color:var(--text-dim);padding:3rem;font-size:0.85rem;">No hay ordenes</div>';
 }
 
 function filterOrdenes(){
@@ -1284,12 +1309,15 @@ async function openNuevaOrden(prefill){
     const{data:fd}=await sb.from('ordenes').select('folio').order('folio',{ascending:false}).limit(1);
     document.getElementById('o-folio').value=fd&&fd[0]?.folio?fd[0].folio+1:254;
   }
+  document.getElementById('o-tipo-equipo').value='';
+  document.getElementById('o-visita-id').value='';
   // Pre-llenado opcional (desde visita)
   if(prefill){
     if(prefill.cliente_id) document.getElementById('o-cliente').value=prefill.cliente_id;
     if(prefill.tecnico) document.getElementById('o-tecnico').value=prefill.tecnico;
     if(prefill.falla) document.getElementById('o-falla').value=prefill.falla;
     if(prefill.notas) document.getElementById('o-notas').value=prefill.notas;
+    if(prefill.visita_id) document.getElementById('o-visita-id').value=prefill.visita_id;
   }
   document.getElementById('modal-orden').classList.add('open');
 }
@@ -1311,6 +1339,8 @@ function editarOrden(id){
   document.getElementById('o-notas').value=o.notas||'';
   document.getElementById('o-iva').checked=o.aplica_iva||false;
   document.getElementById('o-isr').checked=o.aplica_isr||false;
+  document.getElementById('o-tipo-equipo').value=o.tipo_equipo||'';
+  document.getElementById('o-visita-id').value=o.visita_id||'';
   // Load items
   document.getElementById('items-container').innerHTML='';
   const items=o.items||[];
@@ -1332,7 +1362,9 @@ async function guardarOrden(){
   const ivaAmt=iva?subtotal*0.16:0;
   const isrAmt=isr?subtotal*0.0125:0;
   const total=subtotal+ivaAmt-isrAmt;
-  const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:total||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser,aplica_iva:iva,aplica_isr:isr,items:items};
+  const tipoEquipo=document.getElementById('o-tipo-equipo').value||null;
+  const visitaId=document.getElementById('o-visita-id').value||null;
+  const data={cliente_id,marca,modelo:document.getElementById('o-modelo').value.trim(),numero_serie:document.getElementById('o-serie').value.trim(),tecnico:document.getElementById('o-tecnico').value.trim(),falla_reportada:falla,diagnostico:document.getElementById('o-diagnostico').value.trim(),costo_estimado:total||null,estado:document.getElementById('o-estado').value,notas:document.getElementById('o-notas').value.trim(),updated_at:new Date().toISOString(),modificado_por:currentUser,aplica_iva:iva,aplica_isr:isr,items:items,tipo_equipo:tipoEquipo,visita_id:visitaId};
   const folioManual=parseInt(document.getElementById('o-folio').value);
   if(folioManual) data.folio=folioManual;
   let err,rid;
@@ -1360,6 +1392,33 @@ async function eliminarOrden(id){
   await registrarAuditoria('ordenes',id,'eliminar',`Elimino orden #${o?.folio} - ${o?.marca} ${o?.modelo||''}`);
   notif('Orden eliminada','success');
   await loadOrdenes();renderOrdenes();loadDashboard();
+}
+
+// Tarifas de comisión por tipo de equipo
+const COMISIONES_TECNICO={convencional:400,inverter:650};
+
+async function registrarComision(ordenId){
+  const o=allOrdenes.find(x=>x.id===ordenId);
+  if(!o||!o.tipo_equipo)return;
+  const monto=COMISIONES_TECNICO[o.tipo_equipo];
+  if(!monto){notif('Tipo de equipo sin tarifa definida','error');return;}
+  if(!confirm(`¿Registrar comisión de $${monto} para ${o.tecnico||'técnico'} — #${o.folio} ${o.marca}?`))return;
+  const gasto={
+    tipo:'gasto',
+    categoria:'Comisiones',
+    descripcion:`Comisión ${o.tecnico||'técnico'} — #${o.folio} ${o.marca} ${o.modelo||''} (${o.tipo_equipo})`.trim(),
+    monto,
+    fecha:new Date().toISOString().split('T')[0],
+    metodo_pago:'efectivo',
+    notas:`Pago automático por OT #${o.folio}`,
+    registrado_por:currentUser
+  };
+  const{error:e1}=await sb.from('contabilidad').insert([gasto]);
+  if(e1){notif('Error al registrar en contabilidad: '+e1.message,'error');return;}
+  const{error:e2}=await sb.from('ordenes').update({comision_pagada:true}).eq('id',ordenId);
+  if(e2){notif('Error al marcar comisión: '+e2.message,'error');return;}
+  notif(`✓ Comisión $${monto} registrada`,'success');
+  await loadOrdenes();renderOrdenes();
 }
 
 async function verDetalle(id){
@@ -2062,7 +2121,8 @@ async function crearOrdenDesdeVisita(visitaId){
     cliente_id,
     tecnico:v.tecnico||'',
     falla:v.descripcion||'',
-    notas:v.notas||''
+    notas:v.notas||'',
+    visita_id:v.id
   });
 }
 
