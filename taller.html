@@ -617,13 +617,19 @@
   <div class="modal" style="max-width:380px;">
     <div class="modal-title">💰 Pago de Comisión</div>
     <div id="comision-detalle" style="background:var(--bg3);border-radius:10px;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem;line-height:1.6;"></div>
-    <div class="form-group" style="margin-bottom:1rem;">
-      <label>Método de pago</label>
-      <select id="comision-metodo">
-        <option value="efectivo">💵 Efectivo</option>
-        <option value="tarjeta_banorte">💳 Banorte</option>
-        <option value="tarjeta_banamex">💳 Banamex</option>
-      </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="number" id="comision-monto" min="1" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Método de pago</label>
+        <select id="comision-metodo">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="tarjeta_banorte">💳 Banorte</option>
+          <option value="tarjeta_banamex">💳 Banamex</option>
+        </select>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal('modal-comision')">Cancelar</button>
@@ -1461,8 +1467,8 @@ function registrarComision(ordenId){
   document.getElementById('comision-detalle').innerHTML=
     `<div style="font-weight:600;margin-bottom:0.4rem;">#${o.folio} · ${o.marca} ${o.modelo||''}</div>`+
     `<div>Técnico: <strong>${o.tecnico||'?'}</strong></div>`+
-    `<div>Tipo: ${tipoLabel[o.tipo_equipo]}</div>`+
-    `<div style="margin-top:0.6rem;font-size:1.1rem;font-weight:700;color:var(--green);">$${monto.toLocaleString('es-MX')}</div>`;
+    `<div>Tipo: ${tipoLabel[o.tipo_equipo]} · tarifa base $${monto.toLocaleString('es-MX')}</div>`;
+  document.getElementById('comision-monto').value=monto;
   document.getElementById('comision-metodo').value='efectivo';
   document.getElementById('modal-comision').classList.add('open');
 }
@@ -1470,7 +1476,8 @@ function registrarComision(ordenId){
 async function confirmarComision(){
   const o=allOrdenes.find(x=>x.id===_comisionOrdenId);
   if(!o)return;
-  const monto=COMISIONES_TECNICO[o.tipo_equipo];
+  const monto=parseFloat(document.getElementById('comision-monto').value);
+  if(!monto||monto<=0){notif('Ingresa un monto válido','error');return;}
   const metodo=document.getElementById('comision-metodo').value;
   const gasto={tipo:'gasto',categoria:'Comisiones',descripcion:`Comisión ${o.tecnico||'técnico'} — #${o.folio} ${o.marca} ${o.modelo||''} (${o.tipo_equipo})`.trim(),monto,fecha:new Date().toISOString().split('T')[0],metodo_pago:metodo,notas:`Pago por OT #${o.folio}`,registrado_por:currentUser};
   const{error:e1}=await sb.from('contabilidad').insert([gasto]);
