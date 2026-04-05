@@ -611,6 +611,52 @@
 <!-- Modal de Ajuste Manual (solo Maestro) -->
 <!-- Modal Reservas -->
 <div class="modal-overlay" id="modal-reservas">
+
+<!-- Modal Comisión Técnico -->
+<div class="modal-overlay" id="modal-comision">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title">💰 Pago de Comisión</div>
+    <div id="comision-detalle" style="background:var(--bg3);border-radius:10px;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem;line-height:1.6;"></div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Método de pago</label>
+      <select id="comision-metodo">
+        <option value="efectivo">💵 Efectivo</option>
+        <option value="tarjeta_banorte">💳 Banorte</option>
+        <option value="tarjeta_banamex">💳 Banamex</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-comision')">Cancelar</button>
+      <button class="btn-green" onclick="confirmarComision()">Registrar Pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Anticipo -->
+<div class="modal-overlay" id="modal-anticipo">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title">💵 Anticipo de Cliente</div>
+    <div id="anticipo-detalle" style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="number" id="anticipo-monto" value="200" min="1" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Método de pago</label>
+        <select id="anticipo-metodo">
+          <option value="efectivo">💵 Efectivo</option>
+          <option value="tarjeta_banorte">💳 Banorte</option>
+          <option value="tarjeta_banamex">💳 Banamex</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-anticipo')">Cancelar</button>
+      <button class="btn-blue" onclick="confirmarAnticipo()">Registrar Anticipo</button>
+    </div>
+  </div>
+</div>
   <div class="modal" style="max-width:420px;">
     <div class="modal-title" id="modal-reservas-title">Reservas</div>
     <div id="lista-reservas" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.5rem;min-height:60px;"></div>
@@ -1248,6 +1294,8 @@ function renderOrdenes(data){
       <td><div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
         <button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button>
         <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button>
+        <button class="btn-ghost btn-sm" onclick="registrarAnticipo('${o.id}')" title="Registrar anticipo">💵 Anticipo${o.anticipo?` <span style='color:var(--green);'>$${Number(o.anticipo).toLocaleString('es-MX')}</span>`:''}
+        </button>
         ${comisionPendiente?`<button class="btn-green btn-sm" onclick="registrarComision('${o.id}')" title="Registrar pago a Chitara">💰 Comisión</button>`:''}
         ${o.comision_pagada?'<span style="font-size:0.65rem;color:var(--green);padding:0.2rem 0.3rem;">✓ com.</span>':''}
         <button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">X</button>
@@ -1275,6 +1323,8 @@ function renderOrdenes(data){
       <div class="m-card-actions" onclick="event.stopPropagation()">
         <button class="btn-ghost" onclick="verDetalle('${o.id}')">Ver detalle</button>
         <button class="btn-ghost" onclick="editarOrden('${o.id}')">Editar</button>
+        <button class="btn-ghost" onclick="registrarAnticipo('${o.id}')">💵 Anticipo${o.anticipo?` $${Number(o.anticipo).toLocaleString('es-MX')}`:''}
+        </button>
         ${comisionPendienteM?`<button class="btn-green" onclick="registrarComision('${o.id}')">💰 Comisión</button>`:''}
         <button class="btn-red btn-sm" onclick="eliminarOrden('${o.id}')">✕</button>
       </div>
@@ -1343,6 +1393,7 @@ function editarOrden(id){
   document.getElementById('o-isr').checked=o.aplica_isr||false;
   document.getElementById('o-tipo-equipo').value=o.tipo_equipo||'';
   document.getElementById('o-visita-id').value=o.visita_id||'';
+  // anticipo es solo informativo al editar, no se modifica aquí
   // Load items
   document.getElementById('items-container').innerHTML='';
   const items=o.items||[];
@@ -1398,28 +1449,63 @@ async function eliminarOrden(id){
 
 // Tarifas de comisión por tipo de equipo
 const COMISIONES_TECNICO={convencional:400,inverter:650};
+let _comisionOrdenId=null, _anticipoOrdenId=null;
 
-async function registrarComision(ordenId){
+function registrarComision(ordenId){
   const o=allOrdenes.find(x=>x.id===ordenId);
   if(!o||!o.tipo_equipo)return;
   const monto=COMISIONES_TECNICO[o.tipo_equipo];
   if(!monto){notif('Tipo de equipo sin tarifa definida','error');return;}
-  if(!confirm(`¿Registrar comisión de $${monto} para ${o.tecnico||'técnico'} — #${o.folio} ${o.marca}?`))return;
-  const gasto={
-    tipo:'gasto',
-    categoria:'Comisiones',
-    descripcion:`Comisión ${o.tecnico||'técnico'} — #${o.folio} ${o.marca} ${o.modelo||''} (${o.tipo_equipo})`.trim(),
-    monto,
-    fecha:new Date().toISOString().split('T')[0],
-    metodo_pago:'efectivo',
-    notas:`Pago automático por OT #${o.folio}`,
-    registrado_por:currentUser
-  };
+  _comisionOrdenId=ordenId;
+  const tipoLabel={convencional:'Convencional',inverter:'Inverter'};
+  document.getElementById('comision-detalle').innerHTML=
+    `<div style="font-weight:600;margin-bottom:0.4rem;">#${o.folio} · ${o.marca} ${o.modelo||''}</div>`+
+    `<div>Técnico: <strong>${o.tecnico||'?'}</strong></div>`+
+    `<div>Tipo: ${tipoLabel[o.tipo_equipo]}</div>`+
+    `<div style="margin-top:0.6rem;font-size:1.1rem;font-weight:700;color:var(--green);">$${monto.toLocaleString('es-MX')}</div>`;
+  document.getElementById('comision-metodo').value='efectivo';
+  document.getElementById('modal-comision').classList.add('open');
+}
+
+async function confirmarComision(){
+  const o=allOrdenes.find(x=>x.id===_comisionOrdenId);
+  if(!o)return;
+  const monto=COMISIONES_TECNICO[o.tipo_equipo];
+  const metodo=document.getElementById('comision-metodo').value;
+  const gasto={tipo:'gasto',categoria:'Comisiones',descripcion:`Comisión ${o.tecnico||'técnico'} — #${o.folio} ${o.marca} ${o.modelo||''} (${o.tipo_equipo})`.trim(),monto,fecha:new Date().toISOString().split('T')[0],metodo_pago:metodo,notas:`Pago por OT #${o.folio}`,registrado_por:currentUser};
   const{error:e1}=await sb.from('contabilidad').insert([gasto]);
-  if(e1){notif('Error al registrar en contabilidad: '+e1.message,'error');return;}
-  const{error:e2}=await sb.from('ordenes').update({comision_pagada:true}).eq('id',ordenId);
-  if(e2){notif('Error al marcar comisión: '+e2.message,'error');return;}
+  if(e1){notif('Error: '+e1.message,'error');return;}
+  const{error:e2}=await sb.from('ordenes').update({comision_pagada:true}).eq('id',_comisionOrdenId);
+  if(e2){notif('Error: '+e2.message,'error');return;}
+  closeModal('modal-comision');
   notif(`✓ Comisión $${monto} registrada`,'success');
+  await loadOrdenes();renderOrdenes();
+}
+
+function registrarAnticipo(ordenId){
+  const o=allOrdenes.find(x=>x.id===ordenId);
+  if(!o)return;
+  _anticipoOrdenId=ordenId;
+  document.getElementById('anticipo-detalle').textContent=`#${o.folio} · ${o.clientes?.nombre||'?'} · ${o.marca}`;
+  document.getElementById('anticipo-monto').value=200;
+  document.getElementById('anticipo-metodo').value='efectivo';
+  document.getElementById('modal-anticipo').classList.add('open');
+}
+
+async function confirmarAnticipo(){
+  const o=allOrdenes.find(x=>x.id===_anticipoOrdenId);
+  if(!o)return;
+  const monto=parseFloat(document.getElementById('anticipo-monto').value);
+  if(!monto||monto<=0){notif('Ingresa un monto válido','error');return;}
+  const metodo=document.getElementById('anticipo-metodo').value;
+  const ingreso={tipo:'ingreso',categoria:'Anticipo',descripcion:`Anticipo — #${o.folio} ${o.clientes?.nombre||''} ${o.marca}`.trim(),monto,fecha:new Date().toISOString().split('T')[0],metodo_pago:metodo,orden_id:o.id,notas:`Anticipo OT #${o.folio}`,registrado_por:currentUser};
+  const{error:e1}=await sb.from('contabilidad').insert([ingreso]);
+  if(e1){notif('Error: '+e1.message,'error');return;}
+  const nuevoAnticipo=(Number(o.anticipo)||0)+monto;
+  const{error:e2}=await sb.from('ordenes').update({anticipo:nuevoAnticipo}).eq('id',_anticipoOrdenId);
+  if(e2){notif('Error al actualizar orden: '+e2.message,'error');return;}
+  closeModal('modal-anticipo');
+  notif(`✓ Anticipo $${monto.toLocaleString('es-MX')} registrado`,'success');
   await loadOrdenes();renderOrdenes();
 }
 
