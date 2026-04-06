@@ -107,11 +107,8 @@ function showPage(name){
   pg.classList.add('active');
   // Activar sidebar
   document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
-  const smap={dashboard:0,ordenes:1,clientes:2};
-  if(smap[name]!==undefined){
-    const si=document.querySelectorAll('.sidebar-item')[smap[name]];
-    if(si)si.classList.add('active');
-  }
+  const si=document.querySelector(`.sidebar-item[data-page="${name}"]`);
+  if(si)si.classList.add('active');
   // Activar bottom nav
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
   const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',agenda:'bnav-agenda',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones',mipanel:'bnav-mipanel'};

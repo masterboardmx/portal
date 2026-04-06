@@ -45,28 +45,28 @@
     <div class="sidebar">
       <div id="sidebar-mipanel" style="display:none;">
         <div class="sidebar-section">Mi Espacio</div>
-        <div class="sidebar-item" style="color:var(--blue);" onclick="showPage('mipanel')"><span class="sidebar-icon">🏠</span> Mi Panel</div>
+        <div class="sidebar-item" data-page="mipanel" style="color:var(--blue);" onclick="showPage('mipanel')"><span class="sidebar-icon">🏠</span> Mi Panel</div>
       </div>
       <div class="sidebar-section">Principal</div>
-      <div class="sidebar-item active" onclick="showPage('dashboard')"><span class="sidebar-icon">◈</span> Dashboard</div>
-      <div class="sidebar-item" onclick="showPage('ordenes')"><span class="sidebar-icon">◉</span> Ordenes</div>
-      <div class="sidebar-item" onclick="showPage('clientes')"><span class="sidebar-icon">◎</span> Clientes</div>
+      <div class="sidebar-item active" data-page="dashboard" onclick="showPage('dashboard')"><span class="sidebar-icon">◈</span> Dashboard</div>
+      <div class="sidebar-item" data-page="ordenes" onclick="showPage('ordenes')"><span class="sidebar-icon">◉</span> Ordenes</div>
+      <div class="sidebar-item" data-page="clientes" onclick="showPage('clientes')"><span class="sidebar-icon">◎</span> Clientes</div>
       <div id="sidebar-agenda" style="display:none;">
         <div class="sidebar-section">Agenda</div>
-        <div class="sidebar-item" style="color:var(--orange);" onclick="showPage('agenda')"><span class="sidebar-icon">📍</span> Visitas</div>
+        <div class="sidebar-item" data-page="agenda" style="color:var(--orange);" onclick="showPage('agenda')"><span class="sidebar-icon">📍</span> Visitas</div>
       </div>
       <div id="sidebar-master" style="display:none;">
         <div class="sidebar-section">Maestro</div>
-        <div class="sidebar-item master-item" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
-        <div class="sidebar-item master-item" onclick="showPage('auditoria')"><span class="sidebar-icon">◑</span> Historial</div>
-        <div class="sidebar-item master-item" onclick="showPage('usuarios')"><span class="sidebar-icon">◐</span> Actividad</div>
-        <div class="sidebar-item master-item" onclick="showPage('sesiones')"><span class="sidebar-icon">◍</span> Sesiones</div>
-        <div class="sidebar-item master-item" onclick="showPage('backup')"><span class="sidebar-icon">💾</span> Backup</div>
+        <div class="sidebar-item master-item" data-page="contabilidad" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
+        <div class="sidebar-item master-item" data-page="auditoria" onclick="showPage('auditoria')"><span class="sidebar-icon">◑</span> Historial</div>
+        <div class="sidebar-item master-item" data-page="usuarios" onclick="showPage('usuarios')"><span class="sidebar-icon">◐</span> Actividad</div>
+        <div class="sidebar-item master-item" data-page="sesiones" onclick="showPage('sesiones')"><span class="sidebar-icon">◍</span> Sesiones</div>
+        <div class="sidebar-item master-item" data-page="backup" onclick="showPage('backup')"><span class="sidebar-icon">💾</span> Backup</div>
       </div>
       <!-- Contabilidad solo para Alonso -->
       <div id="sidebar-cont-alonso" style="display:none;">
         <div class="sidebar-section">Extra</div>
-        <div class="sidebar-item master-item" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
+        <div class="sidebar-item master-item" data-page="contabilidad" onclick="showPage('contabilidad')"><span class="sidebar-icon">💰</span> Contabilidad</div>
       </div>
     </div>
     <div class="content">
