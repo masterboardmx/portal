@@ -3176,7 +3176,7 @@ async function loadMisPagos(){
     ${pagos.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);">
       <div>
         <div style="font-size:0.82rem;">${p.descripcion.replace('Comisión Chitara — ','')}</div>
-        <div style="font-size:0.7rem;color:var(--text-dim);font-family:var(--mono);margin-top:0.15rem;">${fmtFecha(p.fecha)} · ${mL[p.metodo_pago]||p.metodo_pago}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);font-family:var(--mono);margin-top:0.15rem;">${fmtFecha(p.fecha)}</div>
       </div>
       <span style="font-family:var(--mono);font-weight:700;color:var(--green);">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
     </div>`).join('')}
