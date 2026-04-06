@@ -96,3 +96,25 @@ async function eliminarCliente(id){
 function poblarSelectClientes(){
   document.getElementById('o-cliente').innerHTML='<option value="">Seleccionar cliente</option>'+allClientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
 }
+
+function toggleNuevoCliente(){
+  const f=document.getElementById('nuevo-cliente-form');
+  const visible=f.style.display==='flex';
+  f.style.display=visible?'none':'flex';
+  if(!visible)document.getElementById('nc-nombre').focus();
+}
+
+async function crearClienteRapido(){
+  const nombre=document.getElementById('nc-nombre').value.trim();
+  const telefono=document.getElementById('nc-telefono').value.trim();
+  if(!nombre||!telefono){notif('Nombre y teléfono requeridos','error');return;}
+  const{data,error}=await sb.from('clientes').insert([{nombre,telefono,modificado_por:currentUser}]).select().single();
+  if(error){notif('Error: '+error.message,'error');return;}
+  allClientes.unshift(data);
+  poblarSelectClientes();
+  document.getElementById('o-cliente').value=data.id;
+  document.getElementById('nc-nombre').value='';
+  document.getElementById('nc-telefono').value='';
+  toggleNuevoCliente();
+  notif('Cliente creado ✓','success');
+}
