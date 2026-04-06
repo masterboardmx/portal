@@ -93,12 +93,6 @@ function filtrarMovimientos(tipo){
   }
 }
 
-  if(!f)return'?';
-  const dias=['Dom','Lun','Mar','Mi\u00e9','Jue','Vie','S\u00e1b'];
-  const d=new Date(f+'T12:00:00');
-  return'<span style="color:var(--blue);font-size:0.7rem;">'+dias[d.getDay()]+'</span> '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
-}
-
 function renderMovimientos(list){
   const metodoLabel={efectivo:'\U0001f4b5 Efectivo',transferencia:'\U0001f3e6 Transferencia',tarjeta_banamex:'\U0001f4b3 Banamex',tarjeta_banorte:'\U0001f4b3 Banorte',mercadopago:'\U0001f4f2 MercadoPago',paypal:'\U0001f17f\ufe0f PayPal',otro:'\U0001f4b1 Otro'};
   // desktop
