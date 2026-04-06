@@ -98,7 +98,8 @@ async function openNuevaOrden(prefill){
   editingOrdenId=null;
   document.getElementById('modal-orden-title').textContent='Nueva Orden';
   document.getElementById('btn-guardar-orden').textContent='Guardar';
-  ['o-marca','o-modelo','o-serie','o-tecnico','o-falla','o-diagnostico','o-notas'].forEach(id=>document.getElementById(id).value='');
+  ['o-marca','o-modelo','o-serie','o-falla','o-diagnostico','o-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('o-tecnico').value='Alonso';
   document.getElementById('o-costo-est').value='';
   document.getElementById('o-estado').value='recibido';
   document.getElementById('o-iva').checked=false;

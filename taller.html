@@ -788,15 +788,18 @@
     <div class="modal-title" id="modal-orden-title">Nueva Orden</div>
     <div class="form-grid">
       <div class="form-group full">
-        <label style="display:flex;justify-content:space-between;align-items:center;">Cliente <button type="button" class="btn-ghost btn-sm" style="font-size:0.7rem;padding:0.15rem 0.5rem;" onclick="toggleNuevoCliente()">+ Nuevo</button></label>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+          <label style="margin:0;">Cliente</label>
+          <button type="button" class="btn-ghost btn-sm" style="font-size:0.7rem;padding:0.15rem 0.5rem;" onclick="toggleNuevoCliente()">+ Nuevo</button>
+        </div>
         <select id="o-cliente"><option value="">Seleccionar cliente</option></select>
-        <div id="nuevo-cliente-form" style="display:none;margin-top:0.5rem;padding:0.75rem;background:var(--bg3);border-radius:8px;flex-direction:column;gap:0.5rem;">
+        <div id="nuevo-cliente-form" style="display:none;margin-top:0.5rem;padding:0.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;flex-direction:column;gap:0.5rem;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-            <input type="text" id="nc-nombre" placeholder="Nombre*" style="margin:0;">
-            <input type="text" id="nc-telefono" placeholder="Teléfono*" style="margin:0;">
+            <input type="text" id="nc-nombre" placeholder="Nombre*">
+            <input type="text" id="nc-telefono" placeholder="Teléfono*">
           </div>
           <div style="display:flex;gap:0.5rem;">
-            <button type="button" class="btn-blue btn-sm" style="flex:1;" onclick="crearClienteRapido()">Guardar</button>
+            <button type="button" class="btn-blue btn-sm" style="flex:1;" onclick="crearClienteRapido()">Guardar cliente</button>
             <button type="button" class="btn-ghost btn-sm" onclick="toggleNuevoCliente()">Cancelar</button>
           </div>
         </div>

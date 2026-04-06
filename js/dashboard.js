@@ -147,7 +147,7 @@ async function loadMiPanel(){
 }
 
 async function loadOrdenesAlonso(){
-  const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').ilike('tecnico','alonso').neq('estado','entregado').order('fecha_ingreso',{ascending:true});
+  const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').neq('estado','entregado').order('fecha_ingreso',{ascending:true});
   renderOrdenesAlonso(data||[]);
 }
 
@@ -172,28 +172,56 @@ function renderOrdenesAlonso(list){
     if(d>3)return`${d} días`;
     return`${d} día${d!==1?'s':''}`;
   }
-  const estadoOpts=['recibido','diagnostico','reparacion','cotizacion','listo','entregado'];
-  const estadoLbls={recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',cotizacion:'Cotización enviada',listo:'Listo',entregado:'Entregado'};
+  const estadoOpts=[
+    {v:'recibido',l:'Recibido'},
+    {v:'diagnostico',l:'Diagnóstico'},
+    {v:'reparacion',l:'Reparación'},
+    {v:'cotizacion',l:'Cotización'},
+    {v:'listo',l:'Listo'},
+    {v:'entregado',l:'Entregado'}
+  ];
+  const colorMap={recibido:'rgba(122,130,144,0.5)',diagnostico:'rgba(255,214,10,0.7)',reparacion:'rgba(10,132,255,0.7)',cotizacion:'rgba(191,90,242,0.7)',listo:'rgba(48,209,88,0.7)',entregado:'rgba(122,130,144,0.3)'};
   c.innerHTML=list.map(o=>`
     <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid ${urgColor(o)};border-radius:12px;padding:1rem 1.25rem;margin-bottom:0.75rem;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.75rem;">
         <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.2rem;flex-wrap:wrap;">
             <span style="font-family:var(--mono);color:var(--blue);font-size:0.82rem;font-weight:700;">#${o.folio}</span>
             <span style="font-weight:600;font-size:0.9rem;">${o.clientes?.nombre||'?'}</span>
-            <span style="font-size:0.75rem;color:var(--text-dim);">${o.clientes?.telefono||''}</span>
           </div>
-          <div style="font-size:0.82rem;margin-bottom:0.2rem;">${o.marca||''} ${o.modelo||''}</div>
-          <div style="font-size:0.78rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px;">${o.falla_reportada||''}</div>
+          <div style="font-size:0.8rem;color:var(--text-dim);">${o.marca||''} ${o.modelo||''}</div>
+          <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;">${o.falla_reportada||''}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
-          <select class="estado-select ${o.estado}" onchange="cambiarEstado('${o.id}',this.value,this)" onclick="event.stopPropagation()">
-            ${estadoOpts.map(e=>`<option value="${e}"${o.estado===e?' selected':''}>${estadoLbls[e]}</option>`).join('')}
-          </select>
-          <span style="font-size:0.7rem;font-family:var(--mono);color:${urgColor(o)};">${urgLabel(o)}</span>
-        </div>
+        <span style="font-size:0.72rem;font-family:var(--mono);color:${urgColor(o)};white-space:nowrap;">${urgLabel(o)}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
+        ${estadoOpts.map(e=>`<button onclick="cambiarEstadoAlonso('${o.id}','${e.v}',this)" style="font-size:0.68rem;padding:0.25rem 0.6rem;border-radius:100px;border:1px solid ${o.estado===e.v?colorMap[e.v]:'var(--border)'};cursor:pointer;background:${o.estado===e.v?colorMap[e.v]:'transparent'};color:${o.estado===e.v?'white':'var(--text-dim)'};transition:all 0.15s;">${e.l}</button>`).join('')}
       </div>
     </div>`).join('');
+}
+
+function cambiarEstadoAlonso(id,estado,btn){
+  cambiarEstado(id,estado,null).then(()=>{
+    // Actualizar botones en la tarjeta
+    const row=btn.parentElement;
+    const estadoOpts=['recibido','diagnostico','reparacion','cotizacion','listo','entregado'];
+    const colorMap={recibido:'rgba(122,130,144,0.5)',diagnostico:'rgba(255,214,10,0.7)',reparacion:'rgba(10,132,255,0.7)',cotizacion:'rgba(191,90,242,0.7)',listo:'rgba(48,209,88,0.7)',entregado:'rgba(122,130,144,0.3)'};
+    row.querySelectorAll('button').forEach((b,i)=>{
+      const isActive=estadoOpts[i]===estado;
+      b.style.background=isActive?colorMap[estadoOpts[i]]:'transparent';
+      b.style.borderColor=isActive?colorMap[estadoOpts[i]]:'var(--border)';
+      b.style.color=isActive?'white':'var(--text-dim)';
+    });
+    // Actualizar borde de urgencia de la tarjeta
+    const hoy=Date.now();
+    const o=allOrdenes.find(x=>x.id===id);
+    if(o){
+      const dias=Math.floor((hoy-new Date(o.fecha_ingreso).getTime())/(1000*60*60*24));
+      const color=estado==='listo'?'var(--green)':dias>7?'var(--red)':dias>3?'var(--yellow)':'var(--green)';
+      const card=row.closest('div[style*="border-left"]');
+      if(card)card.style.borderLeftColor=color;
+    }
+  });
 }
 
 function renderTareasPanel(){
