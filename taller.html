@@ -2550,7 +2550,7 @@ async function loadContabilidad(){
   poblarSelectMeses();
   poblarSelectOrdenes();
   actualizarStats();
-  renderMovimientos(allMovimientos);
+  renderMovimientos(allMovimientos.filter(m=>m.categoria!=='Ajuste Maestro'));
   renderGrafica();
 }
 
@@ -2581,12 +2581,11 @@ function poblarSelectOrdenes(){
 
 async function actualizarStats(){
   const{data:ordenesActuales}=await sb.from('ordenes').select('id,estado,costo_estimado,costo_final');
-  const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
-  const gastos=allMovimientos.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
-  const ingSinAjuste=allMovimientos.filter(m=>m.tipo==='ingreso'&&m.categoria!=='Ajuste Maestro').reduce((a,m)=>a+Number(m.monto),0);
-  const gasSinAjuste=allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria!=='Ajuste Maestro').reduce((a,m)=>a+Number(m.monto),0);
-  const lblIng=document.getElementById('lbl-total-ing');if(lblIng)lblIng.textContent='$'+ingSinAjuste.toLocaleString('es-MX',{minimumFractionDigits:2});
-  const lblGas=document.getElementById('lbl-total-gas');if(lblGas)lblGas.textContent='$'+gasSinAjuste.toLocaleString('es-MX',{minimumFractionDigits:2});
+  // Ajuste Maestro se excluye de totales visibles (solo afecta saldos por método)
+  const ingresos=allMovimientos.filter(m=>m.tipo==='ingreso'&&m.categoria!=='Ajuste Maestro').reduce((a,m)=>a+Number(m.monto),0);
+  const gastos=allMovimientos.filter(m=>m.tipo==='gasto'&&m.categoria!=='Ajuste Maestro').reduce((a,m)=>a+Number(m.monto),0);
+  const lblIng=document.getElementById('lbl-total-ing');if(lblIng)lblIng.textContent='$'+ingresos.toLocaleString('es-MX',{minimumFractionDigits:2});
+  const lblGas=document.getElementById('lbl-total-gas');if(lblGas)lblGas.textContent='$'+gastos.toLocaleString('es-MX',{minimumFractionDigits:2});
   const balance=ingresos-gastos;
   const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
   const porCobrar=(ordenesActuales||[]).filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
@@ -2626,7 +2625,8 @@ function filtrarMovimientos(tipo){
     const porCobrar=allOrdenes.filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id));
     renderCobrar(porCobrar);
   } else {
-    const list=tipo==='todos'?allMovimientos:allMovimientos.filter(m=>m.tipo===tipo);
+    const sinAjuste=allMovimientos.filter(m=>m.categoria!=='Ajuste Maestro');
+    const list=tipo==='todos'?sinAjuste:sinAjuste.filter(m=>m.tipo===tipo);
     renderMovimientos(list);
   }
 }
