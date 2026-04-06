@@ -1,5 +1,13 @@
 async function loadOrdenes(){const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').order('fecha_ingreso',{ascending:false});allOrdenes=data||[];}
 
+async function cambiarEstado(id,estado,sel){
+  const{error}=await sb.from('ordenes').update({estado,updated_at:new Date().toISOString(),modificado_por:currentUser}).eq('id',id);
+  if(error){notif('Error: '+error.message,'error');return;}
+  const o=allOrdenes.find(x=>x.id===id);
+  if(o)o.estado=estado;
+  if(sel){sel.className='estado-select '+estado;}
+  notif('Estado actualizado','success');
+}
 
 // ── ORDENES ──────────────────────────────────────────────────
 function renderOrdenes(data){
@@ -17,7 +25,14 @@ function renderOrdenes(data){
       <td><div style="font-weight:500;">${o.clientes?.nombre||'?'}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.clientes?.telefono||''}</div></td>
       <td><div>${o.marca}</div><div style="font-size:0.75rem;color:var(--text-dim);">${o.modelo||''}</div></td>
       <td style="max-width:140px;"><div style="font-size:0.8rem;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.falla_reportada}</div></td>
-      <td>${badgeEstado(o.estado)}</td>
+      <td><select class="estado-select ${o.estado}" onchange="cambiarEstado('${o.id}',this.value,this)" onclick="event.stopPropagation()">
+        <option value="recibido"${o.estado==='recibido'?' selected':''}>Recibido</option>
+        <option value="diagnostico"${o.estado==='diagnostico'?' selected':''}>Diagnostico</option>
+        <option value="reparacion"${o.estado==='reparacion'?' selected':''}>Reparacion</option>
+        <option value="cotizacion"${o.estado==='cotizacion'?' selected':''}>Cotización enviada</option>
+        <option value="listo"${o.estado==='listo'?' selected':''}>Listo</option>
+        <option value="entregado"${o.estado==='entregado'?' selected':''}>Entregado</option>
+      </select></td>
       <td style="color:var(--text-dim);font-size:0.82rem;">${o.tecnico||'?'}</td>
       <td>${o.modificado_por?userPill(o.modificado_por):'<span style="color:var(--text-dim);font-size:0.75rem;">?</span>'}</td>
       <td style="color:var(--text-dim);font-size:0.78rem;">${fmtFecha(o.fecha_ingreso)}</td>

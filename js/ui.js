@@ -1,6 +1,6 @@
-function badgeEstado(e){const L={recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',listo:'Listo',entregado:'Entregado'};return`<span class="badge badge-${e}">${L[e]||e}</span>`;}
+function badgeEstado(e){const L={recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',cotizacion:'Cotización enviada',listo:'Listo',entregado:'Entregado'};return`<span class="badge badge-${e}">${L[e]||e}</span>`;}
 function badgeAccion(a){const L={crear:'Crear',editar:'Editar',estado:'Estado',eliminar:'Eliminar'};return`<span class="badge badge-${a}">${L[a]||a}</span>`;}
-function estadoLabel(e){return{recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',listo:'Listo',entregado:'Entregado'}[e]||e;}
+function estadoLabel(e){return{recibido:'Recibido',diagnostico:'Diagnostico',reparacion:'Reparacion',cotizacion:'Cotización enviada',listo:'Listo',entregado:'Entregado'}[e]||e;}
 function userPill(u){return`<span class="user-pill user-${u}">${u}</span>`;}
 function fmtFecha(f){if(!f)return'?';return new Date(f).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});}
 function fmtFechaHora(f){if(!f)return'?';return new Date(f).toLocaleString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});}
