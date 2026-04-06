@@ -1,5 +1,17 @@
 // ── CONTABILIDAD ─────────────────────────────────────────────
 let allMovimientos=[], graficaChart=null, contTipo='todos', allReservas=[];
+let ajusteTipo='sumar', ajusteTarget=null;
+let reservaMetodoActual=null;
+let graficaCategChart=null;
+
+const ajusteConfig={
+  ingresos:{label:'Ingresos',metodoDefault:'efectivo',tipo_mov:'ingreso'},
+  gastos:{label:'Gastos',metodoDefault:'efectivo',tipo_mov:'gasto'},
+  efectivo:{label:'Efectivo',metodoDefault:'efectivo'},
+  transferencia:{label:'Transferencia',metodoDefault:'transferencia'},
+  banamex:{label:'Banamex',metodoDefault:'tarjeta_banamex'},
+  banorte:{label:'Banorte',metodoDefault:'tarjeta_banorte'}
+};
 
 async function loadContabilidad(){
   const mes=document.getElementById('cont-mes')?.value;
@@ -230,7 +242,6 @@ function renderGrafica(){
   renderGraficaCategorias();
 }
 
-let graficaCategChart=null;
 function renderGraficaCategorias(){
   const canvas=document.getElementById('grafica-categorias');
   if(!canvas)return;
@@ -380,7 +391,6 @@ async function eliminarMovimiento(id){
 // ── HELPERS ──────────────────────────────────────────────────
 
 // ── RESERVAS ──────────────────────────────────────────────────
-let reservaMetodoActual=null;
 
 function abrirGestionReservas(metodo){
   if(currentUser!=='Alan')return;
