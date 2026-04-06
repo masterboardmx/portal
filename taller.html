@@ -229,6 +229,10 @@
   </div>
   <div class="main">
     <div class="sidebar">
+      <div id="sidebar-mipanel" style="display:none;">
+        <div class="sidebar-section">Mi Espacio</div>
+        <div class="sidebar-item" style="color:var(--blue);" onclick="showPage('mipanel')"><span class="sidebar-icon">🏠</span> Mi Panel</div>
+      </div>
       <div class="sidebar-section">Principal</div>
       <div class="sidebar-item active" onclick="showPage('dashboard')"><span class="sidebar-icon">◈</span> Dashboard</div>
       <div class="sidebar-item" onclick="showPage('ordenes')"><span class="sidebar-icon">◉</span> Ordenes</div>
@@ -254,7 +258,25 @@
     <div class="content">
 
       <!-- DASHBOARD -->
-      <div class="page active" id="page-dashboard">
+      <!-- ── MI PANEL (usuarios no-Alan) ────────────────────────── -->
+<div class="page" id="page-mipanel">
+  <div style="max-width:680px;">
+    <div style="margin-bottom:1.75rem;">
+      <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;" id="mipanel-saludo">Hola</div>
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.25rem;" id="mipanel-fecha"></div>
+    </div>
+    <div style="margin-bottom:2rem;">
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.85rem;">📋 Mensajes y Tareas</div>
+      <div id="mipanel-tareas-container"></div>
+    </div>
+    <div id="mipanel-pagos-section" style="display:none;">
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.85rem;">💰 Mis Pagos</div>
+      <div id="mipanel-pagos-container"><div style="color:var(--text-dim);font-size:0.85rem;padding:1rem;">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="page active" id="page-dashboard">
         <div style="margin-bottom:1.5rem;">
           <div style="font-family:var(--mono);font-size:1.4rem;font-weight:700;">Dashboard</div>
           <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.25rem;" id="dash-fecha"></div>
@@ -268,6 +290,30 @@
         <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
         <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
         <div class="mobile-list" id="dash-recent-mobile"></div>
+        <!-- Mensajes al equipo (solo Alan) -->
+        <div style="margin-top:2rem;">
+          <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">📋 Mensajes al Equipo</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;">
+              <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:1rem;">Nuevo mensaje</div>
+              <div class="form-group" style="margin-bottom:0.6rem;"><label>Para</label>
+                <select id="tarea-para">
+                  <option value="">— Seleccionar —</option>
+                  <option value="Chitara">Chitara</option>
+                  <option value="Alonso">Alonso</option>
+                  <option value="Azul">Azul</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0.6rem;"><label>Título / Mensaje</label><input type="text" id="tarea-titulo" placeholder="Escribe aquí..."></div>
+              <div class="form-group" style="margin-bottom:0.75rem;"><label>Detalles (opcional)</label><textarea id="tarea-desc" rows="2" placeholder="Descripción adicional..."></textarea></div>
+              <button class="btn-blue" style="width:100%;" onclick="crearTarea()">Enviar ✉</button>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.25rem;">
+              <div style="font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:1rem;">Pendientes</div>
+              <div id="dash-tareas-lista"><div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Cargando...</div></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ORDENES -->
@@ -595,6 +641,7 @@
 
 <div class="bottom-nav" id="bottom-nav" style="display:none;">
   <div class="bottom-nav-items">
+    <button class="bottom-nav-item" id="bnav-mipanel" style="display:none;color:var(--blue);" onclick="showPage('mipanel')"><span class="bottom-nav-icon">🏠</span>Mi Panel</button>
     <button class="bottom-nav-item active" id="bnav-dashboard" onclick="showPage('dashboard')"><span class="bottom-nav-icon">◈</span>Dashboard</button>
     <button class="bottom-nav-item" id="bnav-ordenes" onclick="showPage('ordenes')"><span class="bottom-nav-icon">◉</span>Ordenes</button>
     <button class="bottom-nav-item" id="bnav-clientes" onclick="showPage('clientes')"><span class="bottom-nav-icon">◎</span>Clientes</button>
@@ -1026,12 +1073,19 @@ async function doLogin(){
     document.getElementById('sidebar-agenda').style.display='block';
     document.getElementById('bnav-agenda').style.display='flex';
   }
-  // Chitara: solo ve Visitas
+  // Todos los no-Alan tienen Mi Panel
+  if(nombre!==MASTER){
+    document.getElementById('sidebar-mipanel').style.display='block';
+    document.getElementById('bnav-mipanel').style.display='flex';
+  }
+  // Chitara: solo ve Mi Panel + Visitas
   if(nombre==='Chitara'){
     document.querySelectorAll('.sidebar-item').forEach(el=>el.style.display='none');
     document.getElementById('bnav-dashboard').style.display='none';
     document.getElementById('bnav-ordenes').style.display='none';
     document.getElementById('bnav-clientes').style.display='none';
+    // Mostrar de nuevo su panel y agenda
+    document.querySelectorAll('#sidebar-mipanel .sidebar-item').forEach(el=>el.style.display='');
   }
   if(CONTABILIDAD_USERS.includes(nombre)&&nombre!==MASTER){
     document.getElementById('bnav-contabilidad').style.display='flex';
@@ -1070,6 +1124,8 @@ async function doLogout(){
   document.getElementById('master-badge').style.display='none';
   document.getElementById('sidebar-master').style.display='none';
   document.getElementById('sidebar-cont-alonso').style.display='none';
+  document.getElementById('sidebar-mipanel').style.display='none';
+  document.getElementById('bnav-mipanel').style.display='none';
   document.getElementById('bnav-backup').style.display='none';
   document.getElementById('bnav-contabilidad').style.display='none';
   document.getElementById('bnav-auditoria').style.display='none';
@@ -1079,8 +1135,8 @@ async function doLogout(){
 }
 
 function showPage(name){
-  // Chitara siempre va a agenda en lugar de dashboard
-  if(currentUser==='Chitara' && (name==='dashboard'||name==='ordenes'||name==='clientes'||name==='detalle')) name='agenda';
+  // Chitara solo puede ver agenda y mipanel
+  if(currentUser==='Chitara' && !['agenda','mipanel'].includes(name)) name='mipanel';
   // proteger paginas de maestro
   const masterPages=['auditoria','usuarios','sesiones','backup'];
   const contPages=['contabilidad'];
@@ -1100,7 +1156,7 @@ function showPage(name){
   }
   // Activar bottom nav
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
-  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',agenda:'bnav-agenda',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones'};
+  const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',agenda:'bnav-agenda',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones',mipanel:'bnav-mipanel'};
   const bkey=name==='agenda'?'bnav-agenda':(bmap[name]||null);
   if(bkey){const b=document.getElementById(bkey);if(b)b.classList.add('active');}
   // Cargar datos
@@ -1108,6 +1164,7 @@ function showPage(name){
   if(name==='ordenes')renderOrdenes();
   if(name==='clientes')renderClientes();
   if(name==='agenda')loadAgenda();
+  if(name==='mipanel')loadMiPanel();
   if(name==='contabilidad')loadContabilidad();
   if(name==='backup'){loadBackupInfo();loadBackupPage();}
   if(name==='auditoria')loadAuditoria();
@@ -1117,8 +1174,8 @@ function showPage(name){
 
 async function loadAll(){
   await Promise.all([loadClientes(),loadOrdenes()]);
-  if(currentUser==='Chitara') showPage('agenda');
-  else loadDashboard();
+  if(currentUser===MASTER){loadDashboard();loadTareasEquipo();}
+  else{await loadMiPanel();showPage('mipanel');}
 }
 async function loadClientes(){const{data}=await sb.from('clientes').select('*').order('created_at',{ascending:false});allClientes=data||[];poblarSelectClientes();}
 async function loadOrdenes(){const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').order('fecha_ingreso',{ascending:false});allOrdenes=data||[];}
@@ -2184,7 +2241,7 @@ function renderAgendaCards(list){
           <button class="btn-ghost btn-sm" onclick="document.getElementById('fc-'+'${v.id}').click()" title="Cámara">📷</button>
           <button class="btn-ghost btn-sm" onclick="document.getElementById('fg-'+'${v.id}').click()" title="Galería">🖼</button>
           <div id="vf-${v.id}" style="display:flex;gap:3px;overflow-x:auto;max-width:140px;padding-bottom:2px;-webkit-overflow-scrolling:touch;flex-shrink:0;scroll-snap-type:x mandatory;"></div>
-          <button class="btn-ghost btn-sm" onclick="crearOrdenDesdeVisita('${v.id}')" title="Crear orden de trabajo">🔧 OT</button>
+          ${currentUser!=='Chitara'?`<button class="btn-ghost btn-sm" onclick="crearOrdenDesdeVisita('${v.id}')" title="Crear orden de trabajo">🔧 OT</button>`:''}
           <button class="btn-ghost btn-sm" onclick="editarVisita('${v.id}')">✏ Editar</button>
           <button class="btn-red btn-sm" onclick="eliminarVisita('${v.id}')">✕</button>
         </div>
@@ -3051,6 +3108,123 @@ async function aplicarAjuste(){
 // Registrar Service Worker para PWA
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ── MI PANEL & TAREAS ────────────────────────────────────────
+let allTareas=[], allTareasEquipo=[];
+
+async function loadMiPanel(){
+  const sal=document.getElementById('mipanel-saludo');
+  const fec=document.getElementById('mipanel-fecha');
+  if(sal) sal.textContent=`Hola, ${currentUser} 👋`;
+  if(fec) fec.textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const{data}=await sb.from('tareas').select('*').eq('para',currentUser).order('created_at',{ascending:false});
+  allTareas=data||[];
+  renderTareasPanel();
+  const sec=document.getElementById('mipanel-pagos-section');
+  if(sec&&currentUser==='Chitara'){sec.style.display='block';loadMisPagos();}
+}
+
+function renderTareasPanel(){
+  const c=document.getElementById('mipanel-tareas-container');if(!c)return;
+  const pend=allTareas.filter(t=>!t.completada);
+  const comp=allTareas.filter(t=>t.completada).slice(0,5);
+  if(!pend.length&&!comp.length){
+    c.innerHTML='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:2rem;text-align:center;color:var(--text-dim);font-size:0.85rem;">Sin pendientes ✓</div>';return;
+  }
+  c.innerHTML=pend.map(t=>`
+    <div style="background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:12px;padding:1rem 1.25rem;margin-bottom:0.75rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
+        <div>
+          <div style="font-weight:600;margin-bottom:0.2rem;">${t.titulo}</div>
+          ${t.descripcion?`<div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.3rem;">${t.descripcion}</div>`:''}
+          <div style="font-size:0.7rem;color:var(--text-dim);font-family:var(--mono);">${fmtFecha(t.created_at)} · de ${t.creado_por}</div>
+        </div>
+        <button class="btn-green btn-sm" style="white-space:nowrap;" onclick="completarTarea('${t.id}')">✓ Listo</button>
+      </div>
+    </div>`).join('')+
+    (comp.length?`<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+      <div style="font-size:0.68rem;color:var(--text-dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;">Completadas</div>
+      ${comp.map(t=>`<div style="display:flex;justify-content:space-between;padding:0.4rem 0.5rem;border-radius:6px;opacity:0.55;">
+        <span style="font-size:0.8rem;text-decoration:line-through;color:var(--text-dim);">${t.titulo}</span>
+        <span style="font-size:0.65rem;color:var(--green);">✓</span>
+      </div>`).join('')}
+    </div>`:'');
+}
+
+async function completarTarea(id){
+  const{error}=await sb.from('tareas').update({completada:true}).eq('id',id);
+  if(error){notif('Error','error');return;}
+  allTareas=allTareas.map(t=>t.id===id?{...t,completada:true}:t);
+  renderTareasPanel();
+  notif('¡Listo! ✓','success');
+}
+
+async function loadMisPagos(){
+  const c=document.getElementById('mipanel-pagos-container');if(!c)return;
+  const{data}=await sb.from('contabilidad').select('*').eq('categoria','Comisiones').ilike('descripcion','%Chitara%').order('fecha',{ascending:false}).limit(50);
+  const pagos=data||[];
+  if(!pagos.length){c.innerHTML='<div style="color:var(--text-dim);font-size:0.85rem;text-align:center;padding:1.5rem;background:var(--bg2);border-radius:12px;border:1px solid var(--border);">Sin pagos registrados aún</div>';return;}
+  const total=pagos.reduce((a,p)=>a+Number(p.monto),0);
+  const mL={efectivo:'💵 Efectivo',tarjeta_banorte:'💳 Banorte',tarjeta_banamex:'💳 Banamex'};
+  c.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+    <div style="padding:0.85rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:0.78rem;color:var(--text-dim);">${pagos.length} pagos registrados</span>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--green);">Total $${total.toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+    </div>
+    ${pagos.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-size:0.82rem;">${p.descripcion.replace('Comisión Chitara — ','')}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);font-family:var(--mono);margin-top:0.15rem;">${fmtFecha(p.fecha)} · ${mL[p.metodo_pago]||p.metodo_pago}</div>
+      </div>
+      <span style="font-family:var(--mono);font-weight:700;color:var(--green);">$${Number(p.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ALAN — gestión de tareas del equipo
+async function loadTareasEquipo(){
+  const{data}=await sb.from('tareas').select('*').eq('completada',false).order('created_at',{ascending:false});
+  allTareasEquipo=data||[];
+  renderTareasEquipo();
+}
+
+function renderTareasEquipo(){
+  const c=document.getElementById('dash-tareas-lista');if(!c)return;
+  if(!allTareasEquipo.length){c.innerHTML='<div style="color:var(--text-dim);font-size:0.82rem;text-align:center;padding:1rem;">Sin pendientes</div>';return;}
+  const por={};
+  allTareasEquipo.forEach(t=>{if(!por[t.para])por[t.para]=[];por[t.para].push(t);});
+  c.innerHTML=Object.entries(por).map(([u,ts])=>`
+    <div style="margin-bottom:0.85rem;">
+      <div style="font-size:0.68rem;font-family:var(--mono);color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.35rem;">${u} · ${ts.length} pendiente${ts.length>1?'s':''}</div>
+      ${ts.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:8px;padding:0.55rem 0.75rem;margin-bottom:0.3rem;gap:0.5rem;">
+        <div>
+          <div style="font-size:0.83rem;font-weight:500;">${t.titulo}</div>
+          ${t.descripcion?`<div style="font-size:0.72rem;color:var(--text-dim);">${t.descripcion}</div>`:''}
+        </div>
+        <button class="btn-red btn-sm" onclick="eliminarTarea('${t.id}')">✕</button>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+async function crearTarea(){
+  const para=document.getElementById('tarea-para').value;
+  const titulo=document.getElementById('tarea-titulo').value.trim();
+  const desc=document.getElementById('tarea-desc').value.trim();
+  if(!para||!titulo){notif('Selecciona usuario y escribe el mensaje','error');return;}
+  const{error}=await sb.from('tareas').insert([{para,titulo,descripcion:desc,creado_por:currentUser}]);
+  if(error){notif('Error: '+error.message,'error');return;}
+  document.getElementById('tarea-titulo').value='';
+  document.getElementById('tarea-desc').value='';
+  notif(`Mensaje enviado a ${para} ✓`,'success');
+  await loadTareasEquipo();
+}
+
+async function eliminarTarea(id){
+  const{error}=await sb.from('tareas').delete().eq('id',id);
+  if(error){notif('Error','error');return;}
+  allTareasEquipo=allTareasEquipo.filter(t=>t.id!==id);
+  renderTareasEquipo();
 }
 
 // ── TEMA CLARO / OSCURO ───────────────────────────────────────
