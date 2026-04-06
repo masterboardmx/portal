@@ -27,10 +27,11 @@ async function doLogin(){
     document.getElementById('sidebar-agenda').style.display='block';
     document.getElementById('bnav-agenda').style.display='flex';
   }
-  // Todos los no-Alan tienen Mi Panel
+  // Todos los no-Alan tienen Mi Panel y NO ven el dashboard financiero
   if(nombre!==MASTER){
     document.getElementById('sidebar-mipanel').style.display='block';
     document.getElementById('bnav-mipanel').style.display='flex';
+    document.getElementById('bnav-dashboard').style.display='none';
   }
   // Chitara: solo ve Mi Panel + Visitas
   if(nombre==='Chitara'){
@@ -90,6 +91,8 @@ async function doLogout(){
 }
 
 function showPage(name){
+  // No-Alan no puede ver el dashboard financiero
+  if(name==='dashboard' && currentUser!==MASTER) name='mipanel';
   // Chitara solo puede ver agenda y mipanel
   if(currentUser==='Chitara' && !['agenda','mipanel'].includes(name)) name='mipanel';
   // proteger paginas de maestro

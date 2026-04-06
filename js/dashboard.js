@@ -1,6 +1,6 @@
 // ── DASHBOARD ────────────────────────────────────────────────
 async function loadDashboard(){
-  if(currentUser==='Chitara'){loadAgenda();return;}
+  if(currentUser!==MASTER){loadMiPanel();showPage('mipanel');return;}
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
