@@ -195,7 +195,7 @@ function renderOrdenesAlonso(list){
         <span style="font-size:0.72rem;font-family:var(--mono);color:${urgColor(o)};white-space:nowrap;">${urgLabel(o)}</span>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:0.35rem;">
-        ${estadoOpts.map(e=>`<button onclick="cambiarEstadoAlonso('${o.id}','${e.v}',this)" style="font-size:0.68rem;padding:0.25rem 0.6rem;border-radius:100px;border:1px solid ${o.estado===e.v?colorMap[e.v]:'var(--border)'};cursor:pointer;background:${o.estado===e.v?colorMap[e.v]:'transparent'};color:${o.estado===e.v?'white':'var(--text-dim)'};transition:all 0.15s;">${e.l}</button>`).join('')}
+        ${estadoOpts.map(e=>`<button type="button" onclick="event.stopPropagation();cambiarEstadoAlonso('${o.id}','${e.v}',this)" style="font-size:0.68rem;padding:0.25rem 0.6rem;border-radius:100px;border:1px solid ${o.estado===e.v?colorMap[e.v]:'var(--border)'};cursor:pointer;background:${o.estado===e.v?colorMap[e.v]:'transparent'};color:${o.estado===e.v?'white':'var(--text-dim)'};transition:all 0.15s;">${e.l}</button>`).join('')}
       </div>
     </div>`).join('');
 }

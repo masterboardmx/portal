@@ -1,12 +1,13 @@
 async function loadOrdenes(){const{data}=await sb.from('ordenes').select('*,clientes(nombre,telefono)').order('fecha_ingreso',{ascending:false});allOrdenes=data||[];}
 
 async function cambiarEstado(id,estado,sel){
+  const o=allOrdenes.find(x=>x.id===id);
   const{error}=await sb.from('ordenes').update({estado,updated_at:new Date().toISOString(),modificado_por:currentUser}).eq('id',id);
   if(error){notif('Error: '+error.message,'error');return;}
-  const o=allOrdenes.find(x=>x.id===id);
+  await registrarAuditoria('ordenes',id,'estado',`Cambio estado orden #${o?.folio} a: ${estadoLabel(estado)}`,{de:o?.estado,a:estado});
   if(o)o.estado=estado;
-  if(sel){sel.className='estado-select '+estado;}
-  notif('Estado actualizado','success');
+  if(sel)sel.className='estado-select '+estado;
+  notif('Estado: '+estadoLabel(estado),'success');
 }
 
 // ── ORDENES ──────────────────────────────────────────────────
@@ -283,7 +284,7 @@ async function verDetalle(id){
     </div>
     <div style="margin-bottom:1.25rem;">
       <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:0.5rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;">Cambiar Estado</div>
-      <div class="estado-buttons">${['recibido','diagnostico','reparacion','listo','entregado'].map(e=>`<button class="estado-btn ${o.estado===e?'active-'+e:''}" onclick="cambiarEstado('${o.id}','${e}')">${estadoLabel(e)}</button>`).join('')}</div>
+      <div class="estado-buttons">${['recibido','diagnostico','reparacion','cotizacion','listo','entregado'].map(e=>`<button class="estado-btn ${o.estado===e?'active-'+e:''}" onclick="cambiarEstado('${o.id}','${e}',null).then(()=>verDetalle('${o.id}'))">${estadoLabel(e)}</button>`).join('')}</div>
     </div>
     <div class="detail-grid">
       <div class="detail-card"><div class="detail-card-label">Marca</div><div class="detail-card-value">${o.marca}</div></div>
@@ -581,13 +582,5 @@ function generarCotizacion(id){
   win.document.close();
 }
 
-
-async function cambiarEstado(id,estado){
-  const o=allOrdenes.find(x=>x.id===id);
-  const{error}=await sb.from('ordenes').update({estado,updated_at:new Date().toISOString(),modificado_por:currentUser}).eq('id',id);
-  if(error){notif('Error','error');return;}
-  await registrarAuditoria('ordenes',id,'estado',`Cambio estado orden #${o?.folio} a: ${estadoLabel(estado)}`,{de:o?.estado,a:estado});
-  await loadOrdenes();notif('Estado: '+estadoLabel(estado),'success');verDetalle(id);
-}
 
 // ── CLIENTES ─────────────────────────────────────────────────
