@@ -1086,6 +1086,7 @@ async function doLogin(){
     document.getElementById('bnav-clientes').style.display='none';
     // Mostrar de nuevo su panel y agenda
     document.querySelectorAll('#sidebar-mipanel .sidebar-item').forEach(el=>el.style.display='');
+    document.querySelectorAll('#sidebar-agenda .sidebar-item').forEach(el=>el.style.display='');
   }
   if(CONTABILIDAD_USERS.includes(nombre)&&nombre!==MASTER){
     document.getElementById('bnav-contabilidad').style.display='flex';
@@ -3162,7 +3163,7 @@ async function completarTarea(id){
 
 async function loadMisPagos(){
   const c=document.getElementById('mipanel-pagos-container');if(!c)return;
-  const{data}=await sb.from('contabilidad').select('*').eq('categoria','Comisiones').ilike('descripcion','%Chitara%').order('fecha',{ascending:false}).limit(50);
+  const{data}=await sb.from('contabilidad').select('*').eq('tipo','gasto').or('categoria.ilike.%Chitara%,descripcion.ilike.%Chitara%').order('fecha',{ascending:false}).limit(50);
   const pagos=data||[];
   if(!pagos.length){c.innerHTML='<div style="color:var(--text-dim);font-size:0.85rem;text-align:center;padding:1.5rem;background:var(--bg2);border-radius:12px;border:1px solid var(--border);">Sin pagos registrados aún</div>';return;}
   const total=pagos.reduce((a,p)=>a+Number(p.monto),0);
