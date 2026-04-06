@@ -303,6 +303,8 @@
             <div class="stat-num" id="dash-sem-util">$0</div>
           </div>
         </div>
+        <!-- Flujo de caja visual -->
+        <div id="dash-flujo" style="margin-bottom:1.5rem;"></div>
         <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
         <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
         <div class="mobile-list" id="dash-recent-mobile"></div>
@@ -1344,21 +1346,80 @@ async function loadDashboard(){
   const elUtil=document.getElementById('dash-sem-util');
   if(elUtil){elUtil.textContent=fmt(semUtil);elUtil.className='stat-num '+(semUtil>=0?'green':'red');}
 
-  // Alertas: renta pendiente
+  // Alertas + saldos + flujo visual
+  const[{data:resActivas},{data:saldoData}]=await Promise.all([
+    sb.from('reservas').select('nombre,monto,metodo').eq('activo',true),
+    sb.from('contabilidad').select('tipo,monto,metodo_pago')
+  ]);
+
+  // Alertas
   const alertasEl=document.getElementById('dash-alertas');
   if(alertasEl){
-    const{data:resActivas}=await sb.from('reservas').select('nombre,monto,metodo').eq('activo',true);
-    const alertas=[];
-    (resActivas||[]).forEach(r=>{
-      alertas.push(`<div style="background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.35);border-radius:10px;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;">
+    const alertas=(resActivas||[]).map(r=>`
+      <div style="background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.35);border-radius:10px;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;">
         <span style="font-size:1.1rem;">⚠️</span>
         <div style="flex:1;font-size:0.83rem;">
           <strong>${r.nombre}</strong> apartada en ${r.metodo==='tarjeta_banorte'?'Banorte':r.metodo==='efectivo'?'Efectivo':'Banamex'}
           — <span style="font-family:var(--mono);color:var(--yellow);">$${Number(r.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span> por pagar
         </div>
       </div>`);
-    });
     alertasEl.innerHTML=alertas.join('');
+  }
+
+  // Flujo visual: saldos por cuenta
+  const movAll=saldoData||[];
+  const calcSaldo=met=>movAll.filter(m=>m.metodo_pago===met).reduce((a,m)=>a+Number(m.monto)*(m.tipo==='ingreso'?1:-1),0);
+  const saldoEf=calcSaldo('efectivo');
+  const saldoBn=calcSaldo('tarjeta_banorte');
+  const totalCuentas=saldoEf+saldoBn; // sin banamex
+  const totalReservado=(resActivas||[]).reduce((a,r)=>a+Number(r.monto),0);
+  const liquidez=totalCuentas-totalReservado;
+  const flujoEl=document.getElementById('dash-flujo');
+  if(flujoEl){
+    const fmtM=v=>'$'+Math.abs(v).toLocaleString('es-MX',{minimumFractionDigits:2});
+    const pct=v=>totalCuentas>0?Math.min(100,Math.round(Math.abs(v)/totalCuentas*100)):0;
+    const resRows=(resActivas||[]).map(r=>{
+      const met=r.metodo==='tarjeta_banorte'?'Banorte':r.metodo==='efectivo'?'Efectivo':'Banamex';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0 0.3rem 1rem;border-left:2px solid rgba(255,69,58,0.3);">
+        <span style="font-size:0.8rem;color:var(--text-dim);">📌 ${r.nombre} (${met})</span>
+        <span style="font-family:var(--mono);font-size:0.8rem;color:var(--red);">-${fmtM(r.monto)}</span>
+      </div>`;}).join('');
+    flujoEl.innerHTML=`
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem;">
+      <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1rem;">¿Dónde está el dinero?</div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem;">
+            <span style="font-size:0.82rem;font-weight:600;">🏦 En cuentas (Efectivo + Banorte)</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--green);">${fmtM(totalCuentas)}</span>
+          </div>
+          <div style="display:flex;gap:1rem;padding:0.3rem 0 0.3rem 1rem;border-left:2px solid rgba(48,209,88,0.3);">
+            <span style="font-size:0.78rem;color:var(--text-dim);">💵 Efectivo <strong style="font-family:var(--mono);color:var(--text);">${fmtM(saldoEf)}</strong></span>
+            <span style="font-size:0.78rem;color:var(--text-dim);">💳 Banorte <strong style="font-family:var(--mono);color:var(--text);">${fmtM(saldoBn)}</strong></span>
+          </div>
+        </div>
+        ${totalReservado>0?`<div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem;">
+            <span style="font-size:0.82rem;font-weight:600;">📌 Apartado / Comprometido</span>
+            <span style="font-family:var(--mono);font-weight:700;color:var(--red);">-${fmtM(totalReservado)}</span>
+          </div>
+          ${resRows}
+        </div>`:''}
+        <div style="border-top:1px solid var(--border);padding-top:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.9rem;font-weight:700;">💧 Disponible ahora mismo</span>
+            <span style="font-family:var(--mono);font-size:1.2rem;font-weight:700;color:${liquidez>=0?'var(--blue)':'var(--red)'};">${fmtM(liquidez)}</span>
+          </div>
+          <div style="margin-top:0.6rem;background:var(--bg3);border-radius:6px;height:8px;overflow:hidden;">
+            <div style="width:${pct(liquidez)}%;height:100%;background:${liquidez>=0?'var(--blue)':'var(--red)'};border-radius:6px;transition:width 0.5s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:0.3rem;">
+            <span style="font-size:0.68rem;color:var(--text-dim);">$0</span>
+            <span style="font-size:0.68rem;color:var(--text-dim);">${fmtM(totalCuentas)} total en cuentas</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
   }
 
   const recent=allOrdenes.slice(0,8);
