@@ -287,6 +287,22 @@
           <div class="stat-card"><div class="stat-label">Listas</div><div class="stat-num green" id="s-listas">0</div></div>
           <div class="stat-card"><div class="stat-label">Clientes</div><div class="stat-num yellow" id="s-clientes">0</div></div>
         </div>
+        <!-- Alerta renta + resumen semanal -->
+        <div id="dash-alertas" style="margin-bottom:1rem;display:flex;flex-direction:column;gap:0.75rem;"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.5rem;" id="dash-semana-cards">
+          <div class="stat-card" style="border-top:2px solid rgba(48,209,88,0.4);">
+            <div class="stat-label">📈 Ingresos esta semana</div>
+            <div class="stat-num green" id="dash-sem-ing">$0</div>
+          </div>
+          <div class="stat-card" style="border-top:2px solid rgba(255,69,58,0.4);">
+            <div class="stat-label">📉 Gastos esta semana</div>
+            <div class="stat-num red" id="dash-sem-gas">$0</div>
+          </div>
+          <div class="stat-card" style="border-top:2px solid rgba(10,132,255,0.4);">
+            <div class="stat-label">⚖️ Utilidad esta semana</div>
+            <div class="stat-num" id="dash-sem-util">$0</div>
+          </div>
+        </div>
         <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
         <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
         <div class="mobile-list" id="dash-recent-mobile"></div>
@@ -851,7 +867,10 @@
             <option value="Herramientas">Herramientas</option>
             <option value="Renta">Renta/Local</option>
             <option value="Servicios">Servicios (luz, internet)</option>
-            <option value="Gasolina">Gasolina</option>
+            <option value="Gasolina Tiida">⛽ Gasolina — Tiida</option>
+            <option value="Gasolina Azul">⛽ Gasolina — Azul</option>
+            <option value="Gasolina">⛽ Gasolina (general)</option>
+            <option value="Reparación Vehículo">🔧 Reparación Vehículo</option>
             <option value="Transporte">Transporte</option>
             <option value="Envío">Envío/Paquetería</option>
             <option value="Publicidad">Publicidad</option>
@@ -859,6 +878,7 @@
             <option value="Pago Azul">💸 Pago — Azul</option>
             <option value="Pago Alonso">💸 Pago — Alonso</option>
             <option value="Pago Chitara">💸 Pago — Chitara</option>
+            <option value="Gastos Personales">🧍 Gastos Personales</option>
             <option value="Otro gasto">Otro gasto</option>
           </optgroup>
         </select>
@@ -1300,12 +1320,47 @@ async function loadActividad(){
 }
 
 // ── DASHBOARD ────────────────────────────────────────────────
-function loadDashboard(){
+async function loadDashboard(){
   if(currentUser==='Chitara'){loadAgenda();return;}
   document.getElementById('s-total').textContent=allOrdenes.length;
   document.getElementById('s-proceso').textContent=allOrdenes.filter(o=>['recibido','diagnostico','reparacion'].includes(o.estado)).length;
   document.getElementById('s-listas').textContent=allOrdenes.filter(o=>o.estado==='listo').length;
   document.getElementById('s-clientes').textContent=allClientes.length;
+
+  // Resumen semanal
+  const hoy=new Date();
+  const lunes=new Date(hoy);lunes.setDate(hoy.getDate()-(hoy.getDay()===0?6:hoy.getDay()-1));
+  const domingo=new Date(lunes);domingo.setDate(lunes.getDate()+6);
+  const ini=lunes.toISOString().split('T')[0];
+  const fin=domingo.toISOString().split('T')[0];
+  const{data:semData}=await sb.from('contabilidad').select('tipo,monto,categoria').gte('fecha',ini).lte('fecha',fin);
+  const movSem=(semData||[]).filter(m=>m.categoria!=='Ajuste Maestro');
+  const semIng=movSem.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+Number(m.monto),0);
+  const semGas=movSem.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+Number(m.monto),0);
+  const semUtil=semIng-semGas;
+  const fmt=v=>(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('es-MX',{minimumFractionDigits:2});
+  const elIng=document.getElementById('dash-sem-ing');if(elIng)elIng.textContent=fmt(semIng);
+  const elGas=document.getElementById('dash-sem-gas');if(elGas)elGas.textContent=fmt(semGas);
+  const elUtil=document.getElementById('dash-sem-util');
+  if(elUtil){elUtil.textContent=fmt(semUtil);elUtil.className='stat-num '+(semUtil>=0?'green':'red');}
+
+  // Alertas: renta pendiente
+  const alertasEl=document.getElementById('dash-alertas');
+  if(alertasEl){
+    const{data:resActivas}=await sb.from('reservas').select('nombre,monto,metodo').eq('activo',true);
+    const alertas=[];
+    (resActivas||[]).forEach(r=>{
+      alertas.push(`<div style="background:rgba(255,214,10,0.08);border:1px solid rgba(255,214,10,0.35);border-radius:10px;padding:0.75rem 1rem;display:flex;align-items:center;gap:0.75rem;">
+        <span style="font-size:1.1rem;">⚠️</span>
+        <div style="flex:1;font-size:0.83rem;">
+          <strong>${r.nombre}</strong> apartada en ${r.metodo==='tarjeta_banorte'?'Banorte':r.metodo==='efectivo'?'Efectivo':'Banamex'}
+          — <span style="font-family:var(--mono);color:var(--yellow);">$${Number(r.monto).toLocaleString('es-MX',{minimumFractionDigits:2})}</span> por pagar
+        </div>
+      </div>`);
+    });
+    alertasEl.innerHTML=alertas.join('');
+  }
+
   const recent=allOrdenes.slice(0,8);
   // desktop
   document.getElementById('dash-recent').innerHTML=recent.length?recent.map(o=>`
@@ -2867,6 +2922,11 @@ async function guardarMovimiento(){
   const desc=document.getElementById('cont-descripcion').value.trim();
   const cat=document.getElementById('cont-categoria').value;
   if(!monto||!desc||!cat){notif('Completa monto, categoría y descripción','error');return;}
+  // Avisar si ingreso sin OT ligada
+  const ordenVal=document.getElementById('cont-orden').value;
+  if(contTipoActual==='ingreso'&&!editingContId&&!ordenVal){
+    if(!confirm('Este ingreso no tiene una OT ligada. ¿Deseas guardarlo sin orden de trabajo?'))return;
+  }
   const data={
     tipo:contTipoActual,categoria:cat,descripcion:desc,monto,
     fecha:document.getElementById('cont-fecha').value,
