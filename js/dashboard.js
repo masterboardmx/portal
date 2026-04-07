@@ -192,6 +192,12 @@ async function loadDashboard(){
     </div>`;
   }
 
+  // ── GRÁFICA 8: Neto real por tipo de orden ──────────────────
+  renderNetoChart();
+
+  // ── GRÁFICA 9: Proyección del mes ───────────────────────────
+  renderProyeccionChart(movAll.filter(m=>m.tipo==='ingreso'&&m.categoria!=='Ajuste Maestro'));
+
   const recent=allOrdenes.slice(0,8);
   // desktop
   document.getElementById('dash-recent').innerHTML=recent.length?recent.map(o=>`
@@ -417,5 +423,132 @@ async function eliminarTarea(id){
   if(error){notif('Error','error');return;}
   allTareasEquipo=allTareasEquipo.filter(t=>t.id!==id);
   renderTareasEquipo();
+}
+
+// ── GRÁFICA 8: Neto real por tipo de orden ───────────────────
+let _netoChart=null;
+function renderNetoChart(){
+  const canvas=document.getElementById('dash-neto-chart');
+  if(!canvas)return;
+  // Calcular promedios reales de costo_estimado por tipo
+  const tipos={inverter:{label:'Inverter',color:'rgba(10,132,255,0.8)',comision:600,ordenes:[]},convencional:{label:'Convencional',color:'rgba(48,209,88,0.8)',comision:0,ordenes:[]}};
+  allOrdenes.forEach(o=>{
+    const t=tipos[o.tipo_equipo];
+    if(t&&o.costo_estimado>0)t.ordenes.push(Number(o.costo_estimado));
+  });
+  const fmtM=v=>'$'+Number(v).toLocaleString('es-MX',{minimumFractionDigits:0});
+  const rows=[];
+  const labels=[],dataNeto=[],dataComision=[],dataColNeto=[],dataColCom=[];
+  Object.entries(tipos).forEach(([,t])=>{
+    if(!t.ordenes.length)return;
+    const prom=Math.round(t.ordenes.reduce((a,v)=>a+v,0)/t.ordenes.length);
+    const neto=prom-t.comision;
+    const porSocio=Math.round(neto/2);
+    labels.push(t.label);
+    dataNeto.push(neto);
+    dataComision.push(t.comision);
+    dataColNeto.push(t.color);
+    dataColCom.push('rgba(255,69,58,0.6)');
+    rows.push(`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${t.color};"></div>
+        <span style="font-size:0.75rem;">${t.label} <span style="color:var(--text-dim);font-size:0.68rem;">(${t.ordenes.length} ord.)</span></span>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--mono);font-size:0.75rem;color:var(--green);">${fmtM(neto)} neto</div>
+        <div style="font-size:0.65rem;color:var(--text-dim);">${fmtM(porSocio)} c/socio · prom. ${fmtM(prom)}</div>
+      </div>
+    </div>`);
+  });
+  if(_netoChart)_netoChart.destroy();
+  _netoChart=new Chart(canvas,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Neto negocio',data:dataNeto,backgroundColor:dataColNeto,borderRadius:6},
+        {label:'Comisión Chitara',data:dataComision,backgroundColor:dataColCom,borderRadius:6}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>' '+fmtM(ctx.raw)}}},
+      scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,ticks:{font:{size:10},callback:v=>'$'+Number(v).toLocaleString('es-MX')}}}}
+  });
+  const det=document.getElementById('dash-neto-detalle');
+  if(det)det.innerHTML=rows.join('')||(rows.length?rows.join(''):'<div style="font-size:0.75rem;color:var(--text-dim);">Sin datos de tipo de equipo aún</div>');
+}
+
+// ── GRÁFICA 9: Proyección del mes ────────────────────────────
+let _proyChart=null;
+function renderProyeccionChart(ingresosAll){
+  const canvas=document.getElementById('dash-proyeccion-chart');
+  if(!canvas)return;
+  const hoy=new Date();
+  const year=hoy.getFullYear(),month=hoy.getMonth();
+  const diaHoy=hoy.getDate();
+  const diasEnMes=new Date(year,month+1,0).getDate();
+  const mesStr=hoy.toISOString().slice(0,7);
+  // Agrupar ingresos del mes actual por día
+  const porDia={};
+  ingresosAll.forEach(m=>{
+    if(!m.fecha||!m.fecha.startsWith(mesStr))return;
+    const d=parseInt(m.fecha.split('-')[2]);
+    porDia[d]=(porDia[d]||0)+Number(m.monto);
+  });
+  // Construir acumulado real
+  let acum=0;
+  const realLabels=[],realData=[],proyData=[];
+  for(let d=1;d<=diasEnMes;d++){
+    realLabels.push(d);
+    if(d<=diaHoy){acum+=(porDia[d]||0);realData.push(acum);proyData.push(null);}
+    else{realData.push(null);proyData.push(null);}
+  }
+  // Proyección: promedio diario × días restantes
+  const promDiario=diaHoy>0?acum/diaHoy:0;
+  const proyFinal=Math.round(acum+(promDiario*(diasEnMes-diaHoy)));
+  // Línea de proyección desde hoy hasta fin de mes
+  for(let d=diaHoy;d<=diasEnMes;d++){
+    proyData[d-1]=Math.round(acum+(promDiario*(d-diaHoy)));
+  }
+  const FIJOS=11580;
+  const fmtM=v=>'$'+Number(v).toLocaleString('es-MX',{minimumFractionDigits:0});
+  const onTrack=proyFinal>=FIJOS;
+  if(_proyChart)_proyChart.destroy();
+  _proyChart=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:realLabels,
+      datasets:[
+        {label:'Real',data:realData,borderColor:'rgba(10,132,255,0.9)',backgroundColor:'rgba(10,132,255,0.08)',borderWidth:2,pointRadius:2,fill:true,tension:0.3,spanGaps:false},
+        {label:'Proyección',data:proyData,borderColor:'rgba(255,214,10,0.8)',borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false,tension:0.3,spanGaps:false}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,labels:{font:{size:10},boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmtM(ctx.raw||0)}},
+        annotation:{annotations:{fijos:{type:'line',yMin:FIJOS,yMax:FIJOS,borderColor:'rgba(255,69,58,0.6)',borderWidth:1.5,borderDash:[4,3],label:{display:true,content:'Gastos fijos',font:{size:9},color:'rgba(255,69,58,0.8)',position:'end'}}}}
+      },
+      scales:{
+        x:{ticks:{font:{size:9},maxTicksLimit:10}},
+        y:{ticks:{font:{size:9},callback:v=>'$'+Number(v).toLocaleString('es-MX')}}
+      }}
+  });
+  const det=document.getElementById('dash-proyeccion-detalle');
+  if(det)det.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">Acumulado hoy (día ${diaHoy})</div>
+        <div style="font-family:var(--mono);font-weight:700;font-size:0.85rem;">${fmtM(acum)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:0.72rem;color:var(--text-dim);">Proyección al día ${diasEnMes}</div>
+        <div style="font-family:var(--mono);font-weight:700;font-size:0.85rem;color:${onTrack?'var(--green)':'var(--red)'};">${fmtM(proyFinal)}</div>
+      </div>
+    </div>
+    <div style="font-size:0.7rem;margin-top:0.35rem;color:${onTrack?'var(--green)':'var(--yellow)'};">
+      ${onTrack?`✓ En camino — proyectas ${fmtM(proyFinal-FIJOS)} sobre fijos`:`⚡ Promedio diario: ${fmtM(Math.round(promDiario))} · necesitas ${fmtM(Math.round(FIJOS/diasEnMes))}/día`}
+    </div>`;
 }
 

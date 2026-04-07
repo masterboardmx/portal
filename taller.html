@@ -125,6 +125,21 @@
         </div>
         <!-- Flujo de caja visual -->
         <div id="dash-flujo" style="margin-bottom:1.5rem;"></div>
+        <!-- Gráficas analíticas -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;" id="dash-analisis-grid">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem;">
+            <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.25rem;">💰 Neto real por tipo de orden</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:1rem;">Después de comisiones · por socio</div>
+            <div style="position:relative;height:180px;"><canvas id="dash-neto-chart"></canvas></div>
+            <div id="dash-neto-detalle" style="margin-top:0.75rem;"></div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem;">
+            <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.25rem;">📈 Proyección del mes</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:1rem;">Basada en ritmo actual de ingresos</div>
+            <div style="position:relative;height:180px;"><canvas id="dash-proyeccion-chart"></canvas></div>
+            <div id="dash-proyeccion-detalle" style="margin-top:0.75rem;"></div>
+          </div>
+        </div>
         <div style="font-family:var(--mono);font-size:0.85rem;font-weight:700;margin-bottom:1rem;">Ordenes recientes</div>
         <div class="table-wrap desktop-table"><table><thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Equipo</th><th>Estado</th><th>Modificado por</th><th>Fecha</th></tr></thead><tbody id="dash-recent"></tbody></table></div>
         <div class="mobile-list" id="dash-recent-mobile"></div>
