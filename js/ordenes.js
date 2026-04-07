@@ -2,11 +2,18 @@ async function loadOrdenes(){const{data}=await sb.from('ordenes').select('*,clie
 
 async function cambiarEstado(id,estado,sel){
   const o=allOrdenes.find(x=>x.id===id);
-  const{error}=await sb.from('ordenes').update({estado,updated_at:new Date().toISOString(),modificado_por:currentUser}).eq('id',id);
-  if(error){notif('Error: '+error.message,'error');return;}
-  await registrarAuditoria('ordenes',id,'estado',`Cambio estado orden #${o?.folio} a: ${estadoLabel(estado)}`,{de:o?.estado,a:estado});
+  const estadoAnterior=o?.estado;
+  const{error}=await sb.from('ordenes').update({estado,modificado_por:currentUser}).eq('id',id);
+  if(error){
+    console.error('cambiarEstado error:',error);
+    notif('Error al guardar: '+error.message,'error');
+    // Revertir select visualmente
+    if(sel&&estadoAnterior)sel.value=estadoAnterior;
+    return;
+  }
   if(o)o.estado=estado;
-  if(sel)sel.className='estado-select '+estado;
+  if(sel){sel.className='estado-select '+estado;}
+  registrarAuditoria('ordenes',id,'estado',`Cambio estado orden #${o?.folio} a: ${estadoLabel(estado)}`,{de:estadoAnterior,a:estado});
   notif('Estado: '+estadoLabel(estado),'success');
 }
 
