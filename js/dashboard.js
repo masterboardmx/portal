@@ -48,7 +48,7 @@ async function loadDashboard(){
   const mesStr=hoy.toISOString().slice(0,7);
   const[{data:resActivas},{data:saldoData},{data:pagosMes}]=await Promise.all([
     sb.from('reservas').select('nombre,monto,metodo').eq('activo',true),
-    sb.from('contabilidad').select('tipo,monto,metodo_pago'),
+    sb.from('contabilidad').select('tipo,monto,metodo_pago,fecha,categoria'),
     sb.from('contabilidad').select('descripcion,categoria,monto').gte('fecha',mesStr+'-01').lte('fecha',mesStr+'-31').eq('tipo','gasto')
   ]);
 
