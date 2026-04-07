@@ -17,7 +17,7 @@ async function confirmarPagoFijo(metodo){
   closeModal('modal-pago-fijo');
   notif(`${nombre} registrado ✓`,'success');
   _pagoFijoActual=null;
-  loadDashboard();
+  await loadDashboard();
 }
 
 async function loadDashboard(){
@@ -46,10 +46,12 @@ async function loadDashboard(){
 
   // Alertas + saldos + flujo visual + gastos fijos
   const mesStr=hoy.toISOString().slice(0,7);
+  const diasMes=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
+  const finMes=mesStr+'-'+String(diasMes).padStart(2,'0');
   const[{data:resActivas},{data:saldoData},{data:pagosMes}]=await Promise.all([
     sb.from('reservas').select('nombre,monto,metodo').eq('activo',true),
     sb.from('contabilidad').select('tipo,monto,metodo_pago,fecha,categoria'),
-    sb.from('contabilidad').select('descripcion,categoria,monto').gte('fecha',mesStr+'-01').lte('fecha',mesStr+'-31').eq('tipo','gasto')
+    sb.from('contabilidad').select('descripcion,categoria,monto').gte('fecha',mesStr+'-01').lte('fecha',finMes).eq('tipo','gasto')
   ]);
 
   // Alertas
@@ -71,16 +73,21 @@ async function loadDashboard(){
   if(fijosEl){
     const diaHoy=hoy.getDate();
     const pm=pagosMes||[];
-    const pagado=kw=>pm.some(p=>((p.categoria||'')+(p.descripcion||'')).toLowerCase().includes(kw));
+    const pagado=(kw,extra=[])=>{
+      return pm.some(p=>{
+        const txt=((p.categoria||'')+'|'+(p.descripcion||'')).toLowerCase();
+        return [kw,...extra].some(k=>txt.includes(k));
+      });
+    };
     const diasHasta=dia=>{
       if(dia>=diaHoy)return dia-diaHoy;
       const nm=new Date(hoy.getFullYear(),hoy.getMonth()+1,dia);
       return Math.round((nm-hoy)/(1000*60*60*24));
     };
     const FIJOS=[
-      {nombre:'Internet',monto:449,dia:3,cat:'Servicios',desc:'Pago Internet mensual',kw:'internet'},
-      {nombre:'Renta',monto:5600,dia:9,cat:'Renta',desc:'Pago Renta mensual',kw:'renta'},
-      {nombre:'Luz',monto:1200,dia:27,cat:'Servicios',desc:'Pago Luz mensual',kw:'luz'},
+      {nombre:'Internet',monto:449,dia:3,cat:'Servicios',desc:'Pago Internet mensual',kw:'internet',extra:['telmex','megacable','totalplay','izzi']},
+      {nombre:'Renta',monto:5600,dia:9,cat:'Renta',desc:'Pago Renta mensual',kw:'renta',extra:['local','arrendamiento']},
+      {nombre:'Luz',monto:1200,dia:27,cat:'Servicios',desc:'Pago Luz mensual',kw:'luz',extra:['cfe','electricidad']},
     ];
     const totalFijos=FIJOS.reduce((a,f)=>a+f.monto,0);// $7,249
     // Meta día 25: ¿cuánto tenemos disponible ya?
@@ -92,7 +99,7 @@ async function loadDashboard(){
     const fmtP=v=>'$'+Number(v).toLocaleString('es-MX',{minimumFractionDigits:2});
 
     const fijoRows=FIJOS.map(f=>{
-      const esPagado=pagado(f.kw);
+      const esPagado=pagado(f.kw,f.extra||[]);
       const dias=diasHasta(f.dia);
       const urgente=!esPagado&&dias<=3;
       const proximo=!esPagado&&dias<=7;
