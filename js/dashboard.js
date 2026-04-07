@@ -1,4 +1,15 @@
 // ── DASHBOARD ────────────────────────────────────────────────
+async function registrarFijo(nombre,monto,categoria,descripcion){
+  const hoy=new Date().toISOString().split('T')[0];
+  const{error}=await sb.from('contabilidad').insert([{
+    tipo:'gasto',monto,descripcion,categoria,
+    metodo_pago:'efectivo',fecha:hoy,registrado_por:currentUser
+  }]);
+  if(error){notif('Error: '+error.message,'error');return;}
+  notif(`${nombre} registrado ✓`,'success');
+  loadDashboard();
+}
+
 async function loadDashboard(){
   if(currentUser!==MASTER){loadMiPanel();showPage('mipanel');return;}
   document.getElementById('s-total').textContent=allOrdenes.length;
@@ -23,10 +34,12 @@ async function loadDashboard(){
   const elUtil=document.getElementById('dash-sem-util');
   if(elUtil){elUtil.textContent=fmt(semUtil);elUtil.className='stat-num '+(semUtil>=0?'green':'red');}
 
-  // Alertas + saldos + flujo visual
-  const[{data:resActivas},{data:saldoData}]=await Promise.all([
+  // Alertas + saldos + flujo visual + gastos fijos
+  const mesStr=hoy.toISOString().slice(0,7);
+  const[{data:resActivas},{data:saldoData},{data:pagosMes}]=await Promise.all([
     sb.from('reservas').select('nombre,monto,metodo').eq('activo',true),
-    sb.from('contabilidad').select('tipo,monto,metodo_pago')
+    sb.from('contabilidad').select('tipo,monto,metodo_pago'),
+    sb.from('contabilidad').select('descripcion,categoria,monto').gte('fecha',mesStr+'-01').lte('fecha',mesStr+'-31').eq('tipo','gasto')
   ]);
 
   // Alertas
@@ -41,6 +54,76 @@ async function loadDashboard(){
         </div>
       </div>`);
     alertasEl.innerHTML=alertas.join('');
+  }
+
+  // Gastos fijos del mes con fechas y meta día 25
+  const fijosEl=document.getElementById('dash-fijos');
+  if(fijosEl){
+    const diaHoy=hoy.getDate();
+    const pm=pagosMes||[];
+    const pagado=kw=>pm.some(p=>((p.categoria||'')+(p.descripcion||'')).toLowerCase().includes(kw));
+    const diasHasta=dia=>{
+      if(dia>=diaHoy)return dia-diaHoy;
+      const nm=new Date(hoy.getFullYear(),hoy.getMonth()+1,dia);
+      return Math.round((nm-hoy)/(1000*60*60*24));
+    };
+    const FIJOS=[
+      {nombre:'Internet',monto:449,dia:3,cat:'Servicios',desc:'Pago Internet mensual',kw:'internet'},
+      {nombre:'Renta',monto:5600,dia:9,cat:'Renta',desc:'Pago Renta mensual',kw:'renta'},
+      {nombre:'Luz',monto:1200,dia:27,cat:'Servicios',desc:'Pago Luz mensual',kw:'luz'},
+    ];
+    const totalFijos=FIJOS.reduce((a,f)=>a+f.monto,0);// $7,249
+    // Meta día 25: ¿cuánto tenemos disponible ya?
+    const movAll=saldoData||[];
+    const calcS=met=>movAll.filter(m=>m.metodo_pago===met).reduce((a,m)=>a+Number(m.monto)*(m.tipo==='ingreso'?1:-1),0);
+    const disponible=(calcS('efectivo')+calcS('tarjeta_banorte'))-((resActivas||[]).reduce((a,r)=>a+Number(r.monto),0));
+    const pctMeta=Math.min(100,Math.round(disponible/totalFijos*100));
+    const metaColor=pctMeta>=100?'var(--green)':pctMeta>=60?'var(--yellow)':'var(--red)';
+    const fmtP=v=>'$'+Number(v).toLocaleString('es-MX',{minimumFractionDigits:2});
+
+    const fijoRows=FIJOS.map(f=>{
+      const esPagado=pagado(f.kw);
+      const dias=diasHasta(f.dia);
+      const urgente=!esPagado&&dias<=3;
+      const proximo=!esPagado&&dias<=7;
+      const iconColor=esPagado?'var(--green)':urgente?'var(--red)':proximo?'var(--yellow)':'var(--text-dim)';
+      const etiqueta=esPagado?'✓ Pagado':dias===0?'⚠️ Vence HOY':`${dias===1?'Mañana':`${dias} días`}`;
+      const borderColor=esPagado?'rgba(48,209,88,0.3)':urgente?'rgba(255,69,58,0.3)':proximo?'rgba(255,214,10,0.3)':'var(--border)';
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0.85rem;border:1px solid ${borderColor};border-radius:8px;${urgente?'background:rgba(255,69,58,0.05);':''}">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="font-size:0.95rem;">${esPagado?'✅':urgente?'🔴':proximo?'🟡':'📅'}</span>
+          <div>
+            <div style="font-size:0.83rem;font-weight:600;">${f.nombre}</div>
+            <div style="font-size:0.7rem;color:var(--text-dim);">Vence día ${f.dia} de cada mes</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="font-family:var(--mono);font-size:0.82rem;font-weight:700;">${fmtP(f.monto)}</span>
+          <span style="font-size:0.72rem;font-family:var(--mono);color:${iconColor};min-width:70px;text-align:right;">${etiqueta}</span>
+          ${!esPagado?`<button onclick="registrarFijo('${f.nombre}',${f.monto},'${f.cat}','${f.desc}')" class="btn-ghost btn-sm" style="font-size:0.7rem;padding:0.2rem 0.5rem;white-space:nowrap;">Registrar pago</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+    fijosEl.innerHTML=`
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.25rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem;">
+          <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;">📅 Gastos fijos del mes</div>
+          <div style="font-size:0.72rem;color:var(--text-dim);">Meta: cubiertos antes del <strong style="color:var(--blue);">día 25</strong></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;">${fijoRows}</div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;">
+            <span style="font-size:0.75rem;color:var(--text-dim);">Liquidez disponible vs total fijos</span>
+            <span style="font-family:var(--mono);font-size:0.75rem;font-weight:700;color:${metaColor};">${fmtP(Math.max(0,disponible))} de ${fmtP(totalFijos)} (${pctMeta}%)</span>
+          </div>
+          <div style="background:var(--bg3);border-radius:100px;height:6px;overflow:hidden;">
+            <div style="width:${pctMeta}%;height:100%;background:${metaColor};border-radius:100px;transition:width 0.5s;"></div>
+          </div>
+          ${pctMeta>=100?`<div style="font-size:0.72rem;color:var(--green);margin-top:0.4rem;">✓ Gastos fijos cubiertos — día 25 alcanzado</div>`
+            :`<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem;">Te faltan <strong style="color:${metaColor};">${fmtP(Math.max(0,totalFijos-disponible))}</strong> para cubrir todos los fijos</div>`}
+        </div>
+      </div>`;
   }
 
   // Flujo visual: saldos por cuenta
