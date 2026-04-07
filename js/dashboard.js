@@ -1,12 +1,22 @@
 // ── DASHBOARD ────────────────────────────────────────────────
-async function registrarFijo(nombre,monto,categoria,descripcion){
+let _pagoFijoActual=null;
+function registrarFijo(nombre,monto,categoria,descripcion){
+  _pagoFijoActual={nombre,monto,categoria,descripcion};
+  document.getElementById('mpf-titulo').textContent=`Pagar ${nombre} — $${Number(monto).toLocaleString('es-MX')}`;
+  document.getElementById('modal-pago-fijo').classList.add('open');
+}
+async function confirmarPagoFijo(metodo){
+  if(!_pagoFijoActual)return;
+  const{nombre,monto,categoria,descripcion}=_pagoFijoActual;
   const hoy=new Date().toISOString().split('T')[0];
   const{error}=await sb.from('contabilidad').insert([{
     tipo:'gasto',monto,descripcion,categoria,
-    metodo_pago:'efectivo',fecha:hoy,registrado_por:currentUser
+    metodo_pago:metodo,fecha:hoy,registrado_por:currentUser
   }]);
   if(error){notif('Error: '+error.message,'error');return;}
+  closeModal('modal-pago-fijo');
   notif(`${nombre} registrado ✓`,'success');
+  _pagoFijoActual=null;
   loadDashboard();
 }
 

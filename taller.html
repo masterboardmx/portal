@@ -912,6 +912,24 @@
   <script src="js/agenda.js"></script>
   <script src="js/backup.js"></script>
   <script src="js/dashboard.js"></script>
+
+<!-- Modal pago gasto fijo -->
+<div class="modal-overlay" id="modal-pago-fijo">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title" id="mpf-titulo">Registrar pago</div>
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.5rem;">¿Con qué método pagas?</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+        <button type="button" class="btn-ghost" style="justify-content:flex-start;gap:0.75rem;padding:0.75rem 1rem;border-radius:10px;font-size:0.85rem;" onclick="confirmarPagoFijo('efectivo')">💵 Efectivo</button>
+        <button type="button" class="btn-ghost" style="justify-content:flex-start;gap:0.75rem;padding:0.75rem 1rem;border-radius:10px;font-size:0.85rem;" onclick="confirmarPagoFijo('tarjeta_banorte')">💳 Banorte</button>
+        <button type="button" class="btn-ghost" style="justify-content:flex-start;gap:0.75rem;padding:0.75rem 1rem;border-radius:10px;font-size:0.85rem;" onclick="confirmarPagoFijo('tarjeta_banamex')">💳 Banamex</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-pago-fijo')">Cancelar</button>
+    </div>
+  </div>
+</div>
   <script src="js/auth.js"></script>
 </body>
 </html>
