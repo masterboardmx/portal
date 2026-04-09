@@ -148,7 +148,8 @@ async function loadDashboard(){
   const calcSaldo=met=>movAll.filter(m=>m.metodo_pago===met).reduce((a,m)=>a+Number(m.monto)*(m.tipo==='ingreso'?1:-1),0);
   const saldoEf=calcSaldo('efectivo');
   const saldoBn=calcSaldo('tarjeta_banorte');
-  const totalCuentas=saldoEf+saldoBn; // sin banamex
+  const saldoBmx=calcSaldo('tarjeta_banamex');
+  const totalCuentas=saldoEf+saldoBn+saldoBmx;
   const totalReservado=(resActivas||[]).reduce((a,r)=>a+Number(r.monto),0);
   const liquidez=totalCuentas-totalReservado;
   const flujoEl=document.getElementById('dash-flujo');
@@ -167,12 +168,13 @@ async function loadDashboard(){
       <div style="display:flex;flex-direction:column;gap:0.75rem;">
         <div>
           <div style="display:flex;justify-content:space-between;margin-bottom:0.35rem;">
-            <span style="font-size:0.82rem;font-weight:600;">🏦 En cuentas (Efectivo + Banorte)</span>
+            <span style="font-size:0.82rem;font-weight:600;">🏦 En cuentas</span>
             <span style="font-family:var(--mono);font-weight:700;color:var(--green);">${fmtM(totalCuentas)}</span>
           </div>
-          <div style="display:flex;gap:1rem;padding:0.3rem 0 0.3rem 1rem;border-left:2px solid rgba(48,209,88,0.3);">
+          <div style="display:flex;flex-wrap:wrap;gap:1rem;padding:0.3rem 0 0.3rem 1rem;border-left:2px solid rgba(48,209,88,0.3);">
             <span style="font-size:0.78rem;color:var(--text-dim);">💵 Efectivo <strong style="font-family:var(--mono);color:var(--text);">${fmtM(saldoEf)}</strong></span>
             <span style="font-size:0.78rem;color:var(--text-dim);">💳 Banorte <strong style="font-family:var(--mono);color:var(--text);">${fmtM(saldoBn)}</strong></span>
+            <span style="font-size:0.78rem;color:var(--text-dim);">🏧 Banamex <strong style="font-family:var(--mono);color:var(--text);">${fmtM(saldoBmx)}</strong></span>
           </div>
         </div>
         ${totalReservado>0?`<div>
