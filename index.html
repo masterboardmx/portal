@@ -49,7 +49,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     ::-webkit-scrollbar-thumb { background: var(--blue-dim); border-radius: 2px; }
 
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      position: fixed; top: 40px; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 2.5rem; height: 64px;
       padding-top: env(safe-area-inset-top);
@@ -89,7 +89,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .stagger-6 { transition-delay: 0.40s !important; }
 
     /* ── HERO PARALLAX ── */
-    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; padding: 80px 2rem 2rem; }
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; padding: 110px 2rem 2rem; }
     #hero-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; display: block; pointer-events: none; }
     .hero-content { position: relative; z-index: 2; max-width: 900px; text-align: center; will-change: transform, opacity; }
     .hero-label { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--mono); font-size: 0.68rem; color: var(--blue); letter-spacing: 0.15em; text-transform: uppercase; border: 1px solid rgba(10,132,255,0.3); border-radius: 100px; padding: 0.35rem 1rem; margin-bottom: 2rem; }
@@ -227,14 +227,185 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       .nav-links, .nav-cta { display: none; }
       .hamburger { display: flex; }
       .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: rgba(10,12,16,0.98); padding: 1.5rem; border-bottom: 1px solid var(--border); gap: 1.25rem; backdrop-filter: blur(16px); }
-      .about-grid, .contact-grid, .bitacora-card { grid-template-columns: 1fr; }
-      .bitacora-left { border-right: none; border-bottom: 1px solid var(--border-bright); }
+      .about-grid, .contact-grid, .product-box { grid-template-columns: 1fr; }
+      .product-cover { border-right: none; border-bottom: 1px solid var(--border-bright); min-height: 280px; }
+      .urgency-banner .ub-text { display: none; }
+      .product-features-mini { grid-template-columns: 1fr; }
       .about-visual { max-width: 280px; margin: 0 auto; }
       .hero h1 { font-size: 1.85rem; }
       section { padding: 4rem 1.25rem; }
       .hero-stats { gap: 1.5rem; }
       .yt-banner { flex-direction: column; align-items: flex-start; }
     }
+
+    /* URGENCY BANNER */
+    .urgency-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 151;
+      background: linear-gradient(90deg, #0070FF, #0A84FF, #38B6FF);
+      display: flex; align-items: center; justify-content: center; gap: 1rem;
+      padding: 0 1.5rem; height: 40px; overflow: hidden;
+      box-shadow: 0 2px 24px rgba(10,132,255,0.55);
+    }
+    .urgency-banner .ub-text {
+      font-family: var(--mono); font-size: 0.78rem; font-weight: 700;
+      color: white; letter-spacing: 0.04em; white-space: nowrap;
+    }
+    .urgency-banner .ub-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: white; color: #0A84FF; font-family: var(--mono);
+      font-size: 0.68rem; font-weight: 700; padding: 0.3rem 0.9rem;
+      border-radius: 100px; text-decoration: none; letter-spacing: 0.05em;
+      transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .urgency-banner .ub-btn:hover { background: #dceeff; transform: scale(1.04); }
+
+    /* PRODUCT BOX */
+    .product-box {
+      display: grid; grid-template-columns: 320px 1fr; gap: 0;
+      background: rgba(17,19,24,0.88); backdrop-filter: blur(12px);
+      border: 1px solid var(--border-bright); border-radius: 20px; overflow: hidden;
+      box-shadow: 0 16px 60px rgba(10,132,255,0.14);
+    }
+    .product-cover {
+      background: linear-gradient(160deg, #0A1628 0%, #0d1f3c 50%, #091526 100%);
+      position: relative; display: flex; align-items: center; justify-content: center;
+      padding: 2.5rem 2rem; min-height: 380px; border-right: 1px solid var(--border-bright);
+    }
+    .product-cover::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(10,132,255,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10,132,255,0.07) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .product-badge-sold {
+      position: absolute; top: 1.25rem; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #FF6B00, #FF8C00); color: white;
+      font-family: var(--mono); font-size: 0.62rem; font-weight: 700;
+      padding: 0.3rem 0.9rem; border-radius: 100px; letter-spacing: 0.06em;
+      white-space: nowrap; z-index: 2; box-shadow: 0 4px 14px rgba(255,107,0,0.45);
+    }
+    .product-cover-inner { position: relative; z-index: 2; }
+    .product-book { display: flex; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.65)); }
+    .book-spine {
+      width: 26px; background: linear-gradient(180deg, #004FA0, #002E6E);
+      border-radius: 5px 0 0 5px; box-shadow: inset -3px 0 6px rgba(0,0,0,0.5);
+    }
+    .book-face {
+      width: 175px; min-height: 235px;
+      background: linear-gradient(160deg, #0A84FF 0%, #0055CC 60%, #003D99 100%);
+      border-radius: 0 8px 8px 0; padding: 1.4rem 1.2rem;
+      display: flex; flex-direction: column; justify-content: space-between;
+      position: relative; overflow: hidden;
+    }
+    .book-face::before {
+      content: ''; position: absolute; top: -25px; right: -25px;
+      width: 110px; height: 110px; background: rgba(255,255,255,0.06); border-radius: 50%;
+    }
+    .book-face::after {
+      content: ''; position: absolute; bottom: -35px; left: -35px;
+      width: 130px; height: 130px; background: rgba(0,0,0,0.12); border-radius: 50%;
+    }
+    .book-face-logo { font-size: 1.7rem; margin-bottom: 0.35rem; }
+    .book-face-brand {
+      font-family: var(--mono); font-size: 0.52rem; color: rgba(255,255,255,0.55);
+      letter-spacing: 0.2em; text-transform: uppercase;
+    }
+    .book-face-title {
+      font-family: var(--mono); font-size: 1.1rem; font-weight: 700;
+      color: white; line-height: 1.15; letter-spacing: 0.03em; position: relative; z-index: 2;
+    }
+    .book-face-sub {
+      font-family: var(--mono); font-size: 0.58rem; color: rgba(255,255,255,0.65);
+      letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.4rem; position: relative; z-index: 2;
+    }
+    .book-face-ver {
+      display: inline-block; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.28); border-radius: 4px;
+      font-family: var(--mono); font-size: 0.56rem; color: white;
+      padding: 0.18rem 0.5rem; letter-spacing: 0.06em; position: relative; z-index: 2; width: fit-content;
+    }
+    .product-info { padding: 2.5rem; display: flex; flex-direction: column; gap: 1.2rem; }
+    .product-title { font-family: var(--mono); font-size: 1.6rem; font-weight: 700; line-height: 1.2; }
+    .product-title span { color: var(--blue); }
+    .product-desc { font-size: 0.87rem; color: var(--text-dim); line-height: 1.65; }
+    .product-price-area {
+      background: rgba(10,132,255,0.07); border: 1px solid rgba(10,132,255,0.22);
+      border-radius: 12px; padding: 1.2rem 1.5rem;
+    }
+    .product-price-label {
+      font-family: var(--mono); font-size: 0.58rem; color: var(--blue);
+      text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.35rem;
+    }
+    .product-price-big {
+      font-family: var(--mono); font-size: 3rem; font-weight: 700; line-height: 1;
+      color: var(--text); display: flex; align-items: baseline; gap: 0.45rem;
+    }
+    .pc-cur { font-size: 0.95rem; color: var(--text-dim); }
+    .product-price-note { font-size: 0.71rem; color: var(--text-dim); margin-top: 0.4rem; }
+    .product-features-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .pfm-item {
+      font-size: 0.77rem; color: var(--text-dim); display: flex; align-items: center;
+      gap: 0.4rem; background: rgba(24,28,36,0.75); border: 1px solid var(--border);
+      border-radius: 6px; padding: 0.5rem 0.7rem;
+    }
+    .btn-buy-now {
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+      background: linear-gradient(135deg, #0A84FF, #0055CC); color: white;
+      font-family: var(--mono); font-size: 0.9rem; font-weight: 700;
+      padding: 1rem 2rem; border-radius: 10px; text-decoration: none;
+      letter-spacing: 0.04em; transition: all 0.25s;
+      box-shadow: 0 6px 24px rgba(10,132,255,0.38);
+    }
+    .btn-buy-now:hover {
+      background: linear-gradient(135deg, #2296FF, #0A84FF);
+      transform: translateY(-2px); box-shadow: 0 12px 36px rgba(10,132,255,0.52);
+    }
+    .product-guarantee {
+      text-align: center; font-size: 0.71rem; color: var(--text-dim); font-family: var(--mono);
+    }
+
+    /* PROXIMAMENTE */
+    #proximamente { background: rgba(10,12,16,0.92) !important; }
+    .proximas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+    .proxima-card {
+      background: rgba(17,19,24,0.82); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.5rem 1rem; text-align: center;
+      transition: border-color 0.25s, transform 0.25s; position: relative; overflow: hidden;
+    }
+    .proxima-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(10,132,255,0.4), transparent);
+    }
+    .proxima-card:hover { border-color: rgba(10,132,255,0.35); transform: translateY(-3px); }
+    .proxima-soon {
+      display: inline-block; font-family: var(--mono); font-size: 0.57rem;
+      color: var(--text-dim); letter-spacing: 0.12em; text-transform: uppercase;
+      border: 1px solid var(--border); border-radius: 100px; padding: 0.2rem 0.6rem; margin-bottom: 0.75rem;
+    }
+    .proxima-brand { font-family: var(--mono); font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .proxima-sub { font-size: 0.71rem; color: var(--text-dim); margin-bottom: 1rem; }
+    .btn-notify {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: transparent; border: 1px solid rgba(10,132,255,0.35);
+      color: var(--blue); font-family: var(--mono); font-size: 0.67rem;
+      font-weight: 700; padding: 0.42rem 0.9rem; border-radius: 100px;
+      text-decoration: none; letter-spacing: 0.05em; transition: all 0.2s;
+    }
+    .btn-notify:hover { background: rgba(10,132,255,0.1); border-color: var(--blue); }
+
+    /* MARCAS */
+    #marcas { background: rgba(17,19,24,0.84) !important; }
+    .brands-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
+    .brand-tile {
+      background: rgba(24,28,36,0.72); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.1rem 0.75rem; text-align: center; transition: all 0.25s;
+    }
+    .brand-tile:hover {
+      border-color: rgba(10,132,255,0.38); background: rgba(10,132,255,0.06);
+      transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,132,255,0.1);
+    }
+    .brand-tile-name { font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text); letter-spacing: 0.04em; }
+    .brand-tile-type { font-size: 0.63rem; color: var(--text-dim); margin-top: 0.3rem; }
   </style>
 </head>
 <body>
@@ -242,6 +413,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PSGDJ77D"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
+
+<div class="urgency-banner">
+  <span class="ub-text">🔥 Diagnóstico GRATIS esta semana — Llama ahora</span>
+  <a href="https://wa.me/526692711522" class="ub-btn" target="_blank">📲 WhatsApp → Llamar ahora</a>
+</div>
 
 <div id="scroll-bar"></div>
 
@@ -292,33 +468,91 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="section-label reveal">// PRODUCTO DIGITAL</div>
     <h2 class="section-title reveal" style="margin-bottom:0.5rem;">Bitácora de Tarjetas Inverter</h2>
     <p class="section-sub reveal" style="margin-bottom:2rem;">El recurso técnico definitivo para técnicos y entusiastas de la electrónica.</p>
-    <div class="bitacora-card reveal-scale">
-      <div class="bitacora-left">
-        <div class="bitacora-left-inner">
-          <div class="bit-badge">📒 PRODUCTO DIGITAL</div>
-          <div class="bit-title">Bitácora <span>Mirage</span><br>Inverter</div>
-          <div class="bit-sub">Guía técnica especializada en tarjetas Mirage. Distribuida vía grupo privado de Telegram.</div>
-          <div class="bit-price-row"><span class="bit-currency">MXN</span><span class="bit-price">$700</span></div>
-          <div class="bit-price-note">Pago único · Acceso inmediato · Sin mensualidad</div>
-          <a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20la%20Bitácora%20Mirage%20Inverter" class="btn-tg" target="_blank">
-            <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.867l-2.965-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.963.692z"/></svg>
-            OBTENER EN TELEGRAM
-          </a>
+    <div class="product-box reveal-scale">
+      <div class="product-cover">
+        <div class="product-badge-sold">🔥 12 técnicos ya la tienen</div>
+        <div class="product-cover-inner">
+          <div class="product-book">
+            <div class="book-spine"></div>
+            <div class="book-face">
+              <div>
+                <div class="book-face-logo">📒</div>
+                <div class="book-face-brand">MASTERBOARD</div>
+              </div>
+              <div>
+                <div class="book-face-title">BITÁCORA<br>MIRAGE</div>
+                <div class="book-face-sub">INVERTER</div>
+              </div>
+              <div class="book-face-ver">v2.0</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="bitacora-right">
-        <h3>¿Qué incluye?</h3>
-        <ul class="bit-features">
-          <li><div class="bit-icon">📋</div><div><strong>Bitácora Técnica Mirage</strong><span>Documentación detallada de fallas, componentes y soluciones en tarjetas inverter marca Mirage.</span></div></li>
-          <li><div class="bit-icon">💬</div><div><strong>Grupo Privado de Telegram</strong><span>Acceso al grupo donde resolvemos dudas técnicas en tiempo real. Comunidad activa de técnicos.</span></div></li>
-          <li><div class="bit-icon">🔧</div><div><strong>Apoyo en tu Primera Reparación</strong><span>Te guiamos en tu primera reparación paso a paso. Soporte personalizado para que salga perfecta.</span></div></li>
-          <li><div class="bit-icon">🔄</div><div><strong>Actualizaciones Incluidas</strong><span>Recibes todas las actualizaciones futuras de esta bitácora sin costo adicional.</span></div></li>
-          <li><div class="bit-icon">📚</div><div><strong>Acceso a Futuros Manuales</strong><span>Acceso anticipado y a precio especial a futuros manuales de otras marcas inverter.</span></div></li>
-        </ul>
-        <div class="bit-offer">
-          <h4>🔥 OFERTA — Te ayudamos en tu primera reparación</h4>
-          <p>Con la compra de la Bitácora entras al grupo privado, tienes la guía técnica completa, apoyo directo para tu primera reparación, y acceso a todos los futuros manuales de otras marcas. Una sola inversión, conocimiento para toda la vida.</p>
+      <div class="product-info">
+        <div class="bit-badge">📒 PRODUCTO DIGITAL</div>
+        <h3 class="product-title">Bitácora <span>Mirage</span> Inverter</h3>
+        <p class="product-desc">La guía técnica definitiva para diagnóstico y reparación de tarjetas inverter marca Mirage. Incluye bitácora técnica, grupo privado y soporte personalizado.</p>
+        <div class="product-price-area">
+          <div class="product-price-label">Precio único</div>
+          <div class="product-price-big"><span class="pc-cur">MXN</span>$700</div>
+          <div class="product-price-note">Pago único · Acceso inmediato · Sin mensualidad</div>
         </div>
+        <div class="product-features-mini">
+          <div class="pfm-item">📋 Bitácora técnica completa</div>
+          <div class="pfm-item">💬 Grupo Telegram privado</div>
+          <div class="pfm-item">🔧 Apoyo en primera reparación</div>
+          <div class="pfm-item">🔄 Actualizaciones incluidas</div>
+        </div>
+        <a href="https://wa.me/526692711522?text=Hola,%20me%20interesa%20la%20Bit%C3%A1cora%20Mirage%20Inverter" class="btn-buy-now" target="_blank">
+          📲 COMPRAR AHORA — $700 MXN
+        </a>
+        <div class="product-guarantee">🛡️ Satisfacción garantizada · Soporte incluido</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="proximamente">
+  <div class="container">
+    <div class="section-label reveal">// PRÓXIMAMENTE</div>
+    <h2 class="section-title reveal">Más Bitácoras en Camino</h2>
+    <p class="section-sub reveal">Estamos documentando más marcas. Sé el primero en enterarte cuando estén listas.</p>
+    <div class="proximas-grid">
+      <div class="proxima-card reveal stagger-1">
+        <div class="proxima-soon">Próximamente</div>
+        <div class="proxima-brand">Samsung</div>
+        <div class="proxima-sub">Tarjetas inverter</div>
+        <a href="https://wa.me/526692711522?text=Quiero%20que%20me%20avisen%20cuando%20salga%20la%20Bit%C3%A1cora%20Samsung" class="btn-notify" target="_blank">🔔 Avisarme</a>
+      </div>
+      <div class="proxima-card reveal stagger-2">
+        <div class="proxima-soon">Próximamente</div>
+        <div class="proxima-brand">GE</div>
+        <div class="proxima-sub">Tarjetas inverter</div>
+        <a href="https://wa.me/526692711522?text=Quiero%20que%20me%20avisen%20cuando%20salga%20la%20Bit%C3%A1cora%20GE" class="btn-notify" target="_blank">🔔 Avisarme</a>
+      </div>
+      <div class="proxima-card reveal stagger-3">
+        <div class="proxima-soon">Próximamente</div>
+        <div class="proxima-brand">Carrier</div>
+        <div class="proxima-sub">Tarjetas inverter</div>
+        <a href="https://wa.me/526692711522?text=Quiero%20que%20me%20avisen%20cuando%20salga%20la%20Bit%C3%A1cora%20Carrier" class="btn-notify" target="_blank">🔔 Avisarme</a>
+      </div>
+      <div class="proxima-card reveal stagger-4">
+        <div class="proxima-soon">Próximamente</div>
+        <div class="proxima-brand">LG</div>
+        <div class="proxima-sub">Tarjetas inverter</div>
+        <a href="https://wa.me/526692711522?text=Quiero%20que%20me%20avisen%20cuando%20salga%20la%20Bit%C3%A1cora%20LG" class="btn-notify" target="_blank">🔔 Avisarme</a>
+      </div>
+      <div class="proxima-card reveal stagger-5">
+        <div class="proxima-soon">Próximamente</div>
+        <div class="proxima-brand">Daikin</div>
+        <div class="proxima-sub">Tarjetas inverter</div>
+        <a href="https://wa.me/526692711522?text=Quiero%20que%20me%20avisen%20cuando%20salga%20la%20Bit%C3%A1cora%20Daikin" class="btn-notify" target="_blank">🔔 Avisarme</a>
+      </div>
+      <div class="proxima-card reveal stagger-6">
+        <div class="proxima-soon">Próximamente</div>
+        <div class="proxima-brand">Trane</div>
+        <div class="proxima-sub">Tarjetas inverter</div>
+        <a href="https://wa.me/526692711522?text=Quiero%20que%20me%20avisen%20cuando%20salga%20la%20Bit%C3%A1cora%20Trane" class="btn-notify" target="_blank">🔔 Avisarme</a>
       </div>
     </div>
   </div>
@@ -453,6 +687,28 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="payment-card"><span>🅿️</span> PayPal</div>
       <div class="payment-card"><span>🏦</span> Transferencia Bancaria</div>
       <div class="payment-card"><span>💵</span> Efectivo</div>
+    </div>
+  </div>
+</section>
+
+<section id="marcas">
+  <div class="container">
+    <div class="section-label reveal">// COMPATIBILIDAD</div>
+    <h2 class="section-title reveal">Marcas que Reparamos</h2>
+    <p class="section-sub reveal">Trabajamos con las principales marcas de mini splits inverter del mercado mexicano.</p>
+    <div class="brands-grid">
+      <div class="brand-tile reveal stagger-1"><div class="brand-tile-name">Mirage</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-2"><div class="brand-tile-name">Samsung</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-3"><div class="brand-tile-name">LG</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-4"><div class="brand-tile-name">Carrier</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-5"><div class="brand-tile-name">Daikin</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-6"><div class="brand-tile-name">Trane</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-1"><div class="brand-tile-name">GE</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-2"><div class="brand-tile-name">Whirlpool</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-3"><div class="brand-tile-name">Mabe</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-4"><div class="brand-tile-name">York</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-5"><div class="brand-tile-name">Rheem</div><div class="brand-tile-type">Mini Split</div></div>
+      <div class="brand-tile reveal stagger-6"><div class="brand-tile-name">Lennox</div><div class="brand-tile-type">Mini Split</div></div>
     </div>
   </div>
 </section>
