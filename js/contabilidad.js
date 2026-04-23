@@ -469,16 +469,20 @@ function actualizarReservasUI(){
     </div>`;
   });
 
-  // Liquidez inmediata: Efectivo + Banorte disponible (sin Banamex)
+  // Liquidez inmediata: Efectivo + Banorte + Banamex disponible
   const efEl=document.getElementById('c-efectivo');
   const bnEl=document.getElementById('c-tarjeta_banorte');
+  const bmxEl=document.getElementById('c-tarjeta_banamex');
   const saldoEf=parseFloat(efEl?efEl.textContent.replace(/[$,\s]/g,''):'0')||0;
   const saldoBn=parseFloat(bnEl?bnEl.textContent.replace(/[$,\s]/g,''):'0')||0;
-  const resBn=allReservas.filter(r=>r.metodo==='tarjeta_banorte').reduce((a,r)=>a+Number(r.monto),0);
+  const saldoBmx=parseFloat(bmxEl?bmxEl.textContent.replace(/[$,\s]/g,''):'0')||0;
   const resEf=allReservas.filter(r=>r.metodo==='efectivo').reduce((a,r)=>a+Number(r.monto),0);
+  const resBn=allReservas.filter(r=>r.metodo==='tarjeta_banorte').reduce((a,r)=>a+Number(r.monto),0);
+  const resBmx=allReservas.filter(r=>r.metodo==='tarjeta_banamex').reduce((a,r)=>a+Number(r.monto),0);
   const dispEf=saldoEf-resEf;
   const dispBn=saldoBn-resBn;
-  const liquidez=dispEf+dispBn;
+  const dispBmx=saldoBmx-resBmx;
+  const liquidez=dispEf+dispBn+dispBmx;
   const lEl=document.getElementById('c-liquidez');
   const lDet=document.getElementById('liquidez-detalle');
   if(lEl){
@@ -487,7 +491,7 @@ function actualizarReservasUI(){
   }
   if(lDet){
     const fmtLine=(label,val)=>`<div style="display:flex;gap:0.75rem;justify-content:flex-end;"><span>${label}</span><span style="font-family:var(--mono);color:${val>=0?'inherit':'var(--red)'};">${val<0?'-':''}$${Math.abs(val).toLocaleString('es-MX',{minimumFractionDigits:2})}</span></div>`;
-    lDet.innerHTML=fmtLine('💵 Efectivo disp.',dispEf)+fmtLine('💳 Banorte disp.',dispBn);
+    lDet.innerHTML=fmtLine('💵 Efectivo disp.',dispEf)+fmtLine('💳 Banorte disp.',dispBn)+fmtLine('🏧 Banamex disp.',dispBmx);
   }
 }
 
