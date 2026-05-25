@@ -55,7 +55,7 @@ function renderOrdenes(data){
       </td>
       <td><div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
         <button class="btn-ghost btn-sm" onclick="verDetalle('${o.id}')">Ver</button>
-        <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button>
+        <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-ghost" onclick="generarCotizacion('${o.id}')">📄 Cotización</button>
         <button class="btn-ghost btn-sm" onclick="registrarAnticipo('${o.id}')" title="Registrar anticipo">💵 Anticipo${o.anticipo?` <span style='color:var(--green);'>$${Number(o.anticipo).toLocaleString('es-MX')}</span>`:''}
         </button>
         ${comisionPendiente?`<button class="btn-green btn-sm" onclick="registrarComision('${o.id}')" title="Registrar pago a Chitara">💰 Comisión</button>`:''}
@@ -84,7 +84,7 @@ function renderOrdenes(data){
       </div>
       <div class="m-card-actions" onclick="event.stopPropagation()">
         <button class="btn-ghost" onclick="verDetalle('${o.id}')">Ver detalle</button>
-        <button class="btn-ghost" onclick="editarOrden('${o.id}')">Editar</button>
+        <button class="btn-ghost" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-ghost" onclick="generarCotizacion('${o.id}')">📄 Cotización</button>
         <button class="btn-ghost" onclick="registrarAnticipo('${o.id}')">💵 Anticipo${o.anticipo?` $${Number(o.anticipo).toLocaleString('es-MX')}`:''}
         </button>
         ${comisionPendienteM?`<button class="btn-green" onclick="registrarComision('${o.id}')">💰 Comisión</button>`:''}
@@ -285,8 +285,8 @@ async function verDetalle(id){
       </div>
       <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
         ${o.modificado_por?`<div style="font-size:0.75rem;color:var(--text-dim);">Editado por: ${userPill(o.modificado_por)}</div>`:''}
-        <button class="btn-ghost btn-sm" onclick="generarCotizacion('${o.id}')">📄 Cotización</button>
-        <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button>
+        <button class="btn-blue" onclick="generarCotizacion('${o.id}')" style="font-weight:600;padding:0.45rem 1rem;">📄 Generar Cotización</button>
+        <button class="btn-ghost btn-sm" onclick="editarOrden('${o.id}')">Editar</button><button class="btn-ghost" onclick="generarCotizacion('${o.id}')">📄 Cotización</button>
       </div>
     </div>
     <div style="margin-bottom:1.25rem;">
@@ -516,7 +516,7 @@ function recalcularCosto(){
   } else { res.style.display='none'; }
 }
 
-function generarCotizacion(id){
+async function generarCotizacion(id){
   const o=allOrdenes.find(x=>x.id===id);if(!o)return;
   const cliente=o.clientes||{};
   const hoy=new Date();
@@ -584,6 +584,7 @@ function generarCotizacion(id){
     +'<div class="terminos-texto">Las reparaciones realizadas cuentan con una garantía de 40 días, aplicable únicamente sobre los trabajos efectuados. La garantía no cubre daños ocasionados por mal uso, condiciones externas como humedad, sobrecargas eléctricas o intervenciones posteriores de terceros. Para hacerla válida es indispensable presentar este recibo.</div></div>'
     +'</div></body></html>';
 
+  await sb.from('ordenes').update({estado:'cotizacion'}).eq('id',id);const oIdx=allOrdenes.findIndex(x=>x.id===id);if(oIdx>=0){allOrdenes[oIdx].estado='cotizacion';}
   const win=window.open('','_blank');
   win.document.write(html);
   win.document.close();
