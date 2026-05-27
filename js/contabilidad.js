@@ -61,9 +61,6 @@ async function actualizarStats(){
   const lblIng=document.getElementById('lbl-total-ing');if(lblIng)lblIng.textContent='$'+ingresos.toLocaleString('es-MX',{minimumFractionDigits:2});
   const lblGas=document.getElementById('lbl-total-gas');if(lblGas)lblGas.textContent='$'+gastos.toLocaleString('es-MX',{minimumFractionDigits:2});
   const balance=ingresos-gastos;
-  const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
-  const porCobrar=(ordenesActuales||[]).filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id))
-    .reduce((a,o)=>a+Number(o.costo_final||o.costo_estimado||0),0);
   document.getElementById('c-ingresos').textContent='$'+ingresos.toLocaleString('es-MX',{minimumFractionDigits:2});
   document.getElementById('c-gastos').textContent='$'+gastos.toLocaleString('es-MX',{minimumFractionDigits:2});
   const balEl=document.getElementById('c-balance');
@@ -71,7 +68,6 @@ async function actualizarStats(){
   balEl.className='stat-num '+(balance>=0?'green':'red');
   const cardBal=document.getElementById('card-balance');
   if(cardBal)cardBal.style.borderTop=balance>=0?'2px solid rgba(48,209,88,0.5)':'2px solid rgba(255,69,58,0.5)';
-  document.getElementById('c-cobrar').textContent='$'+porCobrar.toLocaleString('es-MX',{minimumFractionDigits:2});
   // Saldo neto por método
   const metodos=['efectivo','transferencia','tarjeta_banamex','tarjeta_banorte'];
   const colores={efectivo:'var(--green)',transferencia:'var(--blue)',tarjeta_banamex:'var(--yellow)',tarjeta_banorte:'var(--orange)'};
@@ -90,19 +86,13 @@ async function actualizarStats(){
 
 function filtrarMovimientos(tipo){
   contTipo=tipo;
-  ['todos','ingresos','gastos','cobrar'].forEach(t=>{
+  ['todos','ingresos','gastos'].forEach(t=>{
     const btn=document.getElementById('tab-'+t);
     if(btn){btn.className=t===tipo?'btn-blue btn-sm':'btn-ghost btn-sm';}
   });
-  if(tipo==='cobrar'){
-    const ordenesConIngreso=new Set(allMovimientos.filter(m=>m.orden_id).map(m=>m.orden_id));
-    const porCobrar=allOrdenes.filter(o=>['listo','entregado'].includes(o.estado)&&!ordenesConIngreso.has(o.id));
-    renderCobrar(porCobrar);
-  } else {
     const sinAjuste=allMovimientos.filter(m=>m.categoria!=='Ajuste Maestro');
     const list=tipo==='todos'?sinAjuste:sinAjuste.filter(m=>m.tipo===tipo);
     renderMovimientos(list);
-  }
 }
 
 function renderMovimientos(list){
@@ -134,30 +124,6 @@ function renderMovimientos(list){
     </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Sin movimientos</div>';
 }
 
-function renderCobrar(ordenes){
-  const tbody=document.getElementById('tabla-cont');
-  if(tbody) tbody.innerHTML=ordenes.length?ordenes.map(o=>`
-    <tr onclick="verDetalle('${o.id}')" style="cursor:pointer;">
-      <td style="font-size:0.78rem;color:var(--text-dim);">${fmtFecha(o.fecha_ingreso)}</td>
-      <td><span class="badge badge-listo">Por Cobrar</span></td>
-      <td>${o.clientes?.nombre||'?'}</td>
-      <td>${o.marca} ${o.modelo||''}</td>
-      <td><span style="font-family:var(--mono);font-size:0.8rem;color:var(--blue);">#${o.folio}</span></td>
-      <td style="font-family:var(--mono);font-weight:700;color:var(--yellow);">$${Number(o.costo_estimado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
-      <td><button class="btn-blue btn-sm" onclick="event.stopPropagation();registrarCobroOrden('${o.id}')">Cobrar</button></td>
-    </tr>`).join(''):`<tr class="empty-row"><td colspan="7">Todo cobrado</td></tr>`;
-  const mob=document.getElementById('mobile-cont');
-  if(mob) mob.innerHTML=ordenes.length?ordenes.map(o=>`
-    <div class="m-card" onclick="verDetalle('${o.id}')">
-      <div class="m-card-top"><span class="m-card-folio">#${o.folio}</span><span class="badge badge-listo">Por cobrar</span></div>
-      <div class="m-card-name">${o.clientes?.nombre||'?'}</div>
-      <div class="m-card-equipo">${o.marca} ${o.modelo||''}</div>
-      <div class="m-card-bottom">
-        <span style="font-family:var(--mono);color:var(--yellow);font-weight:700;">$${Number(o.costo_estimado||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</span>
-        <button class="btn-blue btn-sm" onclick="event.stopPropagation();registrarCobroOrden('${o.id}')">Cobrar</button>
-      </div>
-    </div>`).join(''):'<div style="text-align:center;color:var(--text-dim);padding:2rem;">Todo cobrado</div>';
-}
 
 let cobroOrdenId=null, cobroMetodo=null;
 
