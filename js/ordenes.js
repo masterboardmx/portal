@@ -584,7 +584,7 @@ async function generarCotizacion(id){
     +'<div class="terminos-texto">Las reparaciones realizadas cuentan con una garantía de 40 días, aplicable únicamente sobre los trabajos efectuados. La garantía no cubre daños ocasionados por mal uso, condiciones externas como humedad, sobrecargas eléctricas o intervenciones posteriores de terceros. Para hacerla válida es indispensable presentar este recibo.</div></div>'
     +'</div></body></html>';
 
-  await sb.from('ordenes').update({estado:'cotizacion'}).eq('id',id);const oIdx=allOrdenes.findIndex(x=>x.id===id);if(oIdx>=0){allOrdenes[oIdx].estado='cotizacion';}
+  await cambiarEstado(id,'cotizacion',null);
   const win=window.open('','_blank');
   win.document.write(html);
   win.document.close();
