@@ -1,17 +1,11 @@
-async function doLogin(){
-  const u=document.getElementById('login-user').value.trim();
-  const p=document.getElementById('login-pass').value;
-  const email=USER_EMAILS[u];
-  if(!email){document.getElementById('login-err').style.display='block';return;}
-  const{data,error}=await sb.auth.signInWithPassword({email,password:p});
-  if(error||!data.user){document.getElementById('login-err').style.display='block';return;}
-  const nombre=data.user.raw_user_meta_data?.nombre||u;
+function mostrarApp(nombre){
   currentUser=nombre;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'flex':'none';
   document.getElementById('topbar-user').textContent=nombre;
   document.getElementById('dash-fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
   if(nombre===MASTER){
     document.getElementById('master-badge').style.display='inline-flex';
     document.getElementById('sidebar-master').style.display='block';
@@ -48,6 +42,9 @@ async function doLogin(){
     document.getElementById('sidebar-cont-alonso').style.display='block';
   }
   loadAll();
+}
+
+async function registrarSesion(nombre){
   const ua=navigator.userAgent;
   const browser=ua.includes('Chrome')&&!ua.includes('Edg')?'Chrome':ua.includes('Safari')&&!ua.includes('Chrome')?'Safari':ua.includes('Firefox')?'Firefox':ua.includes('Edg')?'Edge':'Otro';
   const os=ua.includes('iPhone')?'iPhone':ua.includes('iPad')?'iPad':ua.includes('Android')?'Android':ua.includes('Windows')?'Windows':ua.includes('Mac')?'Mac':'Otro';
@@ -57,6 +54,18 @@ async function doLogin(){
     detalle:`Inicio sesion desde ${tipo} · ${os} · ${browser}`,
     cambios:{tipo,os,browser,hora:new Date().toISOString()}
   }]);
+}
+
+async function doLogin(){
+  const u=document.getElementById('login-user').value.trim();
+  const p=document.getElementById('login-pass').value;
+  const email=USER_EMAILS[u];
+  if(!email){document.getElementById('login-err').style.display='block';return;}
+  const{data,error}=await sb.auth.signInWithPassword({email,password:p});
+  if(error||!data.user){document.getElementById('login-err').style.display='block';return;}
+  const nombre=data.user.raw_user_meta_data?.nombre||u;
+  mostrarApp(nombre);
+  await registrarSesion(nombre);
 }
 
 async function doLogout(){
@@ -100,20 +109,24 @@ function showPage(name){
   const contPages=['contabilidad'];
   if(masterPages.includes(name) && currentUser!==MASTER){notif('Acceso restringido','error');return;}
   if(contPages.includes(name) && !CONTABILIDAD_USERS.includes(currentUser)){notif('Acceso restringido','error');return;}
+
   // Activar página
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name);
   if(!pg){notif('Página no encontrada','error');return;}
   pg.classList.add('active');
+
   // Activar sidebar
   document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
   const si=document.querySelector(`.sidebar-item[data-page="${name}"]`);
   if(si)si.classList.add('active');
+
   // Activar bottom nav
   document.querySelectorAll('.bottom-nav-item').forEach(b=>b.classList.remove('active'));
   const bmap={dashboard:'bnav-dashboard',ordenes:'bnav-ordenes',clientes:'bnav-clientes',agenda:'bnav-agenda',backup:'bnav-backup',contabilidad:'bnav-contabilidad',auditoria:'bnav-auditoria',usuarios:'bnav-usuarios',sesiones:'bnav-sesiones',mipanel:'bnav-mipanel'};
   const bkey=name==='agenda'?'bnav-agenda':(bmap[name]||null);
   if(bkey){const b=document.getElementById(bkey);if(b)b.classList.add('active');}
+
   // Cargar datos
   if(name==='dashboard')loadDashboard();
   if(name==='ordenes')renderOrdenes();
@@ -141,6 +154,32 @@ function activarAjusteMaestro(){
     const btn=document.getElementById(id);if(btn)btn.style.display='inline-flex';
   });
 }
+
+// Revisar si ya hay sesión activa guardada (evita re-login en cada recarga)
+async function checkSession(){
+  try{
+    const {data:{session}} = await sb.auth.getSession();
+    if(session?.user){
+      const email=session.user.email;
+      const nombre=Object.keys(USER_EMAILS).find(k=>USER_EMAILS[k]===email) || session.user.raw_user_meta_data?.nombre;
+      if(nombre) mostrarApp(nombre);
+    }
+  }catch(e){
+    console.error('Error revisando sesion:',e);
+  }
+}
+checkSession();
+
+// Mantener sesión sincronizada (refresh de token automático y cierre en otras pestañas)
+sb.auth.onAuthStateChange((event, session)=>{
+  if(event==='SIGNED_OUT' && currentUser){
+    // Sesión cerrada en otro lado (token expirado, logout en otra pestaña, etc)
+    currentUser=null;
+    document.getElementById('app').style.display='none';
+    document.getElementById('bottom-nav').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+  }
+});
 
 // Registrar Service Worker para PWA
 if('serviceWorker' in navigator){
