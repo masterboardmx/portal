@@ -14,7 +14,6 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 function notif(msg,type){const el=document.getElementById('notif');el.textContent=msg;el.className='notif show '+(type||'');setTimeout(()=>el.className='notif',3000);}
 
 document.addEventListener('DOMContentLoaded', function(){
-  document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
   window.addEventListener('resize',()=>{
     if(!currentUser)return;
     document.getElementById('bottom-nav').style.display=window.innerWidth<=768?'flex':'none';
